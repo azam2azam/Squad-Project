@@ -8,11 +8,14 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BoardsService } from '../../core/services/boards.service';
+import type { BoardAuditEntry, JiraSuggestion } from '../../core/services/boards.service';
+import { AuthService } from '../../core/services/auth.service';
 import { MetadataService } from '../../core/services/metadata.service';
 import { SlideCanvas } from '../../shared/slide/slide-canvas';
 import { SquadEditor } from './squad-editor';
@@ -30,7 +33,7 @@ type MobileTab = 'build' | 'slide';
 @Component({
   selector: 'app-board-editor-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, SlideCanvas, SquadEditor],
+  imports: [DatePipe, FormsModule, RouterLink, SlideCanvas, SquadEditor],
   templateUrl: './board-editor-page.html',
   styleUrl: './board-editor-page.scss',
 })
@@ -41,6 +44,7 @@ export class BoardEditorPage {
   private readonly metadata = inject(MetadataService);
   private readonly realtime = inject(BoardRealtimeService);
   private readonly exporter = inject(SlideExportService);
+  private readonly auth = inject(AuthService);
 
   protected readonly statuses = this.metadata.statuses;
   protected readonly realtimeStatus = this.realtime.status;
@@ -50,6 +54,21 @@ export class BoardEditorPage {
   private readonly slideHost = viewChild<ElementRef<HTMLElement>>('slideHost');
 
   protected readonly exporting = signal(false);
+
+  /** Viewers see the board read-only; the API refuses their writes regardless. */
+  protected readonly canWrite = this.auth.canWrite;
+  protected readonly jiraEnabled = this.metadata.jiraSyncEnabled;
+
+  protected readonly auditEntries = signal<BoardAuditEntry[] | null>(null);
+  protected readonly auditOpen = signal(false);
+  protected readonly jiraSuggestion = signal<JiraSuggestion | null>(null);
+  protected readonly jiraBusy = signal(false);
+
+  /** True when a board they may not edit is open, so the UI can say why. */
+  protected readonly readOnlyReason = computed(() => {
+    if (this.canWrite()) return null;
+    return 'You have read-only access. You can present and export this board.';
+  });
 
   private readonly boardId = toSignal(this.route.paramMap.pipe(map((params) => params.get('id'))), {
     initialValue: null,
@@ -274,6 +293,68 @@ export class BoardEditorPage {
     if (board) {
       void this.router.navigate(['/present', board.id]);
     }
+  }
+
+  /** Loads the change log on first open, then just toggles. */
+  protected toggleAudit(): void {
+    const opening = !this.auditOpen();
+    this.auditOpen.set(opening);
+
+    if (opening && this.auditEntries() === null) {
+      const board = this.serverBoard();
+      if (!board) return;
+
+      this.boards.audit(board.id).subscribe({
+        next: (entries) => this.auditEntries.set(entries),
+        error: () => this.auditEntries.set([]),
+      });
+    }
+  }
+
+  /** Pulls a Jira suggestion. Nothing is written until the user accepts it. */
+  protected syncJira(): void {
+    const board = this.serverBoard();
+    if (!board || this.jiraBusy()) return;
+
+    this.jiraBusy.set(true);
+    this.jiraSuggestion.set(null);
+
+    this.boards.jiraSync(board.id).subscribe({
+      next: (suggestion) => {
+        this.jiraSuggestion.set(suggestion);
+        this.jiraBusy.set(false);
+      },
+      error: () => {
+        this.jiraBusy.set(false);
+        this.error.set('Could not reach Jira.');
+      },
+    });
+  }
+
+  /**
+   * Applies the pulled numbers to the draft only — the board is still unsaved, so the
+   * Product Owner reviews the slide and presses Save (spec section 10).
+   */
+  protected acceptJira(): void {
+    const suggestion = this.jiraSuggestion();
+    if (!suggestion?.available) return;
+
+    this.draft.update((d) =>
+      d
+        ? {
+            ...d,
+            progressPercent: suggestion.suggestedProgressPercent,
+            status: suggestion.suggestedStatus as BoardStatus,
+            sprint: suggestion.sprintName ?? d.sprint,
+          }
+        : d,
+    );
+
+    this.jiraSuggestion.set(null);
+  }
+
+  protected dismissJira(): void {
+    this.jiraSuggestion.set(null);
   }
 
   protected revert(): void {

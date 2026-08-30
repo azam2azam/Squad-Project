@@ -42,11 +42,14 @@ public sealed class CreatePersonCommandValidator : AbstractValidator<CreatePerso
     }
 }
 
-public sealed class CreatePersonCommandHandler(IAppDbContext db)
+public sealed class CreatePersonCommandHandler(IAppDbContext db, IBoardAuthorizer authorizer)
     : IRequestHandler<CreatePersonCommand, PersonDto>
 {
     public async Task<PersonDto> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
     {
+        // The roster is org-wide, so a PO editing it would affect every squad.
+        authorizer.EnsureIsAdmin();
+
         var person = new Person(request.FullName, request.DefaultRole,
             request.DefaultDetail, request.Email, request.AvatarColorOverride);
 
@@ -85,11 +88,13 @@ public sealed class UpdatePersonCommandValidator : AbstractValidator<UpdatePerso
     }
 }
 
-public sealed class UpdatePersonCommandHandler(IAppDbContext db)
+public sealed class UpdatePersonCommandHandler(IAppDbContext db, IBoardAuthorizer authorizer)
     : IRequestHandler<UpdatePersonCommand, PersonDto>
 {
     public async Task<PersonDto> Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
     {
+        authorizer.EnsureIsAdmin();
+
         var person = await db.People
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Person {request.Id} was not found.");
@@ -109,11 +114,13 @@ public sealed class UpdatePersonCommandHandler(IAppDbContext db)
 
 public sealed record DeactivatePersonCommand(Guid Id) : IRequest;
 
-public sealed class DeactivatePersonCommandHandler(IAppDbContext db)
+public sealed class DeactivatePersonCommandHandler(IAppDbContext db, IBoardAuthorizer authorizer)
     : IRequestHandler<DeactivatePersonCommand>
 {
     public async Task Handle(DeactivatePersonCommand request, CancellationToken cancellationToken)
     {
+        authorizer.EnsureIsAdmin();
+
         var person = await db.People
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Person {request.Id} was not found.");
@@ -128,11 +135,13 @@ public sealed class DeactivatePersonCommandHandler(IAppDbContext db)
 
 public sealed record ReactivatePersonCommand(Guid Id) : IRequest<PersonDto>;
 
-public sealed class ReactivatePersonCommandHandler(IAppDbContext db)
+public sealed class ReactivatePersonCommandHandler(IAppDbContext db, IBoardAuthorizer authorizer)
     : IRequestHandler<ReactivatePersonCommand, PersonDto>
 {
     public async Task<PersonDto> Handle(ReactivatePersonCommand request, CancellationToken cancellationToken)
     {
+        authorizer.EnsureIsAdmin();
+
         var person = await db.People
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Person {request.Id} was not found.");

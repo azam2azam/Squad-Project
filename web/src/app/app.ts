@@ -3,12 +3,14 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { MetadataService } from './core/services/metadata.service';
+import { AuthService } from './core/services/auth.service';
 
 /**
  * Application shell: the persistent header and the routed outlet.
  *
- * Present mode and the export slide route render chromeless — the header must not
- * appear in a screenshot of the slide, and it would be a distraction in a review.
+ * Present mode, the export slide route and the login page render chromeless — the header
+ * must not appear in a screenshot of the slide, and it would be meaningless before
+ * sign-in.
  */
 @Component({
   selector: 'app-root',
@@ -18,11 +20,14 @@ import { MetadataService } from './core/services/metadata.service';
 })
 export class App {
   private readonly metadata = inject(MetadataService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly serverExportEnabled = this.metadata.serverExportEnabled;
-  protected readonly jiraSyncEnabled = this.metadata.jiraSyncEnabled;
   protected readonly roleCount = this.metadata.roles;
+  protected readonly user = this.auth.user;
+  protected readonly isSignedIn = this.auth.isSignedIn;
+  protected readonly isAdmin = this.auth.isAdmin;
+  protected readonly canWrite = this.auth.canWrite;
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -36,6 +41,10 @@ export class App {
   /** Routes that own the whole viewport and must not show app chrome. */
   protected readonly chromeless = computed(() => {
     const url = this.url();
-    return url.startsWith('/slide') || url.startsWith('/present');
+    return url.startsWith('/slide') || url.startsWith('/present') || url.startsWith('/login');
   });
+
+  protected signOut(): void {
+    void this.auth.logout();
+  }
 }

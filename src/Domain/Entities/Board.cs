@@ -46,6 +46,15 @@ public class Board : Entity
     public string? JiraBoardId { get; private set; }
 
     public string CreatedBy { get; private set; } = "system";
+
+    /// <summary>
+    /// The user who owns this board. A Product Owner may write their own boards and only
+    /// read everyone else's (spec section 8), so ownership is an id rather than the
+    /// display name in <see cref="CreatedBy"/>, which is for audit readability.
+    /// Null for seeded and imported boards, which only an Admin can edit.
+    /// </summary>
+    public Guid? OwnerId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public int OrderIndex { get; private set; }
@@ -160,6 +169,23 @@ public class Board : Entity
         OrderIndex = orderIndex;
         Touch();
     }
+
+    public void AssignOwner(Guid? ownerId)
+    {
+        OwnerId = ownerId;
+        Touch();
+    }
+
+    /// <summary>
+    /// Whether the given user may write to this board. Admins may write anything;
+    /// a Product Owner only their own boards; a Viewer nothing.
+    /// </summary>
+    public bool CanBeEditedBy(Guid userId, UserRole role) => role switch
+    {
+        UserRole.Admin => true,
+        UserRole.ProductOwner => OwnerId == userId,
+        _ => false
+    };
 
     public void SoftDelete()
     {

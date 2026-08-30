@@ -145,3 +145,48 @@ html2canvas cannot parse — client-side PNG export failed with "Attempting to p
 unsupported color function". Tints are computed to plain `rgba()` in `shared/slide/color.ts`
 instead, which is also what the prototype did by appending an alpha suffix to the hex.
 Keep new slide styles free of `color-mix`, `oklch` and other modern colour functions.
+
+## Auth and RBAC
+
+`AppUser` is deliberately separate from `Person`: the roster is who appears on slides,
+`AppUser` is who has access. Most roster members never sign in, and an admin need not be
+on any squad.
+
+Access tokens are short-lived JWTs carrying the role, so most authorisation needs no
+database round trip. Refresh tokens are opaque random strings — never JWTs — stored only
+as a SHA-256 hash and **rotated on every use**, so a stolen refresh token is good only
+until the legitimate client next refreshes. Login returns one message for "no such user",
+"wrong password" and "deactivated", because telling them apart lets an attacker enumerate
+accounts.
+
+Authorisation is enforced **in the handlers**, not only on routes:
+
+- A role claim answers "may this user write at all".
+- `IBoardAuthorizer` answers "may this user write *this* board", which needs the board
+  loaded and so cannot live in an attribute.
+
+The Angular route guards mirror these rules but are a convenience only — every rule is
+re-checked server-side, so bypassing the router gains nothing. `RbacTests` asserts on the
+handlers rather than the endpoints for exactly this reason.
+
+The authorization fallback policy requires an authenticated user, so a newly added
+controller is secure by default and must opt out with `[AllowAnonymous]` rather than
+accidentally shipping public.
+
+### Board ownership
+
+`Board.OwnerId` is set to the creator. A Product Owner may write only their own boards;
+an Admin may write any. **Ownerless boards are admin-only** — that covers seeded and
+imported boards, and any board created before ownership existed. The seeder adopts the
+one known demo board so the Product Owner path is demonstrable, but deliberately leaves
+other pre-existing boards ownerless: guessing an owner for somebody else's board is worse
+than requiring an admin to assign one.
+
+## Jira
+
+Config-gated and read-only. `GetJiraSuggestionQuery` is a **query, not a command** — it
+never writes to the board. It returns the pulled numbers, a suggested progress and status,
+and a plain-English rationale; the Product Owner applies them to the draft and still has
+to press Save. When Jira is not configured the null-object client reports `IsEnabled =
+false`, `/metadata/capabilities` says so, and the UI hides the affordance rather than
+offering a button that fails.

@@ -20,6 +20,9 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
+
+builder.Services.AddJwtAuth(builder.Configuration);
 
 builder.Services.AddSignalR();
 
@@ -75,8 +78,10 @@ else
 
 app.UseSerilogRequestLogging();
 app.UseCors(WebCorsPolicy);
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapHub<BoardsHub>("/hubs/boards");
 
 await MigrateAndSeedAsync(app);
@@ -111,7 +116,8 @@ static async Task MigrateAndSeedAsync(WebApplication app)
 
     if (seedDemoData)
     {
-        await DbSeeder.SeedAsync(db, logger);
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        await DbSeeder.SeedAsync(db, logger, passwordHasher);
     }
 }
 

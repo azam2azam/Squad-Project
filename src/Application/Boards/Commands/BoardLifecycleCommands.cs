@@ -14,12 +14,16 @@ namespace Application.Boards.Commands;
 public sealed record DuplicateBoardCommand(Guid Id, string? NewTitle = null)
     : IRequest<BoardDetailDto>;
 
-public sealed class DuplicateBoardCommandHandler(IAppDbContext db, ICurrentUser currentUser)
+public sealed class DuplicateBoardCommandHandler(
+    IAppDbContext db, ICurrentUser currentUser, ICurrentUserContext userContext,
+    IBoardAuthorizer authorizer)
     : IRequestHandler<DuplicateBoardCommand, BoardDetailDto>
 {
     public async Task<BoardDetailDto> Handle(
         DuplicateBoardCommand request, CancellationToken cancellationToken)
     {
+        authorizer.EnsureCanCreate();
+
         var source = await db.Boards
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
@@ -27,6 +31,8 @@ public sealed class DuplicateBoardCommandHandler(IAppDbContext db, ICurrentUser 
             ?? throw new KeyNotFoundException($"Board {request.Id} was not found.");
 
         var copy = source.Duplicate(currentUser.DisplayName, request.NewTitle);
+        // The copy belongs to whoever made it, not to the original owner.
+        copy.AssignOwner(userContext.UserId);
 
         db.Boards.Add(copy);
         db.BoardAuditEntries.Add(new BoardAuditEntry(
@@ -45,11 +51,14 @@ public sealed class DuplicateBoardCommandHandler(IAppDbContext db, ICurrentUser 
 public sealed record DeleteBoardCommand(Guid Id) : IRequest;
 
 public sealed class DeleteBoardCommandHandler(
-    IAppDbContext db, ICurrentUser currentUser, IBoardNotifier notifier)
+    IAppDbContext db, ICurrentUser currentUser, IBoardNotifier notifier,
+    IBoardAuthorizer authorizer)
     : IRequestHandler<DeleteBoardCommand>
 {
     public async Task Handle(DeleteBoardCommand request, CancellationToken cancellationToken)
     {
+        await authorizer.EnsureCanEditAsync(request.Id, cancellationToken);
+
         var board = await db.Boards
             .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Board {request.Id} was not found.");
@@ -88,11 +97,14 @@ public sealed class ReorderBoardsCommandValidator : AbstractValidator<ReorderBoa
     }
 }
 
-public sealed class ReorderBoardsCommandHandler(IAppDbContext db)
+public sealed class ReorderBoardsCommandHandler(IAppDbContext db, IBoardAuthorizer authorizer)
     : IRequestHandler<ReorderBoardsCommand>
 {
     public async Task Handle(ReorderBoardsCommand request, CancellationToken cancellationToken)
     {
+        // Reordering the portfolio is a shared-view change, so it is admin-only.
+        authorizer.EnsureIsAdmin();
+
         var ids = request.Items.Select(i => i.Id).ToList();
 
         var boards = await db.Boards

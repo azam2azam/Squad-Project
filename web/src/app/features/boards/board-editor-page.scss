@@ -324,3 +324,113 @@
     background: var(--status-on-track);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Read-only, Jira and audit
+// ---------------------------------------------------------------------------
+
+.builder__readonly {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: #4a5768;
+  background: #eef1f5;
+  border: 1px solid var(--card-line);
+}
+
+.card--jira {
+  gap: 10px;
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.jira__rationale {
+  margin: 0;
+  font-size: 13px;
+}
+
+.jira__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px 14px;
+  margin: 0;
+
+  dt {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 13px;
+  }
+}
+
+.jira__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.jira__note,
+.jira__unavailable {
+  margin: 0;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.audit {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.audit__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12.5px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--card-line);
+
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.audit__when {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.audit__empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64748b;
+  font-style: italic;
+}

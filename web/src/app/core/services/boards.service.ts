@@ -64,6 +64,15 @@ export class BoardsService {
     return this.http.put<void>(`${this.baseUrl}/boards/reorder`, items);
   }
 
+  audit(id: string): Observable<BoardAuditEntry[]> {
+    return this.http.get<BoardAuditEntry[]>(`${this.baseUrl}/boards/${id}/audit`);
+  }
+
+  /** Pulls a Jira suggestion. Read-only: it never writes to the board. */
+  jiraSync(id: string): Observable<JiraSuggestion> {
+    return this.http.post<JiraSuggestion>(`${this.baseUrl}/boards/${id}/jira/sync`, {});
+  }
+
   /** Bulk restore from an exported file. Upserts by id, so re-importing is a no-op. */
   import(file: unknown): Observable<ImportResult> {
     return this.http.post<ImportResult>(`${this.baseUrl}/import`, file);
@@ -78,4 +87,33 @@ export interface ImportResult {
   boardsUpdated: number;
   membersLinked: number;
   warnings: string[];
+}
+
+/** One line of a board's change log. */
+export interface BoardAuditEntry {
+  id: string;
+  field: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedBy: string;
+  changedAt: string;
+  summary: string;
+}
+
+/** A Jira-derived suggestion. Never applied automatically — the PO accepts it. */
+export interface JiraSuggestion {
+  available: boolean;
+  reason: string | null;
+  sprintName: string | null;
+  doneIssues: number;
+  totalIssues: number;
+  blockedIssues: number;
+  suggestedProgressPercent: number;
+  suggestedStatus: number;
+  suggestedStatusLabel: string;
+  suggestedStatusColor: string;
+  rationale: string;
+  currentSprint: string | null;
+  currentProgressPercent: number;
+  currentStatus: number;
 }

@@ -39,12 +39,15 @@ public sealed class UpdateBoardMetaCommandValidator : AbstractValidator<UpdateBo
 }
 
 public sealed class UpdateBoardMetaCommandHandler(
-    IAppDbContext db, ICurrentUser currentUser, IBoardNotifier notifier)
+    IAppDbContext db, ICurrentUser currentUser, IBoardNotifier notifier,
+    IBoardAuthorizer authorizer)
     : IRequestHandler<UpdateBoardMetaCommand, BoardDetailDto>
 {
     public async Task<BoardDetailDto> Handle(
         UpdateBoardMetaCommand request, CancellationToken cancellationToken)
     {
+        await authorizer.EnsureCanEditAsync(request.Id, cancellationToken);
+
         var board = await db.Boards
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)

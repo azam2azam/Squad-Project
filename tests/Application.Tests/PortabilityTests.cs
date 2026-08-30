@@ -34,7 +34,7 @@ public class PortabilityTests : IDisposable
         new ExportDataQueryHandler(_harness.Db).Handle(new ExportDataQuery(), CancellationToken.None);
 
     private Task<ImportResult> ImportAsync(BoardExportFile file) =>
-        new ImportDataCommandHandler(_harness.Db, _harness.CurrentUser)
+        new ImportDataCommandHandler(_harness.Db, _harness.CurrentUser, _harness.Authorizer)
             .Handle(new ImportDataCommand(file), CancellationToken.None);
 
     [Fact]
@@ -78,7 +78,7 @@ public class PortabilityTests : IDisposable
 
         // A second, empty database stands in for "restore onto a fresh install".
         using var fresh = new TestHarness();
-        var result = await new ImportDataCommandHandler(fresh.Db, fresh.CurrentUser)
+        var result = await new ImportDataCommandHandler(fresh.Db, fresh.CurrentUser, fresh.Authorizer)
             .Handle(new ImportDataCommand(file), CancellationToken.None);
 
         result.BoardsCreated.Should().Be(1);
@@ -156,7 +156,7 @@ public class PortabilityTests : IDisposable
         file.People.Single(p => p.FullName == "Tariq Nawaz").IsActive.Should().BeFalse();
 
         using var fresh = new TestHarness();
-        await new ImportDataCommandHandler(fresh.Db, fresh.CurrentUser)
+        await new ImportDataCommandHandler(fresh.Db, fresh.CurrentUser, fresh.Authorizer)
             .Handle(new ImportDataCommand(file), CancellationToken.None);
 
         var restored = await fresh.Db.People.SingleAsync(p => p.FullName == "Tariq Nawaz");
@@ -176,7 +176,7 @@ public class PortabilityTests : IDisposable
         var file = await ExportAsync();
 
         using var fresh = new TestHarness();
-        var result = await new ImportDataCommandHandler(fresh.Db, fresh.CurrentUser)
+        var result = await new ImportDataCommandHandler(fresh.Db, fresh.CurrentUser, fresh.Authorizer)
             .Handle(new ImportDataCommand(file), CancellationToken.None);
 
         result.MembersLinked.Should().Be(2);

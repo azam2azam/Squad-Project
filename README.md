@@ -9,7 +9,7 @@ cards — ready to present or export.
 
 ---
 
-## Current status — M4 complete
+## Current status — M5 complete
 
 | Milestone | Scope | State |
 |---|---|---|
@@ -17,12 +17,19 @@ cards — ready to present or export.
 | **M2** | Board CRUD API + board editor wired to the live `SlideCanvas` | ✅ Done |
 | **M3** | Roster CRUD, typeahead, membership, composition | ✅ Done |
 | **M4** | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | ✅ Done |
-| M5 | JWT auth + RBAC, portfolio view, Jira sync, audit log | Planned |
+| **M5** | JWT auth + RBAC, Jira sync, audit log | ✅ Done |
 | M6 | Test coverage, e2e, Dockerfiles, K8s/Helm, docs | Planned |
 
-M4 makes it a review tool: edits broadcast live to other viewers, Present mode runs the
-portfolio full-screen from the keyboard, slides export to PNG and PDF at 2x, and the whole
-dataset round-trips through JSON.
+M5 locks it down: every endpoint requires a token, roles are enforced server-side, the
+board history is readable, and Jira can suggest progress without ever writing to a board.
+
+Sign in with one of the seeded demo accounts — password `Demo!Pass123`:
+
+| Account | Role | Can do |
+|---|---|---|
+| `admin@pirt.example` | Admin | Everything, including the roster and imports |
+| `po@pirt.example` | Product Owner | Full control of boards they own; reads the rest |
+| `viewer@pirt.example` | Viewer | Read, present and export only |
 
 The reference prototype is checked in at [docs/prototype/squad-status-board.html](docs/prototype/squad-status-board.html)
  and the `SlideCanvas` is a deliberate transcription of it — see [Architecture](docs/ARCHITECTURE.md)

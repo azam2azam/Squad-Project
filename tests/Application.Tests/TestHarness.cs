@@ -1,4 +1,6 @@
 using Application.Abstractions;
+using Domain.Enums;
+using Infrastructure.Auth;
 using Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +50,22 @@ public sealed class TestHarness : IDisposable
 
     public ICurrentUser CurrentUser { get; } = new FakeCurrentUser("Nadia Al-Harbi");
 
+    /// <summary>
+    /// Defaults to an Admin so tests written before RBAC existed keep exercising the
+    /// behaviour they were written for. Permission tests call <see cref="AsRole"/>.
+    /// </summary>
+    public FakeUserContext UserContext { get; } = new(Guid.NewGuid(), UserRole.Admin);
+
+    public IBoardAuthorizer Authorizer => new BoardAuthorizer(Db, UserContext);
+
+    /// <summary>Switches the ambient identity, for tests that assert on permissions.</summary>
+    public TestHarness AsRole(UserRole role, Guid? userId = null)
+    {
+        UserContext.Role = role;
+        UserContext.UserId = userId ?? UserContext.UserId;
+        return this;
+    }
+
     public RecordingBoardNotifier Notifier { get; } = new();
 
     public void Dispose()
@@ -82,4 +100,12 @@ public sealed class RecordingBoardNotifier : IBoardNotifier
         MemberChanges.Add((boardId, payload));
         return Task.CompletedTask;
     }
+}
+
+/// <summary>Mutable ambient identity so a single test can switch roles mid-flight.</summary>
+public sealed class FakeUserContext(Guid userId, UserRole role) : ICurrentUserContext
+{
+    public Guid? UserId { get; set; } = userId;
+    public UserRole? Role { get; set; } = role;
+    public bool IsAuthenticated => UserId is not null;
 }

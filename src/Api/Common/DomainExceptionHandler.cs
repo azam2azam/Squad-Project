@@ -20,6 +20,8 @@ public sealed class DomainExceptionHandler(
         var (status, title) = exception switch
         {
             ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
+            UnauthorizedException => (StatusCodes.Status401Unauthorized, "Not signed in"),
+            ForbiddenException => (StatusCodes.Status403Forbidden, "Not permitted"),
             DomainException => (StatusCodes.Status400BadRequest, "Request violates a domain rule"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             // A missing rendering engine is a deployment gap, not a server fault: 503

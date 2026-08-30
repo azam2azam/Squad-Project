@@ -39,7 +39,7 @@ public class MemberHandlerTests : IDisposable
     public async Task Adds_an_existing_roster_person_to_the_squad()
     {
         var (board, _, dev) = await SeedAsync();
-        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier);
+        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         var result = await handler.Handle(
             new AddMemberCommand(board.Id, dev.Id, null, Role.Developer, "Angular"),
@@ -58,7 +58,7 @@ public class MemberHandlerTests : IDisposable
     public async Task Quick_creating_a_person_inline_also_adds_them_to_the_roster()
     {
         var (board, _, _) = await SeedAsync();
-        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier);
+        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         await handler.Handle(
             new AddMemberCommand(board.Id, null,
@@ -77,7 +77,7 @@ public class MemberHandlerTests : IDisposable
     public async Task The_same_person_cannot_be_added_to_a_squad_twice()
     {
         var (board, po, _) = await SeedAsync();
-        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier);
+        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         var act = () => handler.Handle(
             new AddMemberCommand(board.Id, po.Id, null, Role.TechLead), CancellationToken.None);
@@ -92,7 +92,7 @@ public class MemberHandlerTests : IDisposable
         dev.Deactivate();
         await _harness.Db.SaveChangesAsync();
 
-        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier);
+        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         var act = () => handler.Handle(
             new AddMemberCommand(board.Id, dev.Id, null, Role.Developer), CancellationToken.None);
@@ -104,7 +104,7 @@ public class MemberHandlerTests : IDisposable
     public async Task Adding_a_member_broadcasts_the_change()
     {
         var (board, _, dev) = await SeedAsync();
-        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier);
+        var handler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         await handler.Handle(
             new AddMemberCommand(board.Id, dev.Id, null, Role.Developer), CancellationToken.None);
@@ -121,11 +121,11 @@ public class MemberHandlerTests : IDisposable
     public async Task A_members_role_can_differ_from_their_roster_default()
     {
         var (board, _, dev) = await SeedAsync();
-        var added = await new AddMemberCommandHandler(_harness.Db, _harness.Notifier)
+        var added = await new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer)
             .Handle(new AddMemberCommand(board.Id, dev.Id, null, Role.Developer),
                 CancellationToken.None);
 
-        var updated = await new UpdateMemberCommandHandler(_harness.Db, _harness.Notifier)
+        var updated = await new UpdateMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer)
             .Handle(new UpdateMemberCommand(added.Id, Role.TechLead, "Architecture", 60),
                 CancellationToken.None);
 
@@ -141,7 +141,7 @@ public class MemberHandlerTests : IDisposable
     public async Task Removing_a_member_resequences_the_rest()
     {
         var (board, _, dev) = await SeedAsync();
-        var addHandler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier);
+        var addHandler = new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         var second = await addHandler.Handle(
             new AddMemberCommand(board.Id, dev.Id, null, Role.Developer), CancellationToken.None);
@@ -150,7 +150,7 @@ public class MemberHandlerTests : IDisposable
                 Role.QaEngineer),
             CancellationToken.None);
 
-        await new RemoveMemberCommandHandler(_harness.Db, _harness.Notifier)
+        await new RemoveMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer)
             .Handle(new RemoveMemberCommand(second.Id), CancellationToken.None);
 
         var remaining = await _harness.Db.SquadMembers.OrderBy(m => m.OrderIndex).ToListAsync();
@@ -163,11 +163,11 @@ public class MemberHandlerTests : IDisposable
     public async Task Removing_a_member_leaves_the_person_on_the_roster()
     {
         var (board, _, dev) = await SeedAsync();
-        var added = await new AddMemberCommandHandler(_harness.Db, _harness.Notifier)
+        var added = await new AddMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer)
             .Handle(new AddMemberCommand(board.Id, dev.Id, null, Role.Developer),
                 CancellationToken.None);
 
-        await new RemoveMemberCommandHandler(_harness.Db, _harness.Notifier)
+        await new RemoveMemberCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer)
             .Handle(new RemoveMemberCommand(added.Id), CancellationToken.None);
 
         (await _harness.Db.People.CountAsync(p => p.Id == dev.Id)).Should().Be(1);
@@ -177,7 +177,7 @@ public class MemberHandlerTests : IDisposable
     public async Task Reorder_rejects_a_member_that_is_not_on_the_board()
     {
         var (board, _, _) = await SeedAsync();
-        var handler = new ReorderMembersCommandHandler(_harness.Db, _harness.Notifier);
+        var handler = new ReorderMembersCommandHandler(_harness.Db, _harness.Notifier, _harness.Authorizer);
 
         var act = () => handler.Handle(
             new ReorderMembersCommand(board.Id, [Guid.NewGuid()]), CancellationToken.None);
@@ -194,7 +194,7 @@ public class MemberHandlerTests : IDisposable
     {
         var (board, po, _) = await SeedAsync();
 
-        await new DeactivatePersonCommandHandler(_harness.Db)
+        await new DeactivatePersonCommandHandler(_harness.Db, _harness.Authorizer)
             .Handle(new DeactivatePersonCommand(po.Id), CancellationToken.None);
 
         var picker = await new ListPeopleQueryHandler(_harness.Db)
@@ -213,7 +213,7 @@ public class MemberHandlerTests : IDisposable
     public async Task Roster_search_matches_name_email_and_skills()
     {
         await SeedAsync();
-        var create = new CreatePersonCommandHandler(_harness.Db);
+        var create = new CreatePersonCommandHandler(_harness.Db, _harness.Authorizer);
         await create.Handle(
             new CreatePersonCommand("Tariq Nawaz", Role.DevOps, "Kubernetes · Azure",
                 "tariq@example.com"),
@@ -232,10 +232,10 @@ public class MemberHandlerTests : IDisposable
     public async Task Reactivating_puts_a_person_back_in_the_picker()
     {
         var (_, po, _) = await SeedAsync();
-        await new DeactivatePersonCommandHandler(_harness.Db)
+        await new DeactivatePersonCommandHandler(_harness.Db, _harness.Authorizer)
             .Handle(new DeactivatePersonCommand(po.Id), CancellationToken.None);
 
-        var result = await new ReactivatePersonCommandHandler(_harness.Db)
+        var result = await new ReactivatePersonCommandHandler(_harness.Db, _harness.Authorizer)
             .Handle(new ReactivatePersonCommand(po.Id), CancellationToken.None);
 
         result.IsActive.Should().BeTrue();

@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Person> People => Set<Person>();
     public DbSet<SquadMember> SquadMembers => Set<SquadMember>();
     public DbSet<BoardAuditEntry> BoardAuditEntries => Set<BoardAuditEntry>();
+    public DbSet<AppUser> Users => Set<AppUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

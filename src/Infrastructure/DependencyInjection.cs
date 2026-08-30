@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Infrastructure.Auth;
 using Infrastructure.Integrations;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -59,7 +60,23 @@ public static class DependencyInjection
         // The Jira implementation lands in M5; the notifier is replaced by the SignalR
         // one in the API composition root.
         services.AddSingleton<IBoardNotifier, NullBoardNotifier>();
-        services.AddSingleton<IJiraClient, DisabledJiraClient>();
+
+        // Auth (spec section 8).
+        services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddSingleton<ITokenService, TokenService>();
+        services.AddScoped<IBoardAuthorizer, BoardAuthorizer>();
+
+        // Jira is config-gated. Registering the null object when it is off means the
+        // capability endpoint reports it honestly instead of the UI discovering at
+        // click time that nothing is configured.
+        if (configuration.GetValue("Jira:Enabled", false))
+        {
+            services.AddHttpClient<IJiraClient, JiraClient>();
+        }
+        else
+        {
+            services.AddSingleton<IJiraClient, DisabledJiraClient>();
+        }
 
         // Server-side export needs a headless browser, which not every host has.
         // Off by default so a deployment opts in rather than discovering at runtime

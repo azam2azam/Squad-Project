@@ -41,7 +41,7 @@ public class BoardHandlerTests : IDisposable
     [Fact]
     public async Task Create_stamps_the_current_user_and_writes_an_audit_row()
     {
-        var handler = new CreateBoardCommandHandler(_harness.Db, _harness.CurrentUser);
+        var handler = new CreateBoardCommandHandler(_harness.Db, _harness.CurrentUser, _harness.UserContext, _harness.Authorizer);
 
         var result = await handler.Handle(
             new CreateBoardCommand("Pharmacy Revamp", "VIDA HIS", "Squad Beta",
@@ -64,7 +64,7 @@ public class BoardHandlerTests : IDisposable
         await SeedBoardAsync(orderIndex: 0);
         await SeedBoardAsync("Second", orderIndex: 1);
 
-        var handler = new CreateBoardCommandHandler(_harness.Db, _harness.CurrentUser);
+        var handler = new CreateBoardCommandHandler(_harness.Db, _harness.CurrentUser, _harness.UserContext, _harness.Authorizer);
         var result = await handler.Handle(
             new CreateBoardCommand("Third", "VIDA HIS", "Squad Gamma", null,
                 BoardStatus.OnTrack, 0),
@@ -76,7 +76,7 @@ public class BoardHandlerTests : IDisposable
     [Fact]
     public async Task A_new_board_with_no_members_warns_about_its_missing_roles()
     {
-        var handler = new CreateBoardCommandHandler(_harness.Db, _harness.CurrentUser);
+        var handler = new CreateBoardCommandHandler(_harness.Db, _harness.CurrentUser, _harness.UserContext, _harness.Authorizer);
 
         var result = await handler.Handle(
             new CreateBoardCommand("Empty", "VIDA HIS", "Squad Delta", null,
@@ -125,7 +125,7 @@ public class BoardHandlerTests : IDisposable
     {
         var board = await SeedBoardAsync(status: BoardStatus.OnTrack, progress: 68);
         var handler = new UpdateBoardMetaCommandHandler(
-            _harness.Db, _harness.CurrentUser, _harness.Notifier);
+            _harness.Db, _harness.CurrentUser, _harness.Notifier, _harness.Authorizer);
 
         await handler.Handle(new UpdateBoardMetaCommand(
             board.Id, board.Title, board.Product, board.SquadName, board.Sprint,
@@ -145,7 +145,7 @@ public class BoardHandlerTests : IDisposable
     {
         var board = await SeedBoardAsync();
         var handler = new UpdateBoardMetaCommandHandler(
-            _harness.Db, _harness.CurrentUser, _harness.Notifier);
+            _harness.Db, _harness.CurrentUser, _harness.Notifier, _harness.Authorizer);
 
         // Only the title changes.
         await handler.Handle(new UpdateBoardMetaCommand(
@@ -160,7 +160,7 @@ public class BoardHandlerTests : IDisposable
     {
         var board = await SeedBoardAsync();
         var handler = new UpdateBoardMetaCommandHandler(
-            _harness.Db, _harness.CurrentUser, _harness.Notifier);
+            _harness.Db, _harness.CurrentUser, _harness.Notifier, _harness.Authorizer);
 
         await handler.Handle(new UpdateBoardMetaCommand(
             board.Id, board.Title, board.Product, board.SquadName, board.Sprint,
@@ -178,7 +178,7 @@ public class BoardHandlerTests : IDisposable
     public async Task Duplicate_copies_membership_without_duplicating_roster_people()
     {
         var board = await SeedBoardAsync();
-        var handler = new DuplicateBoardCommandHandler(_harness.Db, _harness.CurrentUser);
+        var handler = new DuplicateBoardCommandHandler(_harness.Db, _harness.CurrentUser, _harness.UserContext, _harness.Authorizer);
 
         var copy = await handler.Handle(new DuplicateBoardCommand(board.Id), CancellationToken.None);
 
@@ -195,7 +195,7 @@ public class BoardHandlerTests : IDisposable
     {
         var board = await SeedBoardAsync();
         var deleteHandler = new DeleteBoardCommandHandler(
-            _harness.Db, _harness.CurrentUser, _harness.Notifier);
+            _harness.Db, _harness.CurrentUser, _harness.Notifier, _harness.Authorizer);
 
         await deleteHandler.Handle(new DeleteBoardCommand(board.Id), CancellationToken.None);
 
@@ -210,7 +210,7 @@ public class BoardHandlerTests : IDisposable
     public async Task Reorder_rejects_the_whole_request_when_a_board_is_missing()
     {
         var board = await SeedBoardAsync();
-        var handler = new ReorderBoardsCommandHandler(_harness.Db);
+        var handler = new ReorderBoardsCommandHandler(_harness.Db, _harness.Authorizer);
 
         var act = () => handler.Handle(
             new ReorderBoardsCommand([
@@ -232,7 +232,7 @@ public class BoardHandlerTests : IDisposable
     {
         var first = await SeedBoardAsync("First", orderIndex: 0);
         var second = await SeedBoardAsync("Second", orderIndex: 1);
-        var handler = new ReorderBoardsCommandHandler(_harness.Db);
+        var handler = new ReorderBoardsCommandHandler(_harness.Db, _harness.Authorizer);
 
         await handler.Handle(
             new ReorderBoardsCommand([

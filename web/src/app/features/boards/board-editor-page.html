@@ -42,6 +42,10 @@
         <a class="builder__back" routerLink="/portfolio">All boards</a>
       </div>
 
+      @if (readOnlyReason(); as reason) {
+        <p class="builder__readonly" role="status">{{ reason }}</p>
+      }
+
       <div class="card">
         <label class="field">
           <span class="field__label">Project title</span>
@@ -152,37 +156,124 @@
         </div>
       }
 
-      <div class="card card--members">
-        <div class="card__head">
-          <h2 class="card__title">Add squad member</h2>
-          <span class="card__hint">{{ preview()!.composition.legendText }}</span>
+      <!-- Membership editing is hidden for viewers; the API refuses it regardless. -->
+      @if (canWrite()) {
+        <div class="card card--members">
+          <div class="card__head">
+            <h2 class="card__title">Add squad member</h2>
+            <span class="card__hint">{{ preview()!.composition.legendText }}</span>
+          </div>
+          <app-squad-editor
+            [boardId]="preview()!.id"
+            [members]="preview()!.members"
+            (changed)="reloadMembers()"
+          />
         </div>
-        <app-squad-editor
-          [boardId]="preview()!.id"
-          [members]="preview()!.members"
-          (changed)="reloadMembers()"
-        />
+      }
+
+      @if (jiraEnabled() && canWrite()) {
+        <div class="card card--jira">
+          <div class="card__head">
+            <h2 class="card__title">Jira</h2>
+            <button type="button" class="link-btn" (click)="syncJira()" [disabled]="jiraBusy()">
+              {{ jiraBusy() ? 'Pulling…' : 'Sync from Jira' }}
+            </button>
+          </div>
+
+          @if (jiraSuggestion(); as jira) {
+            @if (jira.available) {
+              <!-- Shown for acceptance, never applied automatically. -->
+              <p class="jira__rationale">{{ jira.rationale }}</p>
+              <dl class="jira__grid">
+                <div>
+                  <dt>Progress</dt>
+                  <dd>
+                    {{ jira.currentProgressPercent }}% → <b>{{ jira.suggestedProgressPercent }}%</b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>
+                    <b [style.color]="jira.suggestedStatusColor">{{ jira.suggestedStatusLabel }}</b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Issues</dt>
+                  <dd>
+                    {{ jira.doneIssues }} / {{ jira.totalIssues }} done,
+                    {{ jira.blockedIssues }} blocked
+                  </dd>
+                </div>
+                @if (jira.sprintName) {
+                  <div>
+                    <dt>Sprint</dt>
+                    <dd>{{ jira.sprintName }}</dd>
+                  </div>
+                }
+              </dl>
+              <div class="jira__actions">
+                <button type="button" class="btn btn--primary" (click)="acceptJira()">
+                  Apply to draft
+                </button>
+                <button type="button" class="btn" (click)="dismissJira()">Dismiss</button>
+              </div>
+              <p class="jira__note">Applying only fills the form — you still choose to save.</p>
+            } @else {
+              <p class="jira__unavailable">{{ jira.reason }}</p>
+            }
+          }
+        </div>
+      }
+
+      <div class="card card--audit">
+        <div class="card__head">
+          <h2 class="card__title">History</h2>
+          <button type="button" class="link-btn" (click)="toggleAudit()">
+            {{ auditOpen() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+
+        @if (auditOpen()) {
+          @if (auditEntries(); as entries) {
+            <ul class="audit">
+              @for (entry of entries; track entry.id) {
+                <li class="audit__item">
+                  <span class="audit__summary">{{ entry.summary }}</span>
+                  <time class="audit__when" [attr.datetime]="entry.changedAt">
+                    {{ entry.changedAt | date: 'd MMM y, HH:mm' }}
+                  </time>
+                </li>
+              } @empty {
+                <li class="audit__empty">No changes recorded yet.</li>
+              }
+            </ul>
+          } @else {
+            <p class="audit__empty">Loading…</p>
+          }
+        }
       </div>
 
       @if (error()) {
         <p class="builder__error" role="alert">{{ error() }}</p>
       }
 
-      <div class="builder__actions">
-        <button type="submit" class="btn btn--primary" [disabled]="!isDirty() || saving()">
-          {{ saving() ? 'Saving…' : 'Save' }}
-        </button>
-        <button type="button" class="btn" (click)="revert()" [disabled]="!isDirty() || saving()">
-          Revert
-        </button>
-        <button type="button" class="btn" (click)="duplicate()" [disabled]="saving()">
-          Duplicate
-        </button>
+      @if (canWrite()) {
+        <div class="builder__actions">
+          <button type="submit" class="btn btn--primary" [disabled]="!isDirty() || saving()">
+            {{ saving() ? 'Saving…' : 'Save' }}
+          </button>
+          <button type="button" class="btn" (click)="revert()" [disabled]="!isDirty() || saving()">
+            Revert
+          </button>
+          <button type="button" class="btn" (click)="duplicate()" [disabled]="saving()">
+            Duplicate
+          </button>
 
-        @if (savedAt() && !isDirty()) {
-          <span class="builder__saved" role="status">Saved</span>
-        }
-      </div>
+          @if (savedAt() && !isDirty()) {
+            <span class="builder__saved" role="status">Saved</span>
+          }
+        </div>
+      }
     </form>
 
     <!-- ---------- Live slide ---------- -->

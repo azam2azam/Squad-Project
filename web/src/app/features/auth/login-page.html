@@ -1,0 +1,61 @@
+<div class="login">
+  <form class="login__card" (submit)="$event.preventDefault(); submit()">
+    <div class="login__brand">
+      <span class="login__mark" aria-hidden="true"></span>
+      <div>
+        <h1 class="login__title">Squad Status Board</h1>
+        <p class="login__sub">Product Innovation &amp; Revamp Team</p>
+      </div>
+    </div>
+
+    <label class="field">
+      <span class="field__label">Email</span>
+      <input
+        class="field__input"
+        type="email"
+        autocomplete="username"
+        required
+        [value]="email()"
+        (input)="email.set($any($event.target).value)"
+        placeholder="you@pirt.example"
+      />
+    </label>
+
+    <label class="field">
+      <span class="field__label">Password</span>
+      <input
+        class="field__input"
+        type="password"
+        autocomplete="current-password"
+        required
+        [value]="password()"
+        (input)="password.set($any($event.target).value)"
+      />
+    </label>
+
+    @if (error()) {
+      <p class="login__error" role="alert">{{ error() }}</p>
+    }
+
+    <button type="submit" class="login__submit" [disabled]="busy()">
+      {{ busy() ? 'Signing in…' : 'Sign in' }}
+    </button>
+
+    <div class="login__demo">
+      <p class="login__demo-title">
+        Demo accounts — password <code>{{ demoPassword }}</code>
+      </p>
+      <ul class="login__demo-list">
+        @for (account of demoAccounts; track account.email) {
+          <li>
+            <button type="button" class="login__demo-btn" (click)="useDemo(account.email)">
+              <span class="login__demo-role">{{ account.role }}</span>
+              <span class="login__demo-email">{{ account.email }}</span>
+              <span class="login__demo-can">{{ account.can }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </form>
+</div>

@@ -167,3 +167,56 @@
 .shell-main--bare {
   background: var(--ink);
 }
+
+// ---------------------------------------------------------------------------
+// Signed-in identity
+// ---------------------------------------------------------------------------
+
+.shell-header__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shell-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.25;
+
+  @media (max-width: 620px) {
+    display: none;
+  }
+}
+
+.shell-user__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--tx);
+}
+
+.shell-user__role {
+  font-size: 11px;
+  color: var(--accent);
+
+  // Viewers get a muted badge — a standing reminder the app is read-only for them.
+  &.is-readonly {
+    color: var(--tx-dim);
+  }
+}
+
+.shell-signout {
+  padding: 5px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--tx-mut);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--tx);
+    background: var(--panel);
+  }
+}

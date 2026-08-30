@@ -24,11 +24,15 @@ public sealed class ImportDataCommandValidator : AbstractValidator<ImportDataCom
     }
 }
 
-public sealed class ImportDataCommandHandler(IAppDbContext db, ICurrentUser currentUser)
+public sealed class ImportDataCommandHandler(
+    IAppDbContext db, ICurrentUser currentUser, IBoardAuthorizer authorizer)
     : IRequestHandler<ImportDataCommand, ImportResult>
 {
     public async Task<ImportResult> Handle(ImportDataCommand request, CancellationToken cancellationToken)
     {
+        // A bulk import can rewrite every board, so it is admin-only.
+        authorizer.EnsureIsAdmin();
+
         var file = request.File;
         var warnings = new List<string>();
 

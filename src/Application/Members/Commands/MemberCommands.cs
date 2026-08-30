@@ -55,11 +55,14 @@ public sealed class AddMemberCommandValidator : AbstractValidator<AddMemberComma
     }
 }
 
-public sealed class AddMemberCommandHandler(IAppDbContext db, IBoardNotifier notifier)
+public sealed class AddMemberCommandHandler(
+    IAppDbContext db, IBoardNotifier notifier, IBoardAuthorizer authorizer)
     : IRequestHandler<AddMemberCommand, SquadMemberDto>
 {
     public async Task<SquadMemberDto> Handle(AddMemberCommand request, CancellationToken cancellationToken)
     {
+        await authorizer.EnsureCanEditAsync(request.BoardId, cancellationToken);
+
         var board = await db.Boards
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
@@ -121,7 +124,8 @@ public sealed class UpdateMemberCommandValidator : AbstractValidator<UpdateMembe
     }
 }
 
-public sealed class UpdateMemberCommandHandler(IAppDbContext db, IBoardNotifier notifier)
+public sealed class UpdateMemberCommandHandler(
+    IAppDbContext db, IBoardNotifier notifier, IBoardAuthorizer authorizer)
     : IRequestHandler<UpdateMemberCommand, SquadMemberDto>
 {
     public async Task<SquadMemberDto> Handle(UpdateMemberCommand request, CancellationToken cancellationToken)
@@ -130,6 +134,9 @@ public sealed class UpdateMemberCommandHandler(IAppDbContext db, IBoardNotifier 
             .Include(m => m.Person)
             .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Squad member {request.Id} was not found.");
+
+        // The route addresses a member, but permission belongs to its board.
+        await authorizer.EnsureCanEditAsync(member.BoardId, cancellationToken);
 
         member.Update(request.Role, request.Detail, request.AllocationPercent);
 
@@ -148,7 +155,8 @@ public sealed class UpdateMemberCommandHandler(IAppDbContext db, IBoardNotifier 
 
 public sealed record RemoveMemberCommand(Guid Id) : IRequest;
 
-public sealed class RemoveMemberCommandHandler(IAppDbContext db, IBoardNotifier notifier)
+public sealed class RemoveMemberCommandHandler(
+    IAppDbContext db, IBoardNotifier notifier, IBoardAuthorizer authorizer)
     : IRequestHandler<RemoveMemberCommand>
 {
     public async Task Handle(RemoveMemberCommand request, CancellationToken cancellationToken)
@@ -158,6 +166,9 @@ public sealed class RemoveMemberCommandHandler(IAppDbContext db, IBoardNotifier 
             ?? throw new KeyNotFoundException($"Squad member {request.Id} was not found.");
 
         var boardId = member.BoardId;
+
+        // The route addresses a member, but permission belongs to its board.
+        await authorizer.EnsureCanEditAsync(boardId, cancellationToken);
 
         var board = await db.Boards
             .Include(b => b.Members)
@@ -192,11 +203,14 @@ public sealed class ReorderMembersCommandValidator : AbstractValidator<ReorderMe
     }
 }
 
-public sealed class ReorderMembersCommandHandler(IAppDbContext db, IBoardNotifier notifier)
+public sealed class ReorderMembersCommandHandler(
+    IAppDbContext db, IBoardNotifier notifier, IBoardAuthorizer authorizer)
     : IRequestHandler<ReorderMembersCommand>
 {
     public async Task Handle(ReorderMembersCommand request, CancellationToken cancellationToken)
     {
+        await authorizer.EnsureCanEditAsync(request.BoardId, cancellationToken);
+
         var board = await db.Boards
             .Include(b => b.Members)
             .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)

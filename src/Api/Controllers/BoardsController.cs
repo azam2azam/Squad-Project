@@ -84,6 +84,24 @@ public sealed class BoardsController(ISender sender) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>The board's change log (spec FR-10).</summary>
+    [HttpGet("{id:guid}/audit")]
+    [ProducesResponseType<IReadOnlyList<BoardAuditEntryDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<BoardAuditEntryDto>>> Audit(
+        Guid id, [FromQuery] int limit = 50, CancellationToken cancellationToken = default)
+        => Ok(await sender.Send(new GetBoardAuditQuery(id, limit), cancellationToken));
+
+    /// <summary>
+    /// Pulls Jira and returns a suggestion. Never writes to the board — the Product
+    /// Owner reviews the numbers and accepts them with a normal update (spec section 10).
+    /// </summary>
+    [HttpPost("{id:guid}/jira/sync")]
+    [ProducesResponseType<JiraSuggestionDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<JiraSuggestionDto>> JiraSync(
+        Guid id, CancellationToken cancellationToken)
+        => Ok(await sender.Send(new GetJiraSuggestionQuery(id), cancellationToken));
+
     [HttpPut("reorder")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

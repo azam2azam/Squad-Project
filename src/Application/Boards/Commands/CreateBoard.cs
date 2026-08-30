@@ -30,12 +30,15 @@ public sealed class CreateBoardCommandValidator : AbstractValidator<CreateBoardC
 }
 
 public sealed class CreateBoardCommandHandler(
-    IAppDbContext db, ICurrentUser currentUser)
+    IAppDbContext db, ICurrentUser currentUser, ICurrentUserContext userContext,
+    IBoardAuthorizer authorizer)
     : IRequestHandler<CreateBoardCommand, BoardDetailDto>
 {
     public async Task<BoardDetailDto> Handle(
         CreateBoardCommand request, CancellationToken cancellationToken)
     {
+        authorizer.EnsureCanCreate();
+
         // New boards go to the end of the portfolio rather than displacing existing ones.
         var nextOrder = await db.Boards.AnyAsync(cancellationToken)
             ? await db.Boards.MaxAsync(b => b.OrderIndex, cancellationToken) + 1
@@ -50,6 +53,9 @@ public sealed class CreateBoardCommandHandler(
             request.ProgressPercent,
             currentUser.DisplayName,
             nextOrder);
+
+        // Stamped so a Product Owner can edit the board they just made.
+        board.AssignOwner(userContext.UserId);
 
         db.Boards.Add(board);
         db.BoardAuditEntries.Add(new BoardAuditEntry(
