@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ssb.name" . }}-config
+  labels:
+    {{- include "ssb.labels" . | nindent 4 }}
+data:
+  ASPNETCORE_ENVIRONMENT: {{ .Values.config.environment | quote }}
+  Database__Provider: {{ .Values.config.databaseProvider | quote }}
+  Database__AutoMigrate: {{ .Values.config.autoMigrate | quote }}
+  Database__SeedDemoData: {{ .Values.config.seedDemoData | quote }}
+  Cors__AllowedOrigins__0: {{ .Values.config.corsOrigin | quote }}
+  Jwt__Issuer: {{ .Values.config.jwtIssuer | quote }}
+  Jwt__Audience: {{ .Values.config.jwtAudience | quote }}
+  {{- if .Values.config.jwtAuthority }}
+  Jwt__Authority: {{ .Values.config.jwtAuthority | quote }}
+  {{- end }}
+  Export__Enabled: {{ .Values.config.export.enabled | quote }}
+  Export__ChromiumPath: {{ .Values.config.export.chromiumPath | quote }}
+  Export__Scale: {{ .Values.config.export.scale | quote }}
+  Export__SlideBaseUrl: "http://{{ include "ssb.name" . }}-web"
+  Jira__Enabled: {{ .Values.config.jira.enabled | quote }}
+  {{- if .Values.config.jira.baseUrl }}
+  Jira__BaseUrl: {{ .Values.config.jira.baseUrl | quote }}
+  {{- end }}

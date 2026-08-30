@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: squad-status-board
+data:
+  # Non-secret configuration only. Connection strings and signing keys come from the
+  # Secret, never from here (spec section 11).
+  ASPNETCORE_ENVIRONMENT: "Production"
+  Database__Provider: "SqlServer"
+  # Migrations are gated in production: run them as a Job, do not let every replica
+  # race to alter schema on startup.
+  Database__AutoMigrate: "false"
+  Database__SeedDemoData: "false"
+  Cors__AllowedOrigins__0: "https://squad.pirt.example"
+  Jwt__Issuer: "squad-status-board"
+  Jwt__Audience: "squad-status-board-web"
+  Export__Enabled: "true"
+  Export__ChromiumPath: "/usr/bin/chromium"
+  Export__SlideBaseUrl: "http://web"
+  Export__Scale: "2"

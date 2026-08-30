@@ -1,0 +1,68 @@
+# One-command local stack (spec section 11).
+#
+#   docker compose -f deploy/docker-compose.yml up --build
+#
+# Then open http://localhost:8080 and sign in with admin@pirt.example / Demo!Pass123.
+#
+# NOT VERIFIED LOCALLY: Docker is not installed on the development machine this was
+# written on. The Dockerfiles and this compose file are real deliverables but need a
+# run-through on a host with a container runtime before being trusted.
+
+name: squad-status-board
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      # Local-only development password. Production uses a Kubernetes secret.
+      MSSQL_SA_PASSWORD: "Local!Dev!Pass123"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      # The API must not start migrating before SQL Server can actually answer.
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  api:
+    build:
+      context: ..
+      dockerfile: src/Api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=db,1433;Database=SquadStatusBoard;User Id=sa;Password=Local!Dev!Pass123;TrustServerCertificate=True;MultipleActiveResultSets=True"
+      Database__Provider: SqlServer
+      Database__AutoMigrate: "true"
+      Database__SeedDemoData: "true"
+      # Compose-only signing key. Anything real supplies its own via a secret.
+      Jwt__SigningKey: "compose-only-signing-key-not-for-production-32+chars"
+      Cors__AllowedOrigins__0: "http://localhost:8080"
+      Export__Enabled: "true"
+      Export__SlideBaseUrl: "http://web:8080"
+    ports:
+      - "5220:8080"
+
+  web:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "8080:8080"
+
+volumes:
+  mssql-data:

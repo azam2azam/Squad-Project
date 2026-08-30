@@ -86,6 +86,14 @@ app.MapHub<BoardsHub>("/hubs/boards");
 
 await MigrateAndSeedAsync(app);
 
+// Lets a Kubernetes Job run migrations once per release and exit, instead of every
+// replica racing to alter the same schema on startup. See deploy/k8s/api.yaml.
+if (app.Configuration.GetValue("RunMigrationsAndExit", false))
+{
+    app.Logger.LogInformation("RunMigrationsAndExit is set — migrations applied, exiting.");
+    return;
+}
+
 app.Run();
 
 /// <summary>

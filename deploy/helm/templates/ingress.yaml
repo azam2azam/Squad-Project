@@ -1,0 +1,38 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ssb.name" . }}
+  labels:
+    {{- include "ssb.labels" . | nindent 4 }}
+  annotations:
+    # SignalR holds a long-lived WebSocket; the default 60s read timeout would drop
+    # it and push the client into a reconnect loop.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    {{- if .Values.ingress.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tlsSecret }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          # The web image's nginx already proxies /api and /hubs to the API Service,
+          # so one backend is enough — routing them here too would be a second place
+          # to keep in step.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ssb.name" . }}-web
+                port:
+                  number: 80
+{{- end }}

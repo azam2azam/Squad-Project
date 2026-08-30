@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: squad-status-board
+  labels:
+    app.kubernetes.io/name: squad-status-board
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: squad-status-board
+        app.kubernetes.io/component: api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 64198
+        fsGroup: 64198
+      containers:
+        - name: api
+          image: ghcr.io/azam2azam/squad-status-board-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api-config
+            - secretRef:
+                name: api-secrets
+          # Liveness only restarts a wedged process; readiness gates traffic. Both hit
+          # /health, which includes a database check, so a pod that cannot reach SQL
+          # Server is pulled out of the Service rather than serving 500s.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 2
+          # Chromium is memory-hungry during an export, hence the headroom.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: squad-status-board
+spec:
+  selector:
+    app.kubernetes.io/component: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# Migrations run once per release, not on every pod start — otherwise replicas race
+# to alter the same schema. Database__AutoMigrate stays false in the Deployment.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: squad-status-board
+  annotations:
+    # With Helm this becomes a pre-upgrade hook; standalone, re-apply with a new name.
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/azam2azam/squad-status-board-api:latest
+          envFrom:
+            - configMapRef:
+                name: api-config
+            - secretRef:
+                name: api-secrets
+          env:
+            - name: Database__AutoMigrate
+              value: "true"
+            - name: RunMigrationsAndExit
+              value: "true"

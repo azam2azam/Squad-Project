@@ -61,7 +61,7 @@ jobs:
         run: npm ci
 
       - name: Format check
-        run: npx prettier --check "src/**/*.{ts,html,scss,json}"
+        run: npx prettier --check "src/**/*.{ts,html,scss,json}" "e2e/**/*.ts"
 
       - name: Build
         run: npm run build
@@ -69,4 +69,105 @@ jobs:
       - name: Test
         run: npx ng test --watch=false
 
-  # Container publishing is wired up in M6, once the Dockerfiles land.
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      # The API needs a real SQL Server; the app is built against it, not a fake.
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'Ci!Pass123'
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Ci!Pass123' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 30s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: web
+
+      # CI uses Playwright's own pinned browser. Locally the config defaults to the
+      # installed Chrome, because the dev machine's security software blocks the
+      # downloaded builds from launching.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: web
+
+      - name: Start the API
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5220
+          ConnectionStrings__Default: 'Server=localhost,1433;Database=SquadStatusBoard;User Id=sa;Password=Ci!Pass123;TrustServerCertificate=True;MultipleActiveResultSets=True'
+          Database__AutoMigrate: 'true'
+          Database__SeedDemoData: 'true'
+          Jwt__SigningKey: 'ci-only-signing-key-not-for-production-32-chars'
+        run: |
+          dotnet run --project src/Api/Api.csproj --launch-profile "" &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:5220/health > /dev/null; then
+              echo "API is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "API failed to start"; exit 1
+
+      - name: Start the web dev server
+        run: |
+          npm start -- --port 4220 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:4220/ > /dev/null; then
+              echo "Web is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "Web failed to start"; exit 1
+        working-directory: web
+
+      - name: Run Playwright
+        env:
+          # Unset so Playwright uses its own pinned Chromium rather than a channel.
+          PLAYWRIGHT_CHANNEL: ''
+          E2E_BASE_URL: http://localhost:4220
+        run: npx playwright test
+        working-directory: web
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+
+  containers:
+    name: Container images
+    runs-on: ubuntu-latest
+    # Only builds the images; publishing is a separate, credentialed step.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build -f src/Api/Dockerfile -t squad-status-board-api:ci .
+
+      - name: Build web image
+        run: docker build -f web/Dockerfile -t squad-status-board-web:ci .

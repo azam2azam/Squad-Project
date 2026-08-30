@@ -1,0 +1,69 @@
+# Defaults for the Squad Status Board chart.
+#
+# NOT VERIFIED: no cluster or container runtime was available on the development
+# machine. Lint and dry-run this before trusting it:
+#   helm lint deploy/helm
+#   helm template ssb deploy/helm | kubectl apply --dry-run=client -f -
+
+nameOverride: ""
+
+image:
+  registry: ghcr.io/azam2azam
+  api:
+    repository: squad-status-board-api
+    tag: latest
+  web:
+    repository: squad-status-board-web
+    tag: latest
+  pullPolicy: IfNotPresent
+
+api:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      # Chromium needs headroom during an export.
+      memory: 1Gi
+
+web:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+config:
+  environment: Production
+  databaseProvider: SqlServer
+  # Migrations run as a pre-upgrade hook Job, never on pod start.
+  autoMigrate: false
+  seedDemoData: false
+  corsOrigin: https://squad.pirt.example
+  jwtIssuer: squad-status-board
+  jwtAudience: squad-status-board-web
+  # Set to an OIDC issuer URL to federate instead of validating local tokens.
+  jwtAuthority: ""
+  export:
+    enabled: true
+    chromiumPath: /usr/bin/chromium
+    scale: 2
+  jira:
+    enabled: false
+    baseUrl: ""
+
+# Secrets are NEVER templated from values in a real deployment. Point this at a
+# secret created out-of-band (External Secrets, sealed-secrets, or kubectl).
+existingSecret: api-secrets
+
+ingress:
+  enabled: true
+  className: nginx
+  host: squad.pirt.example
+  tlsSecret: squad-status-board-tls
+  clusterIssuer: letsencrypt-prod

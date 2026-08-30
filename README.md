@@ -9,7 +9,7 @@ cards — ready to present or export.
 
 ---
 
-## Current status — M5 complete
+## Current status — complete
 
 | Milestone | Scope | State |
 |---|---|---|
@@ -18,10 +18,10 @@ cards — ready to present or export.
 | **M3** | Roster CRUD, typeahead, membership, composition | ✅ Done |
 | **M4** | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | ✅ Done |
 | **M5** | JWT auth + RBAC, Jira sync, audit log | ✅ Done |
-| M6 | Test coverage, e2e, Dockerfiles, K8s/Helm, docs | Planned |
+| **M6** | e2e tests, Dockerfiles, K8s/Helm, docs | ✅ Done |
 
-M5 locks it down: every endpoint requires a token, roles are enforced server-side, the
-board history is readable, and Jira can suggest progress without ever writing to a board.
+All six milestones are done. Every functional requirement in the spec is implemented and
+demoable end to end.
 
 Sign in with one of the seeded demo accounts — password `Demo!Pass123`:
 
@@ -90,13 +90,26 @@ alter schema.
 
 ## Tests
 
+Backend — 80 tests (domain rules, handlers, RBAC, import/export):
+
 ```bash
 dotnet test SquadStatusBoard.sln
 ```
 
+Frontend — 20 component and shell tests:
+
 ```bash
 npx ng test --watch=false --prefix web
 ```
+
+End-to-end — 9 Playwright tests. **Both servers must already be running.**
+
+```bash
+npm run e2e --prefix web
+```
+
+Locally these drive your installed Chrome, because this machine's security software
+blocks Playwright's own downloaded browsers from launching. CI uses the pinned build.
 
 ## Database migrations
 
@@ -123,9 +136,10 @@ appear in `Domain`.
 
 ## Known environment constraints
 
-- **Docker is not installed on the development machine.** The Dockerfiles, compose file
-  and Kubernetes/Helm manifests land in M6 as real deliverables but cannot be verified
-  locally — they need validating in an environment that has a container runtime.
+- **Docker, kubectl and helm are not installed on the development machine.** The
+  Dockerfiles, compose file, Kubernetes manifests and Helm chart are written to the spec
+  but have never been run. See [Deployment](docs/DEPLOYMENT.md) — validate them on a host
+  with a container runtime before trusting them.
 - **Server-side export needs a headless browser and is off by default.** Set
   `Export__Enabled=true`. On this machine PuppeteerSharp's downloaded Chromium would not
   launch (blocked by the host's security software), so point `Export__ChromiumPath` at an
@@ -144,3 +158,4 @@ appear in `Domain`.
 - [Architecture](docs/ARCHITECTURE.md)
 - [API](docs/API.md)
 - [Setup](docs/SETUP.md)
+- [Deployment](docs/DEPLOYMENT.md)

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: squad-status-board
+description: Squad Status Board — delivery snapshot builder for PIRT
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - squad
+  - status
+  - delivery
