@@ -38,7 +38,8 @@ composition, and advisory `warnings`:
     "total": 6,
     "legendText": "1 Product Owner · 1 Tech Lead · 2 Developers · 1 QA Engineer · 1 UI/UX Designer",
     "segments": [
-      { "role": 0, "label": "Product Owner", "color": "#2DD4BF", "count": 1, "percent": 16.67 }
+      { "role": 0, "label": "Product Owner", "pluralLabel": "Product Owners",
+        "color": "#2DD4BF", "count": 1, "percent": 16.67 }
     ]
   },
   "members": [
@@ -77,6 +78,31 @@ Validation failures return every field's problem at once:
   }
 }
 ```
+
+### Membership and roster (M3)
+
+```
+GET    /api/v1/boards/{id}/members
+POST   /api/v1/boards/{id}/members         { personId | newPerson, role, detail, allocationPercent }
+PUT    /api/v1/members/{id}                { role, detail, allocationPercent }
+DELETE /api/v1/members/{id}
+PUT    /api/v1/boards/{id}/members/reorder [memberId, ...]
+
+GET    /api/v1/people                      roster; ?q= typeahead, ?includeInactive=true
+POST   /api/v1/people
+PUT    /api/v1/people/{id}
+DELETE /api/v1/people/{id}                 soft delete (IsActive = false)
+POST   /api/v1/people/{id}/reactivate
+```
+
+Adding a member takes **either** `personId` (an existing roster entry) **or** `newPerson`
+(quick-creates them, so the name joins the roster and is reusable) — never both.
+
+A member carries its own `role`, which may differ from the person's `defaultRole`; changing
+it never edits the roster. `?q=` matches name, email and default detail.
+
+Deleting a person is always soft: they leave the picker but every `SquadMember` row they
+appear in survives, so historical boards still show who delivered them.
 
 ### Metadata (M1)
 
@@ -122,20 +148,6 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 ## Planned
 
 Signatures are fixed; the implementations arrive in the milestone noted.
-
-### Membership and roster — M3
-
-```
-GET    /api/v1/boards/{id}/members
-POST   /api/v1/boards/{id}/members     { personId | inline person, role, detail, allocation }
-PUT    /api/v1/members/{id}
-DELETE /api/v1/members/{id}
-
-GET    /api/v1/people                  roster, typeahead via ?q=
-POST   /api/v1/people
-PUT    /api/v1/people/{id}
-DELETE /api/v1/people/{id}             soft delete (IsActive = false)
-```
 
 ### Realtime, export and bulk data — M4
 

@@ -1,0 +1,288 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.roster-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.roster-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.roster-page__title {
+  font-size: 26px;
+}
+
+.roster-page__sub {
+  margin: 4px 0 0;
+  color: #5d6b7e;
+  font-size: 13px;
+}
+
+.roster-page__filters {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.filter {
+  flex: 1 1 260px;
+  max-width: 380px;
+}
+
+.filter__input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-deep);
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #5d6b7e;
+}
+
+.roster-page__state {
+  padding: 50px 20px;
+  text-align: center;
+  color: #5d6b7e;
+}
+
+.roster-page__error {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #8a2b2b;
+  background: color-mix(in srgb, var(--status-blocked) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--status-blocked) 40%, var(--card-line));
+}
+
+.roster-page__note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+// ---------------------------------------------------------------------------
+// Inline add / edit
+// ---------------------------------------------------------------------------
+
+.editor-card {
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.editor-card__title {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.editor-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.editor-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5d6b7e;
+}
+
+.field__input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-deep);
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// Table
+// ---------------------------------------------------------------------------
+
+// Wide tables scroll inside their own container rather than the page body.
+.table-wrap {
+  overflow-x: auto;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 760px;
+
+  th,
+  td {
+    text-align: left;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--card-line);
+    vertical-align: middle;
+  }
+
+  thead th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+    background: #f8fafc;
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr.is-inactive {
+    opacity: 0.55;
+  }
+}
+
+.table__person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.table__ava {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  color: #fff;
+}
+
+.table__role {
+  font-weight: 600;
+}
+
+.table__muted {
+  color: #64748b;
+}
+
+.table__actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+
+  &--active {
+    color: #0d7a5f;
+    background: color-mix(in srgb, var(--status-on-track) 18%, #fff);
+  }
+
+  &--inactive {
+    color: #64748b;
+    background: #eef1f5;
+  }
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--danger {
+    color: #c2410c;
+  }
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+  }
+}

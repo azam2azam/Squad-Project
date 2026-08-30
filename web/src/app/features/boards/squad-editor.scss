@@ -1,0 +1,284 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+// Matches the prototype's inset "Add squad member" panel.
+.add-member {
+  background: #f6f8fa;
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  padding: 13px;
+}
+
+.field {
+  margin-bottom: 13px;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.field__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.field__optional {
+  color: var(--tx-dim);
+  font-weight: 400;
+}
+
+.field__input {
+  width: 100%;
+  font-size: 14px;
+  color: var(--ink-tx);
+  border: 1px solid var(--card-line);
+  border-radius: 9px;
+  padding: 9px 11px;
+  background: #fbfcfd;
+  transition: border-color var(--transition-fast);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    background: #fff;
+  }
+}
+
+.field__note {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+// ---------------------------------------------------------------------------
+// Roster typeahead
+// ---------------------------------------------------------------------------
+
+.typeahead {
+  position: relative;
+}
+
+.typeahead__list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.typeahead__option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    background: #f1f5f9;
+  }
+}
+
+.typeahead__ava {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  color: #fff;
+}
+
+.typeahead__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.typeahead__name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.typeahead__role {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ---------------------------------------------------------------------------
+// Role pills — the prototype's selector, kept over a dropdown so every role and
+// its colour is visible at once.
+// ---------------------------------------------------------------------------
+
+.role-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-pill {
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1.5px solid var(--card-line);
+  background: #fff;
+  color: #64748b;
+  transition: color var(--transition-fast);
+  @include focus-ring(var(--accent-deep));
+
+  &.is-on {
+    color: #fff;
+  }
+}
+
+.add-btn {
+  width: 100%;
+  margin-top: 11px;
+  background: var(--accent-deep);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 13.5px;
+
+  &:hover:not(:disabled) {
+    background: #0b7d72;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.add-member__error {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #8a2b2b;
+}
+
+// ---------------------------------------------------------------------------
+// Current squad
+// ---------------------------------------------------------------------------
+
+.roster {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.roster__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 9px;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.roster__ava {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  color: #fff;
+}
+
+.roster__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.roster__name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster__role {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster__role-select select {
+  border: 1px solid var(--card-line);
+  border-radius: 7px;
+  padding: 4px 6px;
+  font-size: 11.5px;
+  background: #fff;
+  color: var(--ink-tx);
+  max-width: 116px;
+  @include focus-ring(var(--accent-deep));
+}
+
+.roster__rm {
+  border: none;
+  background: none;
+  color: var(--tx-dim);
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 6px;
+  flex: none;
+
+  &:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
+
+.roster__empty {
+  font-size: 12.5px;
+  color: #64748b;
+  text-align: center;
+  padding: 14px;
+  border: 1px dashed var(--card-line);
+  border-radius: 10px;
+}

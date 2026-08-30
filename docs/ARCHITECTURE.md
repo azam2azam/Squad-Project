@@ -74,3 +74,40 @@ Everything is read from `IConfiguration`, so any setting can be overridden by an
 environment variable (`Section__Key`) or a Kubernetes secret. Nothing sensitive is
 committed. Migrations run on startup only when `Database:AutoMigrate` is true, which
 defaults to true in Development and false everywhere else.
+
+## Fidelity to the prototype
+
+`docs/prototype/squad-status-board.html` is the visual acceptance baseline. `SlideCanvas`
+and its sub-components are a transcription of it, verified by diffing computed styles
+between the two in a browser: slide radius and padding, eyebrow and product chip, the
+29px display title, the 150px ring with its 13px band, the 12px composition bar on a
+`--panel-2` track with 2px segment gaps, the "The squad" rule, the auto-fill member grid,
+the 36px rounded-square avatars, and the footer all match.
+
+Two deliberate departures:
+
+- **Pluralisation.** The prototype appends `"s"` to the role label, which produces
+  "DevOpss". The server supplies a correct `pluralLabel` per role instead, so the legend
+  reads "1 DevOps". Fixing this in the Domain keeps client and export in step.
+- **Composition widths.** The prototype sizes bar segments with `flex: count`. The server
+  computes exact percentages that are guaranteed to sum to 100, which renders identically
+  but also lets an export or another API consumer reproduce the bar without re-deriving it.
+
+The slide reflows to its container exactly as the prototype does. An earlier revision
+scaled a fixed 1280x720 canvas; that was dropped once the prototype confirmed a fluid
+layout. Export fidelity is handled by rendering at a fixed viewport width in the export
+path (M4) rather than by constraining the component.
+
+## Membership and the roster
+
+`SquadMember` is the join between a `Board` and a `Person`, and it carries its **own**
+role. A Tech Lead on the roster can be a Developer on one squad without the roster
+default changing — the assignment is the authority for what the slide shows.
+
+Adding a member goes through `Board.AddMember`, which enforces the duplicate and
+"inactive person" rules on the aggregate, so both the roster-pick and quick-create paths
+are covered by the same invariants. The handler then tracks the new `SquadMember`
+explicitly with `db.SquadMembers.Add(member)`: `Entity` assigns its own GUID in the
+constructor, and EF Core marks an untracked entity reached through a tracked parent's
+navigation as `Modified` rather than `Added` when its key is already set — which emits an
+UPDATE against a row that does not exist yet.

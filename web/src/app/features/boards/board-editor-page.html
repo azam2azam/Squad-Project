@@ -154,20 +154,14 @@
 
       <div class="card card--members">
         <div class="card__head">
-          <h2 class="card__title">Squad</h2>
-          <span class="card__hint">Editing membership arrives in M3</span>
+          <h2 class="card__title">Add squad member</h2>
+          <span class="card__hint">{{ preview()!.composition.legendText }}</span>
         </div>
-        <ul class="roster">
-          @for (member of preview()!.members; track member.id) {
-            <li class="roster__item">
-              <span class="roster__dot" [style.background]="member.roleColor"></span>
-              <span class="roster__name">{{ member.fullName }}</span>
-              <span class="roster__role">{{ member.roleLabel }}</span>
-            </li>
-          } @empty {
-            <li class="roster__item roster__item--empty">No members yet</li>
-          }
-        </ul>
+        <app-squad-editor
+          [boardId]="preview()!.id"
+          [members]="preview()!.members"
+          (changed)="reloadMembers()"
+        />
       </div>
 
       @if (error()) {
@@ -194,7 +188,7 @@
     <!-- ---------- Live slide ---------- -->
     <div class="stage" [class.is-hidden-mobile]="mobileTab() !== 'slide'">
       <div class="stage__inner">
-        <app-slide-frame [board]="preview()!" />
+        <app-slide-canvas [board]="preview()!" />
       </div>
     </div>
   </div>

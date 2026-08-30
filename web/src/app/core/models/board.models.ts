@@ -64,6 +64,8 @@ export interface Capabilities {
 export interface CompositionSegment {
   role: Role;
   label: string;
+  /** Correct plural from the server, e.g. "Developers", and "DevOps" unchanged. */
+  pluralLabel: string;
   color: string;
   count: number;
   /** Share of the composition bar; segments sum to exactly 100. */

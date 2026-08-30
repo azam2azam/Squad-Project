@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 /**
- * Circular progress indicator built from a conic-gradient, as in the prototype.
+ * Circular progress indicator, transcribed from the prototype: a 150px conic-gradient
+ * disc with an inset hole punched by a pseudo-element, filled in --accent against a
+ * --panel-2 track.
  *
- * The percentage is exposed as real text inside the ring, so it is legible to screen
- * readers without a separate description — the visual and the accessible name are the
- * same number rather than two things that can drift apart.
+ * The percentage is real text inside the ring, so the visual and the accessible name
+ * are the same number rather than two things that can drift apart.
  */
 @Component({
   selector: 'app-progress-ring',
@@ -16,78 +17,64 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
       role="img"
       [attr.aria-label]="'Progress: ' + percent() + ' percent complete'"
       [style.--ring-size.px]="size()"
-      [style.--ring-thickness.px]="thickness()"
       [style.--ring-sweep]="sweep()"
       [style.--ring-color]="color()"
     >
-      <div class="ring__track" aria-hidden="true"></div>
-      <div class="ring__hole" aria-hidden="true">
-        <span class="ring__value">{{ percent() }}<span class="ring__unit">%</span></span>
+      <div class="ring__core">
+        <div class="ring__pct">{{ percent() }}%</div>
         @if (caption()) {
-          <span class="ring__caption">{{ caption() }}</span>
+          <div class="ring__lbl">{{ caption() }}</div>
         }
       </div>
     </div>
   `,
   styles: `
     .ring {
-      position: relative;
       width: var(--ring-size);
       height: var(--ring-size);
-      flex: none;
+      border-radius: 50%;
       display: grid;
       place-items: center;
-    }
-
-    .ring__track {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      /* The sweep is the filled arc; the remainder is the unfilled track. */
-      background: conic-gradient(var(--ring-color) var(--ring-sweep), rgba(255, 255, 255, 0.08) 0);
+      position: relative;
+      flex: 0 0 auto;
+      background: conic-gradient(var(--ring-color) var(--ring-sweep), var(--panel-2) 0deg);
       transition: background var(--transition-med);
     }
 
-    .ring__hole {
-      position: relative;
-      width: calc(var(--ring-size) - var(--ring-thickness) * 2);
-      height: calc(var(--ring-size) - var(--ring-thickness) * 2);
+    /* Punches the hole, leaving a 13px band as the ring itself. */
+    .ring::after {
+      content: '';
+      position: absolute;
+      inset: 13px;
       border-radius: 50%;
-      background: var(--panel);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
+      background: var(--ink);
     }
 
-    .ring__value {
+    .ring__core {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .ring__pct {
       font-family: var(--font-display);
-      font-weight: 600;
-      font-size: calc(var(--ring-size) * 0.26);
+      font-size: 38px;
+      font-weight: 700;
       line-height: 1;
-      color: var(--tx);
-      letter-spacing: -0.02em;
     }
 
-    .ring__unit {
-      font-size: 0.5em;
-      color: var(--tx-mut);
-      margin-left: 1px;
-    }
-
-    .ring__caption {
-      font-size: calc(var(--ring-size) * 0.085);
+    .ring__lbl {
+      font-size: 10.5px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--tx-dim);
+      color: var(--tx-mut);
+      margin-top: 3px;
     }
   `,
 })
 export class ProgressRing {
   readonly percent = input.required<number>();
-  readonly size = input(140);
-  readonly thickness = input(10);
+  readonly size = input(150);
   readonly color = input('var(--accent)');
   readonly caption = input<string | null>('Complete');
 

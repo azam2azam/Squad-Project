@@ -1,0 +1,178 @@
+<div class="roster-page">
+  <header class="roster-page__head">
+    <div>
+      <h1 class="roster-page__title">Roster</h1>
+      <p class="roster-page__sub">
+        {{ activeCount() }} active {{ activeCount() === 1 ? 'person' : 'people' }} — squad members
+        are picked from here, not retyped
+      </p>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="startAdd()">Add person</button>
+  </header>
+
+  <div class="roster-page__filters">
+    <label class="filter">
+      <span class="visually-hidden">Search the roster</span>
+      <input
+        class="filter__input"
+        type="search"
+        placeholder="Search name, email or skills…"
+        [value]="search()"
+        (change)="onSearch($any($event.target).value)"
+      />
+    </label>
+
+    <label class="toggle">
+      <input
+        type="checkbox"
+        [checked]="includeInactive()"
+        (change)="toggleInactive($any($event.target).checked)"
+      />
+      Show deactivated
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="roster-page__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (adding() || editingId()) {
+    <form class="editor-card" (submit)="$event.preventDefault(); saveDraft()">
+      <h2 class="editor-card__title">{{ editingId() ? 'Edit person' : 'Add person' }}</h2>
+
+      <div class="editor-card__grid">
+        <label class="field">
+          <span class="field__label">Full name</span>
+          <input
+            class="field__input"
+            type="text"
+            required
+            [value]="draft().fullName"
+            (input)="updateDraft('fullName', $any($event.target).value)"
+            placeholder="Nadia Al-Harbi"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Default role</span>
+          <select
+            class="field__input"
+            [value]="draft().defaultRole"
+            (change)="setDraftRole($any($event.target).value)"
+          >
+            @for (role of roles(); track role.value) {
+              <option [value]="role.value">{{ role.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Default detail</span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="draft().defaultDetail ?? ''"
+            (input)="updateDraft('defaultDetail', $any($event.target).value)"
+            placeholder="Angular · FHIR R4"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Email</span>
+          <input
+            class="field__input"
+            type="email"
+            [value]="draft().email ?? ''"
+            (input)="updateDraft('email', $any($event.target).value)"
+            placeholder="name@example.com"
+          />
+        </label>
+      </div>
+
+      <div class="editor-card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!draft().fullName.trim()">
+          Save
+        </button>
+        <button type="button" class="btn" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="roster-page__state">Loading roster…</p>
+  } @else if (items().length === 0) {
+    <p class="roster-page__state">No people match.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="table">
+        <caption class="visually-hidden">
+          Org-wide roster of people
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Person</th>
+            <th scope="col">Default role</th>
+            <th scope="col">Detail</th>
+            <th scope="col">Email</th>
+            <th scope="col">Status</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (person of items(); track person.id) {
+            <tr [class.is-inactive]="!person.isActive">
+              <th scope="row" class="table__person">
+                <span class="table__ava" [style.background]="person.defaultRoleColor">
+                  {{ person.initials }}
+                </span>
+                {{ person.fullName }}
+              </th>
+              <td>
+                <span class="table__role" [style.color]="person.defaultRoleColor">
+                  {{ person.defaultRoleLabel }}
+                </span>
+              </td>
+              <td class="table__muted">{{ person.defaultDetail ?? '—' }}</td>
+              <td class="table__muted">{{ person.email ?? '—' }}</td>
+              <td>
+                @if (person.isActive) {
+                  <span class="pill pill--active">Active</span>
+                } @else {
+                  <span class="pill pill--inactive">Deactivated</span>
+                }
+              </td>
+              <td class="table__actions">
+                <button type="button" class="link-btn" (click)="startEdit(person)">Edit</button>
+                @if (person.isActive) {
+                  <button
+                    type="button"
+                    class="link-btn link-btn--danger"
+                    [disabled]="busyId() === person.id"
+                    (click)="deactivate(person)"
+                  >
+                    Deactivate
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="link-btn"
+                    [disabled]="busyId() === person.id"
+                    (click)="reactivate(person)"
+                  >
+                    Reactivate
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="roster-page__note">
+      Deactivating somebody removes them from the picker but keeps every squad they were on intact,
+      so past boards still show who delivered them.
+    </p>
+  }
+</div>

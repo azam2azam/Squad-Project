@@ -2,17 +2,18 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import type { SquadMember } from '../../core/models/board.models';
 
 /**
- * One person on the slide: initials avatar tinted to their role colour, name,
- * role label in that same colour, and an optional detail line.
+ * One person on the slide, transcribed from the prototype: a 36px rounded-square
+ * avatar filled solid in the role colour with white initials and a soft halo, the
+ * name, the role label in that same colour, and an optional detail line.
  */
 @Component({
   selector: 'app-member-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="member" [style.--member-color]="member().roleColor">
-      <span class="member__avatar" aria-hidden="true">{{ member().initials }}</span>
+      <span class="member__ava" aria-hidden="true">{{ member().initials }}</span>
 
-      <div class="member__body">
+      <div class="member__meta">
         <p class="member__name">{{ member().fullName }}</p>
         <p class="member__role">
           {{ member().roleLabel }}
@@ -28,57 +29,54 @@ import type { SquadMember } from '../../core/models/board.models';
   `,
   styles: `
     .member {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 12px 14px;
-      background: var(--panel-2);
+      background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: var(--radius-md);
+      border-radius: 12px;
+      padding: 11px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       min-width: 0;
     }
 
-    .member__avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      flex: none;
+    .member__ava {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      flex: 0 0 auto;
       display: grid;
       place-items: center;
       font-family: var(--font-display);
       font-weight: 600;
-      font-size: 14px;
-      letter-spacing: 0.02em;
-      color: var(--member-color);
-      background: color-mix(in srgb, var(--member-color) 16%, transparent);
-      border: 1px solid color-mix(in srgb, var(--member-color) 42%, transparent);
+      font-size: 13px;
+      color: #fff;
+      background: var(--member-color);
+      /* Soft halo in the same colour, as in the prototype. */
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--member-color) 25%, transparent);
     }
 
-    .member__body {
+    .member__meta {
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
+      flex: 1;
     }
 
     .member__name,
     .member__role,
     .member__detail {
       margin: 0;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .member__name {
+      font-size: 13px;
       font-weight: 600;
-      font-size: 14px;
-      color: var(--tx);
     }
 
     .member__role {
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 550;
       color: var(--member-color);
     }
 
@@ -88,8 +86,9 @@ import type { SquadMember } from '../../core/models/board.models';
     }
 
     .member__detail {
-      font-size: 11.5px;
-      color: var(--tx-dim);
+      font-size: 10.5px;
+      color: var(--tx-mut);
+      margin-top: 1px;
     }
   `,
 })

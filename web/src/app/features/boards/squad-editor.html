@@ -1,0 +1,138 @@
+<div class="add-member">
+  <div class="field">
+    <label class="field__label" for="memberName">Name</label>
+    <div class="typeahead">
+      <input
+        id="memberName"
+        class="field__input"
+        type="text"
+        autocomplete="off"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="rosterSuggestions"
+        [attr.aria-expanded]="visibleSuggestions().length > 0"
+        placeholder="Search the roster, or type a new name"
+        [value]="nameQuery()"
+        (input)="onNameInput($any($event.target).value)"
+        (keydown)="onNameKeydown($event)"
+      />
+
+      @if (visibleSuggestions().length > 0) {
+        <ul class="typeahead__list" id="rosterSuggestions" role="listbox">
+          @for (person of visibleSuggestions(); track person.id) {
+            <li>
+              <button
+                type="button"
+                class="typeahead__option"
+                role="option"
+                [attr.aria-selected]="false"
+                (click)="pick(person)"
+              >
+                <span class="typeahead__ava" [style.background]="person.defaultRoleColor">
+                  {{ person.initials }}
+                </span>
+                <span class="typeahead__meta">
+                  <span class="typeahead__name">{{ person.fullName }}</span>
+                  <span class="typeahead__role">
+                    {{ person.defaultRoleLabel }}
+                    @if (person.defaultDetail) {
+                      · {{ person.defaultDetail }}
+                    }
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    @if (selectedPerson()) {
+      <p class="field__note">From the roster — their squad history stays linked.</p>
+    } @else if (nameQuery().trim().length > 1) {
+      <p class="field__note">New name — they will be added to the roster too.</p>
+    }
+  </div>
+
+  <div class="field">
+    <span class="field__label">Role</span>
+    <div class="role-pills" role="radiogroup" aria-label="Role">
+      @for (role of roles(); track role.value) {
+        <button
+          type="button"
+          class="role-pill"
+          role="radio"
+          [attr.aria-checked]="pendingRole() === role.value"
+          [class.is-on]="pendingRole() === role.value"
+          [style.background]="pendingRole() === role.value ? role.color : '#fff'"
+          [style.borderColor]="pendingRole() === role.value ? role.color : 'var(--card-line)'"
+          (click)="setRole(role.value)"
+        >
+          {{ role.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="memberDetail">
+      Detail <span class="field__optional">(stack / focus — optional)</span>
+    </label>
+    <input
+      id="memberDetail"
+      class="field__input"
+      type="text"
+      placeholder="Angular · FHIR R4"
+      [value]="detail()"
+      (input)="onDetailInput($any($event.target).value)"
+      (keydown)="onNameKeydown($event)"
+    />
+  </div>
+
+  @if (error()) {
+    <p class="add-member__error" role="alert">{{ error() }}</p>
+  }
+
+  <button type="button" class="add-btn" (click)="add()" [disabled]="!canAdd() || busy()">
+    {{ busy() ? 'Adding…' : '+ Add to squad' }}
+  </button>
+</div>
+
+<ul class="roster">
+  @for (member of members(); track member.id) {
+    <li class="roster__item">
+      <span class="roster__ava" [style.background]="member.roleColor">{{ member.initials }}</span>
+
+      <span class="roster__meta">
+        <span class="roster__name">{{ member.fullName }}</span>
+        <span class="roster__role">
+          {{ member.roleLabel }}
+          @if (member.detail) {
+            · {{ member.detail }}
+          }
+        </span>
+      </span>
+
+      <label class="roster__role-select">
+        <span class="visually-hidden">Role for {{ member.fullName }}</span>
+        <select [value]="member.role" (change)="changeRole(member, $any($event.target).value)">
+          @for (role of roles(); track role.value) {
+            <option [value]="role.value">{{ role.label }}</option>
+          }
+        </select>
+      </label>
+
+      <button
+        type="button"
+        class="roster__rm"
+        [attr.aria-label]="'Remove ' + member.fullName + ' from the squad'"
+        title="Remove"
+        (click)="remove(member)"
+      >
+        ×
+      </button>
+    </li>
+  } @empty {
+    <li class="roster__empty">No members yet — add developers, QA and a product owner above.</li>
+  }
+</ul>

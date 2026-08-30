@@ -9,20 +9,23 @@ cards — ready to present or export.
 
 ---
 
-## Current status — M2 complete
+## Current status — M3 complete
 
 | Milestone | Scope | State |
 |---|---|---|
 | **M1** | Solution + Angular scaffold, domain model, EF migration + seed, health check, CI | ✅ Done |
 | **M2** | Board CRUD API + board editor wired to the live `SlideCanvas` | ✅ Done |
-| M3 | Roster CRUD, typeahead, membership, composition | Planned |
+| **M3** | Roster CRUD, typeahead, membership, composition | ✅ Done |
 | M4 | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | Planned |
 | M5 | JWT auth + RBAC, portfolio view, Jira sync, audit log | Planned |
 | M6 | Test coverage, e2e, Dockerfiles, K8s/Helm, docs | Planned |
 
-M2 delivers the working product loop: create a board, edit it in the builder, watch the
-slide update live, save it. The roster screen is still a deliberate placeholder naming
-the milestone that fills it, and squad membership is read-only until M3.
+M3 completes the core loop: boards, the live slide, and full squad membership picked from
+an org-wide roster. Every screen in the app is now real.
+
+The reference prototype is checked in at [docs/prototype/squad-status-board.html](docs/prototype/squad-status-board.html)
+ and the `SlideCanvas` is a deliberate transcription of it — see [Architecture](docs/ARCHITECTURE.md)
+ for the two places it intentionally differs.
 
 ---
 

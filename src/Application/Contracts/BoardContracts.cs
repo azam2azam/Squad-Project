@@ -126,12 +126,14 @@ public sealed record CompositionDto(
             composition.Total,
             composition.LegendText,
             composition.Segments
-                .Select(s => new CompositionSegmentDto(s.Role, s.Label, s.Color, s.Count, s.Percent))
+                .Select(s => new CompositionSegmentDto(
+                    s.Role, s.Label, s.PluralLabel, s.Color, s.Count, s.Percent))
                 .ToList());
     }
 }
 
-public sealed record CompositionSegmentDto(Role Role, string Label, string Color, int Count, double Percent);
+public sealed record CompositionSegmentDto(
+    Role Role, string Label, string PluralLabel, string Color, int Count, double Percent);
 
 /// <summary>Change-log line for the board history panel.</summary>
 public sealed record BoardAuditEntryDto(

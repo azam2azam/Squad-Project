@@ -51,6 +51,7 @@ public sealed record SquadComposition
             .Select(role => new CompositionSegment(
                 role,
                 RoleMetadata.Label(role),
+                RoleMetadata.Get(role).PluralLabel,
                 RoleMetadata.Color(role),
                 counts[role],
                 Math.Round(counts[role] * 100d / total, 2)))
@@ -72,4 +73,5 @@ public sealed record SquadComposition
 }
 
 /// <summary>One role's slice of the composition bar.</summary>
-public sealed record CompositionSegment(Role Role, string Label, string Color, int Count, double Percent);
+public sealed record CompositionSegment(
+    Role Role, string Label, string PluralLabel, string Color, int Count, double Percent);

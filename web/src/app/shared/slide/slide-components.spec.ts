@@ -11,9 +11,30 @@ const composition: Composition = {
   total: 4,
   legendText: '1 Product Owner · 2 Developers · 1 QA Engineer',
   segments: [
-    { role: 0, label: 'Product Owner', color: '#2DD4BF', count: 1, percent: 25 },
-    { role: 2, label: 'Developer', color: '#6366F1', count: 2, percent: 50 },
-    { role: 3, label: 'QA Engineer', color: '#F59E0B', count: 1, percent: 25 },
+    {
+      role: 0,
+      label: 'Product Owner',
+      pluralLabel: 'Product Owners',
+      color: '#2DD4BF',
+      count: 1,
+      percent: 25,
+    },
+    {
+      role: 2,
+      label: 'Developer',
+      pluralLabel: 'Developers',
+      color: '#6366F1',
+      count: 2,
+      percent: 50,
+    },
+    {
+      role: 3,
+      label: 'QA Engineer',
+      pluralLabel: 'QA Engineers',
+      color: '#F59E0B',
+      count: 1,
+      percent: 25,
+    },
   ],
 };
 
@@ -94,7 +115,7 @@ describe('ProgressRing', () => {
     await fixture.whenStable();
 
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.ring__value')?.textContent).toContain('68');
+    expect(el.querySelector('.ring__pct')?.textContent).toContain('68');
     expect(el.querySelector('.ring')?.getAttribute('aria-label')).toBe(
       'Progress: 68 percent complete',
     );
@@ -135,7 +156,7 @@ describe('CompositionBar', () => {
     fixture.componentRef.setInput('composition', composition);
     await fixture.whenStable();
 
-    const segments = (fixture.nativeElement as HTMLElement).querySelectorAll('.comp__segment');
+    const segments = (fixture.nativeElement as HTMLElement).querySelectorAll('.comp__seg');
     expect(segments.length).toBe(3);
     expect((segments[1] as HTMLElement).style.width).toBe('50%');
   });
@@ -197,11 +218,11 @@ describe('SlideCanvas', () => {
     await fixture.whenStable();
 
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.slide__product')?.textContent).toContain('VIDA HIS');
+    expect(el.querySelector('.slide__tag')?.textContent).toContain('VIDA HIS');
     expect(el.querySelector('.slide__sprint')?.textContent).toContain('Sprint 14');
     expect(el.querySelector('.slide__title')?.textContent).toContain('OPD Screen Revamp');
     expect(el.querySelector('.slide__squad')?.textContent).toContain('Squad Alpha');
-    expect(el.querySelector('.slide__squad')?.textContent).toContain('2 people');
+    expect(el.querySelector('.comp__n')?.textContent).toContain('2 people');
   });
 
   it('renders a card for every squad member with their role colour', async () => {
@@ -233,6 +254,8 @@ describe('SlideCanvas', () => {
     fixture.componentInstance.board.set({ ...board, members: [] });
     await fixture.whenStable();
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('.slide__empty')).not.toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.slide__team-empty'),
+    ).not.toBeNull();
   });
 });

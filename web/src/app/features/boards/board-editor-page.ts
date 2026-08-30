@@ -5,7 +5,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BoardsService } from '../../core/services/boards.service';
 import { MetadataService } from '../../core/services/metadata.service';
-import { SlideFrame } from '../../shared/slide/slide-frame';
+import { SlideCanvas } from '../../shared/slide/slide-canvas';
+import { SquadEditor } from './squad-editor';
 import type { BoardDetail, BoardStatus } from '../../core/models/board.models';
 
 type MobileTab = 'build' | 'slide';
@@ -18,7 +19,7 @@ type MobileTab = 'build' | 'slide';
 @Component({
   selector: 'app-board-editor-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, SlideFrame],
+  imports: [FormsModule, RouterLink, SlideCanvas, SquadEditor],
   templateUrl: './board-editor-page.html',
   styleUrl: './board-editor-page.scss',
 })
@@ -174,6 +175,21 @@ export class BoardEditorPage {
           this.error.set(readProblemDetail(err) ?? 'Could not save the board.');
         },
       });
+  }
+
+  /**
+   * Refetches after a membership change. Only the server-owned parts are replaced —
+   * the draft is left alone, so adding somebody mid-edit does not silently discard
+   * a title the user was halfway through typing.
+   */
+  protected reloadMembers(): void {
+    const board = this.serverBoard();
+    if (!board) return;
+
+    this.boards.get(board.id).subscribe({
+      next: (fresh) => this.serverBoard.set(fresh),
+      error: () => this.error.set('Could not refresh the squad.'),
+    });
   }
 
   protected revert(): void {

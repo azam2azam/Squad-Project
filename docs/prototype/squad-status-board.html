@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squad Status Board — Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --ink:#0E1520; --panel:#16202D; --panel-2:#1C2836; --line:rgba(255,255,255,.09);
+    --tx:#EAF1F8; --tx-mut:#8595A9; --tx-dim:#5D6B7E;
+    --accent:#2DD4BF; --accent-deep:#0D9488;
+    --bg:#EEF1F5; --card:#FFFFFF; --card-line:#E1E6ED; --ink-tx:#1B2532; --ink-mut:#64748B;
+    --r-po:#2DD4BF; --r-lead:#A78BFA; --r-dev:#6366F1; --r-qa:#F59E0B;
+    --r-ux:#EC4899; --r-ba:#38BDF8; --r-ops:#10B981;
+    --s-track:#34D399; --s-risk:#FBBF24; --s-block:#F87171; --s-review:#60A5FA; --s-done:#2DD4BF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink-tx);
+    -webkit-font-smoothing:antialiased;line-height:1.45}
+  .wrap{max-width:1400px;margin:0 auto;padding:20px}
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    flex-wrap:wrap;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .dot{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--r-dev));
+    display:grid;place-items:center;color:#04121A;font-family:'Space Grotesk';font-weight:700;font-size:18px}
+  .brand h1{font-family:'Space Grotesk';font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .brand p{font-size:12px;color:var(--ink-mut);margin-top:1px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{font-family:'Inter';font-size:13px;font-weight:550;border:1px solid var(--card-line);
+    background:var(--card);color:var(--ink-tx);padding:9px 13px;border-radius:9px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;transition:.15s;white-space:nowrap}
+  .btn:hover{border-color:#B9C2CE;background:#F7F9FB}
+  .btn.primary{background:var(--ink);color:var(--tx);border-color:var(--ink)}
+  .btn.primary:hover{background:#1a2636}
+  .btn svg{width:15px;height:15px}
+
+  /* slide selector row */
+  .slides-bar{display:flex;gap:8px;align-items:center;overflow-x:auto;padding:4px 2px 10px;margin-bottom:6px}
+  .slide-tab{flex:0 0 auto;font-size:12.5px;font-weight:550;padding:7px 12px;border-radius:20px;
+    border:1px solid var(--card-line);background:var(--card);color:var(--ink-mut);cursor:pointer;white-space:nowrap}
+  .slide-tab.active{background:var(--ink);color:var(--tx);border-color:var(--ink)}
+  .slide-tab.add{border-style:dashed;color:var(--accent-deep);border-color:#9FD8CF}
+
+  .layout{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start}
+  @media(max-width:920px){.layout{grid-template-columns:1fr}}
+
+  /* ---- builder form ---- */
+  .builder{background:var(--card);border:1px solid var(--card-line);border-radius:16px;padding:18px}
+  .builder h2{font-family:'Space Grotesk';font-size:13px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-mut);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .builder h2::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;font-weight:550;color:var(--ink-mut);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;font-family:'Inter';font-size:14px;color:var(--ink-tx);
+    border:1px solid var(--card-line);border-radius:9px;padding:9px 11px;background:#FBFCFD;transition:.15s}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(45,212,191,.15);background:#fff}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .slider-wrap{display:flex;align-items:center;gap:12px}
+  .slider-wrap input[type=range]{flex:1;accent-color:var(--accent-deep)}
+  .slider-val{font-family:'Space Grotesk';font-weight:600;font-size:16px;min-width:44px;text-align:right}
+  .divider{height:1px;background:var(--card-line);margin:16px 0}
+
+  .add-member{background:#F6F8FA;border:1px solid var(--card-line);border-radius:12px;padding:13px}
+  .add-member .field:last-child{margin-bottom:0}
+  .role-pills{display:flex;flex-wrap:wrap;gap:6px}
+  .role-pill{font-size:11.5px;font-weight:550;padding:5px 9px;border-radius:7px;cursor:pointer;
+    border:1.5px solid transparent;background:#fff;color:var(--ink-mut);border-color:var(--card-line);transition:.12s}
+  .role-pill[data-on="1"]{color:#fff}
+  .add-btn{width:100%;margin-top:11px;background:var(--accent-deep);color:#fff;border:none;border-radius:9px;
+    padding:10px;font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+  .add-btn:hover{background:#0b7d72}
+
+  .roster{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+  .roster-item{display:flex;align-items:center;gap:10px;padding:8px 9px;border:1px solid var(--card-line);
+    border-radius:10px;background:#fff}
+  .roster-item .ava{width:30px;height:30px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;
+    font-family:'Space Grotesk';font-weight:600;font-size:12px;color:#fff}
+  .roster-item .meta{flex:1;min-width:0}
+  .roster-item .meta .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .roster-item .meta .rl{font-size:11px;color:var(--ink-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .roster-item .rm{border:none;background:none;color:var(--tx-dim);cursor:pointer;font-size:18px;line-height:1;padding:2px 5px;border-radius:6px}
+  .roster-item .rm:hover{background:#FEE2E2;color:#DC2626}
+  .empty-roster{font-size:12.5px;color:var(--ink-mut);text-align:center;padding:14px;border:1px dashed var(--card-line);border-radius:10px}
+
+  /* ---- SLIDE ---- */
+  .stage{position:sticky;top:20px}
+  .slide{background:var(--ink);border-radius:18px;overflow:hidden;color:var(--tx);
+    box-shadow:0 24px 60px -24px rgba(14,21,32,.55);position:relative}
+  .slide::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 100% 0%,rgba(45,212,191,.12),transparent 55%),
+               radial-gradient(90% 80% at 0% 100%,rgba(99,102,241,.12),transparent 55%)}
+  .slide-inner{position:relative;padding:30px 32px 32px}
+  .s-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+  .s-eyebrow{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:550;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--tx-mut);margin-bottom:9px}
+  .s-eyebrow .tag{background:var(--panel-2);border:1px solid var(--line);padding:3px 9px;border-radius:6px;color:var(--tx)}
+  .s-title{font-family:'Space Grotesk';font-size:29px;font-weight:600;line-height:1.08;letter-spacing:-.02em}
+  .s-squad{margin-top:8px;font-size:13.5px;color:var(--tx-mut)}
+  .s-squad b{color:var(--tx);font-weight:600}
+  .status-badge{flex:0 0 auto;font-size:12px;font-weight:600;padding:7px 13px;border-radius:20px;
+    display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line)}
+  .status-badge .pulse{width:8px;height:8px;border-radius:50%}
+
+  .s-grid{display:grid;grid-template-columns:150px 1fr;gap:26px;align-items:center;margin-bottom:24px}
+  @media(max-width:520px){.s-grid{grid-template-columns:1fr;gap:20px;justify-items:center;text-align:center}}
+  .ring{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;position:relative;flex:0 0 auto}
+  .ring::after{content:"";position:absolute;inset:13px;border-radius:50%;background:var(--ink)}
+  .ring-core{position:relative;z-index:2;text-align:center}
+  .ring-core .pct{font-family:'Space Grotesk';font-size:38px;font-weight:700;line-height:1}
+  .ring-core .lbl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-mut);margin-top:3px}
+
+  .comp{width:100%}
+  .comp-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+  .comp-top .h{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--tx-mut);font-weight:550}
+  .comp-top .n{font-family:'Space Grotesk';font-size:14px;font-weight:600}
+  .comp-bar{height:12px;border-radius:7px;overflow:hidden;display:flex;background:var(--panel-2);gap:2px}
+  .comp-seg{height:100%;transition:.3s}
+  .comp-legend{display:flex;flex-wrap:wrap;gap:11px 16px;margin-top:12px}
+  .lg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tx-mut)}
+  .lg .sw{width:9px;height:9px;border-radius:3px}
+  .lg b{color:var(--tx);font-family:'Space Grotesk';font-weight:600}
+
+  .team-h{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--tx-mut);
+    font-weight:550;margin-bottom:12px;display:flex;align-items:center;gap:9px}
+  .team-h::after{content:"";flex:1;height:1px;background:var(--line)}
+  .team{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .member{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 12px;
+    display:flex;align-items:center;gap:10px}
+  .member .ava{width:36px;height:36px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;
+    font-family:'Space Grotesk';font-weight:600;font-size:13px;color:#fff;position:relative}
+  .member .m-meta{min-width:0;flex:1}
+  .member .m-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .member .m-role{font-size:11px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .member .m-detail{font-size:10.5px;color:var(--tx-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .team-empty{grid-column:1/-1;text-align:center;padding:18px;color:var(--tx-mut);font-size:13px;
+    border:1px dashed var(--line);border-radius:12px}
+
+  .s-foot{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;
+    border-top:1px solid var(--line);font-size:11.5px;color:var(--tx-dim)}
+  .s-foot .k{color:var(--tx-mut)}
+
+  /* present mode */
+  body.present .wrap>*:not(.stage-holder){display:none}
+  body.present{background:#070B10;padding:0}
+  body.present .stage{position:static}
+  body.present .stage-holder{position:fixed;inset:0;display:grid;place-items:center;padding:24px}
+  body.present .slide{width:min(1024px,96vw)}
+  .exit-present{display:none}
+  body.present .exit-present{display:inline-flex;position:fixed;top:16px;right:16px;z-index:50}
+
+  .hint{font-size:11.5px;color:var(--ink-mut);margin-top:10px;line-height:1.5}
+  input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="dot">S</div>
+      <div>
+        <h1>Squad Status Board</h1>
+        <p>Product Innovation &amp; Revamp Team — delivery snapshot builder</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="btnSave">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+        Save
+      </button>
+      <label class="btn" for="btnLoad">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        Load
+      </label>
+      <input type="file" id="btnLoad" accept="application/json">
+      <button class="btn" id="btnPresent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20v14H2z"/><path d="M8 21h8M12 17v4"/></svg>
+        Present
+      </button>
+      <button class="btn primary" id="btnPng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        Download PNG
+      </button>
+    </div>
+  </header>
+
+  <div class="slides-bar" id="slidesBar"></div>
+
+  <div class="layout">
+    <!-- ============ BUILDER ============ -->
+    <section class="builder">
+      <h2>Project</h2>
+      <div class="field">
+        <label for="fTitle">Project / initiative</label>
+        <input id="fTitle" placeholder="e.g. OPD Screen Revamp">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="fProduct">Product</label>
+          <input id="fProduct" placeholder="VIDA HIS">
+        </div>
+        <div class="field">
+          <label for="fSquad">Squad name</label>
+          <input id="fSquad" placeholder="Squad Alpha">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="fStatus">Status</label>
+          <select id="fStatus">
+            <option value="track">On Track</option>
+            <option value="risk">At Risk</option>
+            <option value="block">Blocked</option>
+            <option value="review">In Review</option>
+            <option value="done">Delivered</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fSprint">Sprint / target</label>
+          <input id="fSprint" placeholder="Sprint 14 · Jun 30">
+        </div>
+      </div>
+      <div class="field">
+        <label>Progress</label>
+        <div class="slider-wrap">
+          <input type="range" id="fProgress" min="0" max="100" value="0">
+          <span class="slider-val" id="progVal">0%</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <h2>Add squad member</h2>
+      <div class="add-member">
+        <div class="field">
+          <label for="mName">Name</label>
+          <input id="mName" placeholder="Full name">
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <div class="role-pills" id="rolePills"></div>
+        </div>
+        <div class="field">
+          <label for="mDetail">Detail <span style="color:var(--tx-dim);font-weight:400">(stack / focus — optional)</span></label>
+          <input id="mDetail" placeholder="Angular · FHIR R4">
+        </div>
+        <button class="add-btn" id="mAdd">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Add to squad
+        </button>
+      </div>
+      <div class="roster" id="roster"></div>
+      <p class="hint">Tip: <b>Present</b> gives you a clean full-screen slide to screenshot. <b>Save</b> exports all your slides as a file you can <b>Load</b> back next time.</p>
+    </section>
+
+    <!-- ============ SLIDE ============ -->
+    <div class="stage-holder">
+    <div class="stage">
+      <div class="slide" id="slide">
+        <div class="slide-inner">
+          <div class="s-head">
+            <div>
+              <div class="s-eyebrow"><span class="tag" id="vProduct">VIDA HIS</span><span id="vSprint">Sprint 14</span></div>
+              <div class="s-title" id="vTitle">OPD Screen Revamp</div>
+              <div class="s-squad">Delivered by <b id="vSquad">Squad Alpha</b></div>
+            </div>
+            <div class="status-badge" id="vStatus"><span class="pulse"></span><span class="txt">On Track</span></div>
+          </div>
+
+          <div class="s-grid">
+            <div class="ring" id="vRing">
+              <div class="ring-core"><div class="pct" id="vPct">0%</div><div class="lbl">Complete</div></div>
+            </div>
+            <div class="comp">
+              <div class="comp-top"><span class="h">Squad composition</span><span class="n" id="vHead">0 people</span></div>
+              <div class="comp-bar" id="vBar"></div>
+              <div class="comp-legend" id="vLegend"></div>
+            </div>
+          </div>
+
+          <div class="team-h">The squad</div>
+          <div class="team" id="vTeam"></div>
+
+          <div class="s-foot">
+            <span><span class="k">Board:</span> Product Innovation &amp; Revamp Team</span>
+            <span id="vDate"></span>
+          </div>
+        </div>
+      </div>
+      <button class="btn primary exit-present" id="btnExit">Exit present</button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- role catalogue ---------- */
+const ROLES = {
+  po:  {label:"Product Owner", short:"PO",  color:"var(--r-po)",   hex:"#2DD4BF"},
+  lead:{label:"Tech Lead",     short:"Lead",color:"var(--r-lead)", hex:"#A78BFA"},
+  dev: {label:"Developer",     short:"Dev", color:"var(--r-dev)",  hex:"#6366F1"},
+  qa:  {label:"QA Engineer",   short:"QA",  color:"var(--r-qa)",   hex:"#F59E0B"},
+  ux:  {label:"UI/UX Designer",short:"UX",  color:"var(--r-ux)",   hex:"#EC4899"},
+  ba:  {label:"Business Analyst",short:"BA",color:"var(--r-ba)",   hex:"#38BDF8"},
+  ops: {label:"DevOps",        short:"Ops", color:"var(--r-ops)",  hex:"#10B981"},
+};
+const STATUS = {
+  track:{label:"On Track", hex:"#34D399"}, risk:{label:"At Risk", hex:"#FBBF24"},
+  block:{label:"Blocked",  hex:"#F87171"}, review:{label:"In Review",hex:"#60A5FA"},
+  done: {label:"Delivered",hex:"#2DD4BF"},
+};
+
+/* ---------- state: many slides ---------- */
+let slides = [seed()];
+let idx = 0;
+let pendingRole = "dev";
+
+function seed(){
+  return {
+    title:"OPD Screen Revamp", product:"VIDA HIS", squad:"Squad Alpha",
+    status:"track", sprint:"Sprint 14 · Jun 30", progress:62,
+    members:[
+      {name:"Ayesha Khan", role:"po",  detail:"OPD domain owner"},
+      {name:"Bilal Ahmed", role:"lead",detail:".NET Core · Arch"},
+      {name:"Sana Iqbal",  role:"dev", detail:"Angular · UI"},
+      {name:"Omar Farooq", role:"dev", detail:"FHIR R4 · APIs"},
+      {name:"Rania Saleh", role:"qa",  detail:"Automation"},
+      {name:"Yusuf Malik", role:"ux",  detail:"Clinical flows"},
+    ],
+  };
+}
+function blank(){
+  return {title:"New Project",product:"VIDA HIS",squad:"Squad",status:"track",
+    sprint:"",progress:0,members:[]};
+}
+const cur = () => slides[idx];
+const initials = n => (n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("")||"–").toUpperCase();
+
+/* ---------- build role pills ---------- */
+const pillBox = document.getElementById("rolePills");
+Object.entries(ROLES).forEach(([k,r])=>{
+  const b=document.createElement("button");
+  b.className="role-pill"; b.dataset.role=k; b.textContent=r.label;
+  b.onclick=()=>{pendingRole=k;paintPills();};
+  pillBox.appendChild(b);
+});
+function paintPills(){
+  [...pillBox.children].forEach(b=>{
+    const on=b.dataset.role===pendingRole;
+    b.dataset.on=on?"1":"0";
+    b.style.background=on?ROLES[b.dataset.role].hex:"#fff";
+    b.style.borderColor=on?ROLES[b.dataset.role].hex:"var(--card-line)";
+  });
+}
+
+/* ---------- slide tabs ---------- */
+function paintTabs(){
+  const bar=document.getElementById("slidesBar"); bar.innerHTML="";
+  slides.forEach((s,i)=>{
+    const t=document.createElement("button");
+    t.className="slide-tab"+(i===idx?" active":"");
+    t.textContent=s.title||"Untitled";
+    t.onclick=()=>{idx=i;syncForm();render();paintTabs();};
+    bar.appendChild(t);
+  });
+  const add=document.createElement("button");
+  add.className="slide-tab add"; add.textContent="+ New slide";
+  add.onclick=()=>{slides.push(blank());idx=slides.length-1;syncForm();render();paintTabs();};
+  bar.appendChild(add);
+  if(slides.length>1){
+    const del=document.createElement("button");
+    del.className="slide-tab"; del.textContent="🗑 Delete this";
+    del.onclick=()=>{slides.splice(idx,1);idx=Math.max(0,idx-1);syncForm();render();paintTabs();};
+    bar.appendChild(del);
+  }
+}
+
+/* ---------- form <-> state ---------- */
+const $=id=>document.getElementById(id);
+function syncForm(){
+  const c=cur();
+  $("fTitle").value=c.title; $("fProduct").value=c.product; $("fSquad").value=c.squad;
+  $("fStatus").value=c.status; $("fSprint").value=c.sprint; $("fProgress").value=c.progress;
+  $("progVal").textContent=c.progress+"%";
+  paintRoster();
+}
+["fTitle","fProduct","fSquad","fStatus","fSprint"].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    const c=cur();
+    c.title=$("fTitle").value; c.product=$("fProduct").value; c.squad=$("fSquad").value;
+    c.status=$("fStatus").value; c.sprint=$("fSprint").value;
+    render(); paintTabs();
+  });
+});
+$("fProgress").addEventListener("input",e=>{
+  cur().progress=+e.target.value; $("progVal").textContent=e.target.value+"%"; render();
+});
+$("mAdd").addEventListener("click",()=>{
+  const nm=$("mName").value.trim(); if(!nm){$("mName").focus();return;}
+  cur().members.push({name:nm,role:pendingRole,detail:$("mDetail").value.trim()});
+  $("mName").value=""; $("mDetail").value=""; $("mName").focus();
+  paintRoster(); render();
+});
+$("mName").addEventListener("keydown",e=>{if(e.key==="Enter")$("mAdd").click();});
+$("mDetail").addEventListener("keydown",e=>{if(e.key==="Enter")$("mAdd").click();});
+
+function paintRoster(){
+  const box=$("roster"); box.innerHTML="";
+  const m=cur().members;
+  if(!m.length){box.innerHTML='<div class="empty-roster">No members yet — add developers, QA and a product owner above.</div>';return;}
+  m.forEach((mem,i)=>{
+    const r=ROLES[mem.role];
+    const el=document.createElement("div"); el.className="roster-item";
+    el.innerHTML=`<div class="ava" style="background:${r.hex}">${initials(mem.name)}</div>
+      <div class="meta"><div class="nm">${esc(mem.name)}</div>
+      <div class="rl">${r.label}${mem.detail?" · "+esc(mem.detail):""}</div></div>
+      <button class="rm" title="Remove">×</button>`;
+    el.querySelector(".rm").onclick=()=>{cur().members.splice(i,1);paintRoster();render();};
+    box.appendChild(el);
+  });
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- render the SLIDE ---------- */
+function render(){
+  const c=cur();
+  $("vTitle").textContent=c.title||"Untitled project";
+  $("vProduct").textContent=c.product||"—";
+  $("vSprint").textContent=c.sprint||"";
+  $("vSquad").textContent=c.squad||"—";
+
+  const st=STATUS[c.status];
+  const badge=$("vStatus");
+  badge.querySelector(".txt").textContent=st.label;
+  badge.querySelector(".pulse").style.background=st.hex;
+  badge.style.color=st.hex;
+  badge.style.borderColor=st.hex+"55";
+  badge.style.background=st.hex+"1A";
+
+  $("vPct").textContent=c.progress+"%";
+  $("vRing").style.background=
+    `conic-gradient(var(--accent) ${c.progress*3.6}deg, var(--panel-2) 0deg)`;
+
+  // composition
+  const counts={}; c.members.forEach(m=>counts[m.role]=(counts[m.role]||0)+1);
+  const total=c.members.length;
+  $("vHead").textContent=total+(total===1?" person":" people");
+
+  const bar=$("vBar"); bar.innerHTML="";
+  const order=["po","lead","dev","qa","ux","ba","ops"];
+  order.forEach(k=>{
+    if(!counts[k])return;
+    const seg=document.createElement("div");
+    seg.className="comp-seg";
+    seg.style.flex=counts[k];
+    seg.style.background=ROLES[k].hex;
+    bar.appendChild(seg);
+  });
+  if(!total){bar.innerHTML='<div class="comp-seg" style="flex:1;background:var(--panel-2)"></div>';}
+
+  const leg=$("vLegend"); leg.innerHTML="";
+  order.forEach(k=>{
+    if(!counts[k])return;
+    const el=document.createElement("div"); el.className="lg";
+    el.innerHTML=`<span class="sw" style="background:${ROLES[k].hex}"></span>
+      <b>${counts[k]}</b> ${ROLES[k].label}${counts[k]>1?"s":""}`;
+    leg.appendChild(el);
+  });
+
+  // team cards
+  const team=$("vTeam"); team.innerHTML="";
+  if(!total){team.innerHTML='<div class="team-empty">Add squad members to populate the board.</div>';}
+  c.members.forEach(m=>{
+    const r=ROLES[m.role];
+    const el=document.createElement("div"); el.className="member";
+    el.innerHTML=`<div class="ava" style="background:${r.hex};box-shadow:0 0 0 2px ${r.hex}40">${initials(m.name)}</div>
+      <div class="m-meta">
+        <div class="m-name">${esc(m.name)}</div>
+        <div class="m-role" style="color:${r.hex}">${r.label}</div>
+        ${m.detail?`<div class="m-detail">${esc(m.detail)}</div>`:""}
+      </div>`;
+    team.appendChild(el);
+  });
+
+  $("vDate").textContent=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+}
+
+/* ---------- present mode ---------- */
+$("btnPresent").onclick=()=>document.body.classList.add("present");
+$("btnExit").onclick=()=>document.body.classList.remove("present");
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.body.classList.remove("present");});
+
+/* ---------- save / load ---------- */
+$("btnSave").onclick=()=>{
+  const blob=new Blob([JSON.stringify(slides,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="squad-status-board.json"; a.click();
+};
+$("btnLoad").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);
+    if(Array.isArray(d)&&d.length){slides=d;idx=0;syncForm();render();paintTabs();}
+  }catch(err){alert("Could not read that file — expected a saved board JSON.");}};
+  rd.readAsText(f); e.target.value="";
+});
+
+/* ---------- PNG export ---------- */
+$("btnPng").onclick=()=>{
+  const node=$("slide");
+  if(typeof html2canvas==="undefined"){
+    alert("PNG tool didn't load (no internet). Use Present, then screenshot the slide.");
+    return;
+  }
+  html2canvas(node,{backgroundColor:"#0E1520",scale:2,useCORS:true}).then(cv=>{
+    const a=document.createElement("a");
+    a.href=cv.toDataURL("image/png");
+    a.download=(cur().title||"squad").replace(/\s+/g,"-").toLowerCase()+"-status.png";
+    a.click();
+  }).catch(()=>alert("Couldn't capture image. Try Present mode + screenshot."));
+};
+
+/* ---------- boot ---------- */
+pendingRole="dev"; paintPills();
+syncForm(); render(); paintTabs();
+</script>
+</body>
+</html>
