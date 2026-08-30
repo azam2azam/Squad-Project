@@ -28,7 +28,10 @@ public static class DependencyInjection
                 case "postgres":
                 case "postgresql":
                     options.UseNpgsql(connectionString, npgsql =>
-                        npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+                    {
+                        npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+                        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
                     break;
 
                 case "sqlserver":
@@ -36,6 +39,11 @@ public static class DependencyInjection
                     {
                         sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
                         sql.EnableRetryOnFailure(3);
+                        // Boards fan out to members and then to people. Split queries avoid
+                        // the cartesian duplication a single join would produce. Set here
+                        // rather than per-query so the Application layer stays free of
+                        // relational concerns.
+                        sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                     });
                     break;
 
@@ -49,6 +57,7 @@ public static class DependencyInjection
 
         // Integrations are abstracted so they can be swapped or mocked (spec section 10).
         // The real implementations land in M4 (export) and M5 (Jira).
+        services.AddSingleton<IBoardNotifier, NullBoardNotifier>();
         services.AddSingleton<IJiraClient, DisabledJiraClient>();
         services.AddSingleton<IExportRenderer, UnavailableExportRenderer>();
 

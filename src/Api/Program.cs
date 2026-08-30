@@ -1,4 +1,5 @@
 using Api.Common;
+using Application;
 using Application.Abstractions;
 using Infrastructure;
 using Infrastructure.Persistence;
@@ -13,6 +14,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Services(services)
     .Enrich.FromLogContext());
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();

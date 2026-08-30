@@ -1,0 +1,249 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.portfolio {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.portfolio__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.portfolio__title {
+  font-size: 26px;
+}
+
+.portfolio__sub {
+  margin: 4px 0 0;
+  color: #5d6b7e;
+  font-size: 13px;
+}
+
+.portfolio__filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+
+.filter__input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--ink-tx);
+
+  &:focus {
+    border-color: var(--accent-deep);
+    outline: none;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.portfolio__state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #5d6b7e;
+
+  &--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+}
+
+.portfolio__error {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #8a2b2b;
+  background: color-mix(in srgb, var(--status-blocked) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--status-blocked) 40%, var(--card-line));
+}
+
+// ---------------------------------------------------------------------------
+// Board cards — dark, so the portfolio reads as the same product as the slides.
+// ---------------------------------------------------------------------------
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 18px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--tx);
+  text-decoration: none;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--board-color) 50%, var(--line));
+  }
+
+  @include focus-ring;
+}
+
+.board__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.board__product {
+  color: var(--accent);
+}
+
+.board__sprint {
+  color: var(--tx-dim);
+}
+
+.board__title {
+  margin: 4px 0 0;
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--tx);
+}
+
+.board__squad {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tx-mut);
+}
+
+.board__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.board__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--board-color);
+}
+
+.board__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--board-color);
+}
+
+.board__percent {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--tx);
+}
+
+.board__track {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.board__fill {
+  display: block;
+  height: 100%;
+  background: var(--board-color);
+  transition: width var(--transition-med);
+}
+
+.board__legend {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--tx-dim);
+  line-height: 1.4;
+}
+
+.board__delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--tx-dim);
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+
+  .board:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--status-blocked) 22%, transparent);
+    color: var(--status-blocked);
+  }
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+  }
+}

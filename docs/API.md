@@ -3,11 +3,84 @@
 Base path `/api/v1`. JSON in, JSON out. Validation failures and domain-rule violations
 return RFC 7807 `application/problem+json`.
 
-## Implemented in M1
+## Implemented
 
-### `GET /api/v1/metadata`
+### Boards (M2)
 
-Role and status reference data with canonical labels and design-token colours. The client
+```
+GET    /api/v1/boards                  list (paginated portfolio)
+POST   /api/v1/boards                  create
+GET    /api/v1/boards/{id}             board + members, composition computed
+PUT    /api/v1/boards/{id}             update meta
+POST   /api/v1/boards/{id}/duplicate   deep copy including membership
+DELETE /api/v1/boards/{id}             soft delete
+PUT    /api/v1/boards/reorder          [{ id, orderIndex }]
+```
+
+`GET /boards` accepts `?q=` (matches title, product or squad), `?status=` (integer enum),
+`?page=` and `?pageSize=`.
+
+`GET /boards/{id}` returns the board with its members, the **server-computed**
+composition, and advisory `warnings`:
+
+```json
+{
+  "id": "8f1c4d10-0000-4000-a000-000000000001",
+  "title": "OPD Screen Revamp",
+  "product": "VIDA HIS",
+  "squadName": "Squad Alpha",
+  "sprint": "Sprint 14",
+  "status": 0,
+  "statusLabel": "On Track",
+  "statusColor": "#34D399",
+  "progressPercent": 68,
+  "composition": {
+    "total": 6,
+    "legendText": "1 Product Owner · 1 Tech Lead · 2 Developers · 1 QA Engineer · 1 UI/UX Designer",
+    "segments": [
+      { "role": 0, "label": "Product Owner", "color": "#2DD4BF", "count": 1, "percent": 16.67 }
+    ]
+  },
+  "members": [
+    {
+      "id": "…",
+      "fullName": "Nadia Al-Harbi",
+      "initials": "NA",
+      "role": 0,
+      "roleLabel": "Product Owner",
+      "roleColor": "#2DD4BF",
+      "detail": "Outpatient journey · KPI owner",
+      "orderIndex": 0
+    }
+  ],
+  "warnings": []
+}
+```
+
+Segment percentages always sum to exactly 100 — rounding drift is absorbed by the
+largest segment so the composition bar fills completely.
+
+`warnings` are advisory and never block a write: a squad with no Product Owner or no
+Developers, or a Blocked board with no blocker note, still saves.
+
+Validation failures return every field's problem at once:
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Validation failed",
+  "status": 400,
+  "instance": "/api/v1/boards",
+  "errors": {
+    "Title": ["'Title' must not be empty."],
+    "ProgressPercent": ["'Progress Percent' must be between 0 and 100. You entered 150."]
+  }
+}
+```
+
+### Metadata (M1)
+
+`GET /api/v1/metadata` — role and status reference data with canonical labels and design-token colours. The client
 fetches this at startup so the palette is defined in one place.
 
 ```json
@@ -49,18 +122,6 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 ## Planned
 
 Signatures are fixed; the implementations arrive in the milestone noted.
-
-### Boards — M2
-
-```
-GET    /api/v1/boards                  list (paginated portfolio)
-POST   /api/v1/boards                  create
-GET    /api/v1/boards/{id}             board + members, composition computed
-PUT    /api/v1/boards/{id}             update meta
-POST   /api/v1/boards/{id}/duplicate   deep copy including membership
-DELETE /api/v1/boards/{id}             soft delete
-PUT    /api/v1/boards/reorder          [{ id, orderIndex }]
-```
 
 ### Membership and roster — M3
 

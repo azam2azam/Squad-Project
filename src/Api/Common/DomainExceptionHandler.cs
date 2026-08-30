@@ -1,4 +1,5 @@
 using Domain.Common;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,10 +18,21 @@ public sealed class DomainExceptionHandler(
     {
         var (status, title) = exception switch
         {
+            ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
             DomainException => (StatusCodes.Status400BadRequest, "Request violates a domain rule"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
+
+        // Field-level failures go in the standard "errors" extension so the client can
+        // attach each message to the input that produced it.
+        var extensions = new Dictionary<string, object?>();
+        if (exception is ValidationException validationException)
+        {
+            extensions["errors"] = validationException.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+        }
 
         if (status == StatusCodes.Status500InternalServerError)
         {
@@ -41,7 +53,8 @@ public sealed class DomainExceptionHandler(
                 Detail = status == StatusCodes.Status500InternalServerError
                     ? null
                     : exception.Message,
-                Instance = httpContext.Request.Path
+                Instance = httpContext.Request.Path,
+                Extensions = extensions
             }
         });
     }

@@ -1,0 +1,339 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.editor {
+  display: grid;
+  // Builder is fixed-ish; the stage takes the rest.
+  grid-template-columns: minmax(340px, 420px) 1fr;
+  gap: 28px;
+  align-items: start;
+  padding: 24px;
+  max-width: 1680px;
+  margin: 0 auto;
+
+  @include below-stack {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+.editor__state {
+  max-width: 460px;
+  margin: 80px auto;
+  text-align: center;
+  color: var(--tx-dim);
+
+  &--error {
+    color: var(--ink-tx);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mobile Build / Slide toggle — hidden on wide screens where both are visible.
+// ---------------------------------------------------------------------------
+
+.editor__tabs {
+  display: none;
+
+  @include below-stack {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius-pill);
+  }
+}
+
+.editor__tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--tx-dim);
+  font-weight: 600;
+
+  &.is-active {
+    background: var(--ink);
+    color: var(--tx);
+  }
+}
+
+// Scoped through .editor deliberately: at equal specificity the later rule wins, and
+// .builder's own `display: flex` is declared below this one. The extra selector makes
+// the toggle independent of declaration order.
+.editor .is-hidden-mobile {
+  @include below-stack {
+    display: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Builder
+// ---------------------------------------------------------------------------
+
+.builder {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.builder__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.builder__title {
+  font-size: 20px;
+}
+
+.builder__back {
+  font-size: 13px;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+
+  &--warn {
+    gap: 6px;
+    border-color: color-mix(in srgb, var(--status-at-risk) 45%, var(--card-line));
+    background: color-mix(in srgb, var(--status-at-risk) 8%, var(--card));
+  }
+}
+
+.card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card__title {
+  font-size: 14px;
+}
+
+.card__hint {
+  font-size: 11px;
+  color: var(--tx-dim);
+}
+
+.card__warn-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.card__warn-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #6b5a1e;
+}
+
+// ---------------------------------------------------------------------------
+// Fields
+// ---------------------------------------------------------------------------
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5d6b7e;
+}
+
+.field__output {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--ink-tx);
+}
+
+.field__input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+  transition: border-color var(--transition-fast);
+
+  &:hover {
+    border-color: #cbd3de;
+  }
+
+  &:focus {
+    border-color: var(--accent-deep);
+    outline: none;
+  }
+
+  @include focus-ring(var(--accent-deep));
+
+  &--area {
+    resize: vertical;
+    min-height: 54px;
+  }
+}
+
+.field__slider {
+  width: 100%;
+  accent-color: var(--accent-deep);
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// Read-only squad list (membership editing lands in M3)
+// ---------------------------------------------------------------------------
+
+.roster {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.roster__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  min-width: 0;
+
+  &--empty {
+    color: var(--tx-dim);
+    font-style: italic;
+  }
+}
+
+.roster__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.roster__name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster__role {
+  margin-left: auto;
+  color: var(--tx-dim);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+// ---------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------
+
+.builder__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-weight: 600;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    border-color: #cbd3de;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+
+    &:hover:not(:disabled) {
+      background: #16202d;
+    }
+  }
+}
+
+.builder__saved {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.builder__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #8a2b2b;
+  background: color-mix(in srgb, var(--status-blocked) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--status-blocked) 40%, var(--card-line));
+}
+
+// ---------------------------------------------------------------------------
+// Slide stage — sticky so it stays in view while the form scrolls.
+// ---------------------------------------------------------------------------
+
+.stage {
+  position: sticky;
+  top: 24px;
+  min-width: 0;
+
+  @include below-stack {
+    position: static;
+    top: auto;
+  }
+}
+
+.stage__inner {
+  min-width: 0;
+}

@@ -1,0 +1,106 @@
+<div class="portfolio">
+  <header class="portfolio__head">
+    <div>
+      <h1 class="portfolio__title">Portfolio</h1>
+      <p class="portfolio__sub">
+        {{ totalCount() }} {{ totalCount() === 1 ? 'board' : 'boards' }} across the squad
+      </p>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="createBoard()" [disabled]="creating()">
+      {{ creating() ? 'Creating…' : 'New board' }}
+    </button>
+  </header>
+
+  <div class="portfolio__filters">
+    <label class="filter">
+      <span class="visually-hidden">Search boards</span>
+      <input
+        class="filter__input"
+        type="search"
+        placeholder="Search title, product or squad…"
+        [value]="search()"
+        (change)="onSearch($any($event.target).value)"
+      />
+    </label>
+
+    <label class="filter">
+      <span class="visually-hidden">Filter by status</span>
+      <select class="filter__input" (change)="onStatusFilter($any($event.target).value)">
+        <option value="">All statuses</option>
+        @for (status of statuses(); track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="portfolio__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="portfolio__state">Loading boards…</p>
+  } @else if (isEmpty()) {
+    <div class="portfolio__state portfolio__state--empty">
+      @if (isFiltered()) {
+        <p>No boards match those filters.</p>
+      } @else {
+        <p>No boards yet.</p>
+        <button type="button" class="btn btn--primary" (click)="createBoard()">
+          Create the first one
+        </button>
+      }
+    </div>
+  } @else {
+    <ul class="grid">
+      @for (board of items(); track board.id) {
+        <li class="grid__cell">
+          <a
+            class="board"
+            [routerLink]="['/boards', board.id]"
+            [style.--board-color]="board.statusColor"
+          >
+            <div class="board__top">
+              <span class="board__product">{{ board.product }}</span>
+              @if (board.sprint) {
+                <span class="board__sprint">{{ board.sprint }}</span>
+              }
+            </div>
+
+            <h2 class="board__title">{{ board.title }}</h2>
+            <p class="board__squad">{{ board.squadName }}</p>
+
+            <div class="board__status">
+              <span class="board__badge">
+                <span class="board__dot" aria-hidden="true"></span>
+                {{ board.statusLabel }}
+              </span>
+              <span class="board__percent">{{ board.progressPercent }}%</span>
+            </div>
+
+            <div
+              class="board__track"
+              role="img"
+              [attr.aria-label]="board.progressPercent + ' percent complete'"
+            >
+              <span class="board__fill" [style.width.%]="board.progressPercent"></span>
+            </div>
+
+            <p class="board__legend">{{ board.compositionLegend }}</p>
+
+            <button
+              type="button"
+              class="board__delete"
+              (click)="deleteBoard(board, $event)"
+              [attr.aria-label]="'Delete ' + board.title"
+              title="Delete board"
+            >
+              ×
+            </button>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>

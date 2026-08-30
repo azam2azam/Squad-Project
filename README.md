@@ -9,19 +9,20 @@ cards — ready to present or export.
 
 ---
 
-## Current status — M1 complete
+## Current status — M2 complete
 
 | Milestone | Scope | State |
 |---|---|---|
 | **M1** | Solution + Angular scaffold, domain model, EF migration + seed, health check, CI | ✅ Done |
-| M2 | Board CRUD API + board editor wired to the live `SlideCanvas` | Next |
+| **M2** | Board CRUD API + board editor wired to the live `SlideCanvas` | ✅ Done |
 | M3 | Roster CRUD, typeahead, membership, composition | Planned |
 | M4 | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | Planned |
 | M5 | JWT auth + RBAC, portfolio view, Jira sync, audit log | Planned |
 | M6 | Test coverage, e2e, Dockerfiles, K8s/Helm, docs | Planned |
 
-M1 delivers a running, seeded, health-checked stack. The board editor and portfolio
-screens are deliberate placeholders that name the milestone which fills them.
+M2 delivers the working product loop: create a board, edit it in the builder, watch the
+slide update live, save it. The roster screen is still a deliberate placeholder naming
+the milestone that fills it, and squad membership is read-only until M3.
 
 ---
 
@@ -101,7 +102,7 @@ dotnet ef migrations add <Name> --project src/Infrastructure --startup-project s
   /Infrastructure   EF Core, migrations, seeder, integration implementations
   /Api              ASP.NET Core host, controllers, SignalR hub, auth
 /web                Angular app (standalone components, Signals, strict mode)
-/tests              Domain.Tests (xUnit + FluentAssertions)
+/tests              Domain.Tests, Application.Tests (xUnit + FluentAssertions + SQLite)
 /deploy             docker-compose, K8s manifests, Helm chart (M6)
 /docs               ARCHITECTURE.md, API.md, SETUP.md
 ```

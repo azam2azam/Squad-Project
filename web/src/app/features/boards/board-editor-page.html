@@ -1,0 +1,201 @@
+@if (loading()) {
+  <p class="editor__state">Loading board…</p>
+} @else if (error() && !serverBoardLoaded()) {
+  <div class="editor__state editor__state--error">
+    <p>{{ error() }}</p>
+    <a routerLink="/portfolio">Back to the portfolio</a>
+  </div>
+} @else if (draft(); as d) {
+  <div class="editor">
+    <!-- Mobile only: the builder and the slide cannot both fit, so they toggle. -->
+    <div class="editor__tabs" role="tablist" aria-label="Editor view">
+      <button
+        type="button"
+        role="tab"
+        class="editor__tab"
+        [class.is-active]="mobileTab() === 'build'"
+        [attr.aria-selected]="mobileTab() === 'build'"
+        (click)="mobileTab.set('build')"
+      >
+        Build
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="editor__tab"
+        [class.is-active]="mobileTab() === 'slide'"
+        [attr.aria-selected]="mobileTab() === 'slide'"
+        (click)="mobileTab.set('slide')"
+      >
+        Slide
+      </button>
+    </div>
+
+    <!-- ---------- Builder ---------- -->
+    <form
+      class="builder"
+      [class.is-hidden-mobile]="mobileTab() !== 'build'"
+      (submit)="$event.preventDefault(); save()"
+    >
+      <div class="builder__header">
+        <h1 class="builder__title">Build the slide</h1>
+        <a class="builder__back" routerLink="/portfolio">All boards</a>
+      </div>
+
+      <div class="card">
+        <label class="field">
+          <span class="field__label">Project title</span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="d.title"
+            (input)="update('title', $any($event.target).value)"
+            placeholder="OPD Screen Revamp"
+            maxlength="200"
+            required
+          />
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Product</span>
+            <input
+              class="field__input"
+              type="text"
+              [value]="d.product"
+              (input)="update('product', $any($event.target).value)"
+              placeholder="VIDA HIS"
+              maxlength="100"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Sprint</span>
+            <input
+              class="field__input"
+              type="text"
+              [value]="d.sprint"
+              (input)="update('sprint', $any($event.target).value)"
+              placeholder="Sprint 14"
+              maxlength="100"
+            />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Squad</span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="d.squadName"
+            (input)="update('squadName', $any($event.target).value)"
+            placeholder="Squad Alpha"
+            maxlength="100"
+            required
+          />
+        </label>
+      </div>
+
+      <div class="card">
+        <label class="field">
+          <span class="field__label">Status</span>
+          <select
+            class="field__input"
+            [value]="d.status"
+            (change)="onStatusChange($any($event.target).value)"
+          >
+            @for (status of statuses(); track status.value) {
+              <option [value]="status.value">{{ status.label }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="field">
+          <span class="field__label">
+            Progress
+            <output class="field__output">{{ d.progressPercent }}%</output>
+          </span>
+          <input
+            class="field__slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="d.progressPercent"
+            (input)="onProgressInput($any($event.target).value)"
+            aria-label="Progress percent"
+          />
+        </div>
+
+        <label class="field">
+          <span class="field__label">Blocker note</span>
+          <textarea
+            class="field__input field__input--area"
+            rows="2"
+            [value]="d.blockerNote"
+            (input)="update('blockerNote', $any($event.target).value)"
+            placeholder="What is holding this up?"
+            maxlength="1000"
+          ></textarea>
+        </label>
+      </div>
+
+      @if (warnings().length > 0) {
+        <div class="card card--warn" role="status">
+          <p class="card__warn-title">Worth a look</p>
+          <ul class="card__warn-list">
+            @for (warning of warnings(); track warning) {
+              <li>{{ warning }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="card card--members">
+        <div class="card__head">
+          <h2 class="card__title">Squad</h2>
+          <span class="card__hint">Editing membership arrives in M3</span>
+        </div>
+        <ul class="roster">
+          @for (member of preview()!.members; track member.id) {
+            <li class="roster__item">
+              <span class="roster__dot" [style.background]="member.roleColor"></span>
+              <span class="roster__name">{{ member.fullName }}</span>
+              <span class="roster__role">{{ member.roleLabel }}</span>
+            </li>
+          } @empty {
+            <li class="roster__item roster__item--empty">No members yet</li>
+          }
+        </ul>
+      </div>
+
+      @if (error()) {
+        <p class="builder__error" role="alert">{{ error() }}</p>
+      }
+
+      <div class="builder__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!isDirty() || saving()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+        <button type="button" class="btn" (click)="revert()" [disabled]="!isDirty() || saving()">
+          Revert
+        </button>
+        <button type="button" class="btn" (click)="duplicate()" [disabled]="saving()">
+          Duplicate
+        </button>
+
+        @if (savedAt() && !isDirty()) {
+          <span class="builder__saved" role="status">Saved</span>
+        }
+      </div>
+    </form>
+
+    <!-- ---------- Live slide ---------- -->
+    <div class="stage" [class.is-hidden-mobile]="mobileTab() !== 'slide'">
+      <div class="stage__inner">
+        <app-slide-frame [board]="preview()!" />
+      </div>
+    </div>
+  </div>
+}
