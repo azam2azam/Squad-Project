@@ -1,0 +1,130 @@
+@use '../styles/mixins' as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 10px 16px;
+  background: var(--ink);
+  color: var(--tx);
+  border-radius: 0 0 var(--radius-sm) 0;
+
+  &:focus {
+    left: 0;
+  }
+}
+
+.shell-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--ink);
+  color: var(--tx);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(140deg, var(--accent), var(--accent-deep));
+    flex: none;
+  }
+
+  &__title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  &__org {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tx-dim);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: 2px 8px;
+  }
+
+  &__status {
+    margin-left: auto;
+  }
+}
+
+.shell-nav {
+  display: flex;
+  gap: 4px;
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    color: var(--tx-mut);
+    text-decoration: none;
+    font-weight: 500;
+    transition:
+      background var(--transition-fast),
+      color var(--transition-fast);
+    @include focus-ring;
+
+    &:hover {
+      color: var(--tx);
+      background: var(--panel);
+    }
+
+    &.is-active {
+      color: var(--ink);
+      background: var(--accent);
+    }
+  }
+}
+
+.shell-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &--ok {
+    color: var(--status-on-track);
+  }
+
+  &--warn {
+    color: var(--status-blocked);
+  }
+}
+
+.shell-main {
+  flex: 1 1 auto;
+  min-height: 0;
+}

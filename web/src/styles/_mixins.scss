@@ -1,0 +1,34 @@
+// Shared primitives used by the slide and builder components.
+
+/// Visible keyboard focus. Applied on :focus-visible only, so pointer users
+/// do not see rings but keyboard users always do (spec section 9 quality floor).
+@mixin focus-ring($color: var(--accent)) {
+  &:focus-visible {
+    outline: 2px solid #{$color};
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+/// Hides content visually while leaving it available to screen readers.
+/// Used to expose the ring percentage and composition counts as text.
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/// The builder stacks below this width and offers a Build / Slide toggle.
+$breakpoint-stack: 920px;
+
+@mixin below-stack {
+  @media (max-width: $breakpoint-stack) {
+    @content;
+  }
+}

@@ -1,0 +1,69 @@
+// Design tokens — verbatim from the prototype (spec section 9).
+// These are the visual contract. The server mirrors the role and status colours in
+// Domain/Enums/RoleMetadata.cs and BoardStatusMetadata.cs so exports match the client;
+// change them in both places or exports will drift from the screen.
+
+:root {
+  // ---- Slide surface (the dark deliverable) ----
+  --ink: #0e1520;
+  --panel: #16202d;
+  --panel-2: #1c2836;
+  --line: rgba(255, 255, 255, 0.09);
+  --tx: #eaf1f8;
+  --tx-mut: #8595a9;
+  --tx-dim: #5d6b7e;
+  --accent: #2dd4bf;
+  --accent-deep: #0d9488;
+
+  // ---- Builder surface (the light editing chrome) ----
+  --bg: #eef1f5;
+  --card: #ffffff;
+  --card-line: #e1e6ed;
+  --ink-tx: #1b2532;
+
+  // ---- Role colours ----
+  --role-product-owner: #2dd4bf;
+  --role-tech-lead: #a78bfa;
+  --role-developer: #6366f1;
+  --role-qa-engineer: #f59e0b;
+  --role-ux-designer: #ec4899;
+  --role-business-analyst: #38bdf8;
+  --role-dev-ops: #10b981;
+
+  // ---- Status colours ----
+  --status-on-track: #34d399;
+  --status-at-risk: #fbbf24;
+  --status-blocked: #f87171;
+  --status-in-review: #60a5fa;
+  --status-delivered: #2dd4bf;
+
+  // ---- Typography ----
+  // Space Grotesk carries display copy: titles, the ring number, the eyebrow.
+  // Inter carries UI and body copy.
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  // ---- Spacing / geometry ----
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  // The slide renders at a fixed 16:9 so screen and export agree.
+  --slide-width: 1280px;
+  --slide-aspect: 16 / 9;
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+  --shadow-slide: 0 24px 60px rgba(8, 14, 22, 0.35);
+
+  --transition-fast: 120ms ease;
+  --transition-med: 240ms ease;
+}
+
+// Honour the OS setting rather than animating regardless (spec section 9 quality floor).
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-med: 0ms;
+  }
+}

@@ -1,0 +1,26 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+coverage*.json
+coverage*.xml
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# Environment and secrets — never commit these
+*.env
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+
+# OS
+Thumbs.db
+.DS_Store

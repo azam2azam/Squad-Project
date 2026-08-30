@@ -1,0 +1,58 @@
+@use 'styles/tokens';
+@use 'styles/mixins' as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink-tx);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  @include focus-ring;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  @include focus-ring;
+}
+
+a {
+  color: var(--accent-deep);
+  @include focus-ring;
+}
+
+/// Skip link target and screen-reader-only utility.
+.visually-hidden {
+  @include visually-hidden;
+}
