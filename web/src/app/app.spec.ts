@@ -104,7 +104,7 @@ describe('App shell', () => {
     await fixture.whenStable();
 
     const links = [...(fixture.nativeElement as HTMLElement).querySelectorAll('.shell-nav__link')];
-    expect(links.map((l) => l.textContent?.trim())).toEqual(['Portfolio', 'Roster']);
+    expect(links.map((l) => l.textContent?.trim())).toEqual(['Overview', 'Boards', 'Roster']);
   });
 
   it('hides the roster from a product owner', async () => {
@@ -115,7 +115,7 @@ describe('App shell', () => {
     await fixture.whenStable();
 
     const links = [...(fixture.nativeElement as HTMLElement).querySelectorAll('.shell-nav__link')];
-    expect(links.map((l) => l.textContent?.trim())).toEqual(['Portfolio']);
+    expect(links.map((l) => l.textContent?.trim())).toEqual(['Overview', 'Boards']);
   });
 
   it('marks a viewer as read-only in the header', async () => {

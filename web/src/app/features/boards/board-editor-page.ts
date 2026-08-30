@@ -59,6 +59,19 @@ export class BoardEditorPage {
   protected readonly canWrite = this.auth.canWrite;
   protected readonly jiraEnabled = this.metadata.jiraSyncEnabled;
 
+  /** Risk options. Static: these are a fixed vocabulary, not deployment config. */
+  protected readonly riskLevels = [
+    { value: 0, label: 'No risk', color: '#8595A9' },
+    { value: 1, label: 'Low', color: '#34D399' },
+    { value: 2, label: 'Medium', color: '#FBBF24' },
+    { value: 3, label: 'High', color: '#FB923C' },
+    { value: 4, label: 'Critical', color: '#F87171' },
+  ];
+
+  protected onRiskChange(value: string): void {
+    this.update('riskLevel', Number(value));
+  }
+
   protected readonly auditEntries = signal<BoardAuditEntry[] | null>(null);
   protected readonly auditOpen = signal(false);
   protected readonly jiraSuggestion = signal<JiraSuggestion | null>(null);
@@ -127,7 +140,9 @@ export class BoardEditorPage {
       draft.sprint !== (board.sprint ?? '') ||
       draft.status !== board.status ||
       draft.progressPercent !== board.progressPercent ||
-      draft.blockerNote !== (board.blockerNote ?? '')
+      draft.blockerNote !== (board.blockerNote ?? '') ||
+      draft.riskLevel !== board.riskLevel ||
+      draft.riskNote !== (board.riskNote ?? '')
     );
   });
 
@@ -142,6 +157,13 @@ export class BoardEditorPage {
     // 2 is Blocked. Recomputed here because the blocker note is edited locally.
     if (draft.status === 2 && !draft.blockerNote.trim()) {
       warnings.push('Status is Blocked but no blocker note has been recorded.');
+    }
+
+    // Same rule for risk, and for the same reason: a Medium-or-worse risk with no
+    // note tells a reviewer to worry without saying what about.
+    if (draft.riskLevel >= 2 && !draft.riskNote.trim()) {
+      const label = this.riskLevels.find((r) => r.value === draft.riskLevel)?.label;
+      warnings.push(`Risk is ${label} but no risk note explains why.`);
     }
 
     return warnings;
@@ -232,6 +254,8 @@ export class BoardEditorPage {
         status: draft.status,
         progressPercent: draft.progressPercent,
         blockerNote: draft.blockerNote.trim() || null,
+        riskLevel: draft.riskLevel,
+        riskNote: draft.riskNote.trim() || null,
       })
       .subscribe({
         next: (saved) => {
@@ -385,6 +409,8 @@ interface DraftState {
   status: BoardStatus;
   progressPercent: number;
   blockerNote: string;
+  riskLevel: number;
+  riskNote: string;
 }
 
 function toDraft(board: BoardDetail): DraftState {
@@ -396,6 +422,8 @@ function toDraft(board: BoardDetail): DraftState {
     status: board.status,
     progressPercent: board.progressPercent,
     blockerNote: board.blockerNote ?? '',
+    riskLevel: board.riskLevel ?? 0,
+    riskNote: board.riskNote ?? '',
   };
 }
 

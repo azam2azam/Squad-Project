@@ -10,9 +10,10 @@
 
     @if (isSignedIn()) {
       <nav class="shell-nav" aria-label="Primary">
-        <a routerLink="/portfolio" routerLinkActive="is-active" class="shell-nav__link">
-          Portfolio
+        <a routerLink="/dashboard" routerLinkActive="is-active" class="shell-nav__link">
+          Overview
         </a>
+        <a routerLink="/portfolio" routerLinkActive="is-active" class="shell-nav__link"> Boards </a>
         <!-- The roster is org-wide, so it is offered only to those the API would let in. -->
         @if (isAdmin()) {
           <a routerLink="/roster" routerLinkActive="is-active" class="shell-nav__link">Roster</a>

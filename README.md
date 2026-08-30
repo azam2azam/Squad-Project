@@ -1,4 +1,5 @@
-# Squad Status Board
+| **M6** | e2e tests, Dockerfiles, K8s/Helm, docs | ✅ Done |
+| **M7** | Delivery dashboard, portfolio charts, risk tracking | ✅ Done |# Squad Status Board
 
 A production web application for composing, maintaining and presenting live status
 snapshots for engineering squads inside the **Product Innovation & Revamp Team (PIRT)**.
@@ -9,7 +10,7 @@ cards — ready to present or export.
 
 ---
 
-## Current status — complete
+## Current status — complete, plus a delivery dashboard
 
 | Milestone | Scope | State |
 |---|---|---|

@@ -104,6 +104,9 @@ export interface BoardSummary {
   statusColor: string;
   progressPercent: number;
   memberCount: number;
+  riskLevel: number;
+  riskLabel: string;
+  riskColor: string;
   compositionLegend: string;
   orderIndex: number;
   updatedAt: string;
@@ -111,6 +114,8 @@ export interface BoardSummary {
 
 export interface BoardDetail extends Omit<BoardSummary, 'memberCount' | 'compositionLegend'> {
   blockerNote: string | null;
+  /** Delivery risk, tracked separately from status. */
+  riskNote: string | null;
   velocity: number | null;
   targetDate: string | null;
   jiraProjectKey: string | null;

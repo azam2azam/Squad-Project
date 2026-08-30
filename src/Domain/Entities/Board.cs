@@ -40,6 +40,12 @@ public class Board : Entity
     public int ProgressPercent { get; private set; }
 
     public string? BlockerNote { get; private set; }
+
+    /// <summary>How likely this is to go wrong, tracked separately from Status.</summary>
+    public RiskLevel RiskLevel { get; private set; }
+
+    /// <summary>What the risk actually is. Required once risk is Medium or above.</summary>
+    public string? RiskNote { get; private set; }
     public double? Velocity { get; private set; }
     public DateOnly? TargetDate { get; private set; }
     public string? JiraProjectKey { get; private set; }
@@ -93,14 +99,26 @@ public class Board : Entity
                 warnings.Add("Status is Blocked but no blocker note has been recorded.");
             }
 
+            // A risk with no description is unactionable — it tells a reviewer to worry
+            // without telling them what about.
+            if (RiskLevelMetadata.IsNotable(RiskLevel) && string.IsNullOrWhiteSpace(RiskNote))
+            {
+                warnings.Add(
+                    $"Risk is {RiskLevelMetadata.Label(RiskLevel)} but no risk note explains why.");
+            }
+
             return warnings;
         }
     }
 
     public void UpdateMeta(string title, string product, string squadName, string? sprint,
         BoardStatus status, int progressPercent, string? blockerNote, double? velocity,
-        DateOnly? targetDate, string? jiraProjectKey, string? jiraBoardId)
+        DateOnly? targetDate, string? jiraProjectKey, string? jiraBoardId,
+        RiskLevel riskLevel = RiskLevel.None, string? riskNote = null)
     {
+        RiskLevel = riskLevel;
+        RiskNote = Trim(riskNote);
+
         SetTitle(title);
         SetProduct(product);
         SetSquadName(squadName);
@@ -215,6 +233,8 @@ public class Board : Entity
             OrderIndex + 1)
         {
             BlockerNote = BlockerNote,
+            RiskLevel = RiskLevel,
+            RiskNote = RiskNote,
             Velocity = Velocity,
             TargetDate = TargetDate,
             JiraProjectKey = JiraProjectKey,

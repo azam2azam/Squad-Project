@@ -145,6 +145,36 @@
         </label>
       </div>
 
+      <!-- Risk is deliberately separate from status: a board can be On Track and
+           High risk at once, and collapsing the two would hide exactly the boards
+           worth looking at. -->
+      <div class="card">
+        <label class="field">
+          <span class="field__label">Risk level</span>
+          <select
+            class="field__input"
+            [value]="d.riskLevel"
+            (change)="onRiskChange($any($event.target).value)"
+          >
+            @for (risk of riskLevels; track risk.value) {
+              <option [value]="risk.value">{{ risk.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Risk note</span>
+          <textarea
+            class="field__input field__input--area"
+            rows="2"
+            [value]="d.riskNote"
+            (input)="update('riskNote', $any($event.target).value)"
+            placeholder="What could go wrong, and what would it cost?"
+            maxlength="1000"
+          ></textarea>
+        </label>
+      </div>
+
       @if (warnings().length > 0) {
         <div class="card card--warn" role="status">
           <p class="card__warn-title">Worth a look</p>

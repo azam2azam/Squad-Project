@@ -12,7 +12,13 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'portfolio',
+    redirectTo: 'dashboard',
+  },
+  {
+    path: 'dashboard',
+    title: 'Delivery overview · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
   {
     path: 'login',

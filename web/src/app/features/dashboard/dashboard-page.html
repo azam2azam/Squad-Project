@@ -1,0 +1,140 @@
+<div class="dash">
+  <header class="dash__head">
+    <div>
+      <h1 class="dash__title">Delivery overview</h1>
+      <p class="dash__sub">Product Innovation &amp; Revamp Team — portfolio health</p>
+    </div>
+    <a class="btn" routerLink="/portfolio">All boards</a>
+  </header>
+
+  @if (loading()) {
+    <p class="dash__state">Loading portfolio…</p>
+  } @else if (error()) {
+    <div class="dash__state">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn" (click)="load()">Try again</button>
+    </div>
+  } @else if (isEmpty()) {
+    <div class="dash__state">
+      <p>No boards yet — there is nothing to summarise.</p>
+      <a class="btn btn--primary" routerLink="/portfolio">Create the first board</a>
+    </div>
+  } @else if (summary(); as s) {
+    <!-- Headline numbers. Hero figures, not charts: a single value reads faster
+         as a number than as any plotted mark. -->
+    <section class="tiles" aria-label="Portfolio headline">
+      <div class="tile">
+        <span class="tile__value">{{ s.headline.totalBoards }}</span>
+        <span class="tile__label">Boards</span>
+      </div>
+      <div class="tile">
+        <span class="tile__value">{{ s.headline.squadCount }}</span>
+        <span class="tile__label">Squads</span>
+      </div>
+      <div class="tile">
+        <span class="tile__value">{{ s.headline.totalPeople }}</span>
+        <span class="tile__label">People on the roster</span>
+      </div>
+      <div class="tile">
+        <span class="tile__value">{{ s.headline.averageProgressPercent }}%</span>
+        <span class="tile__label">Average progress</span>
+      </div>
+      <div class="tile tile--good">
+        <span class="tile__value">{{ s.headline.onTrackPercent }}%</span>
+        <span class="tile__label">On track or delivered</span>
+      </div>
+      <div class="tile" [class.tile--warn]="s.headline.boardsNeedingAttention > 0">
+        <span class="tile__value">{{ s.headline.boardsNeedingAttention }}</span>
+        <span class="tile__label">Need attention</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2 class="panel__title">Status across the portfolio</h2>
+        <app-donut-chart [slices]="statusSlices()" centerLabel="Boards" />
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Average progress by squad</h2>
+        <p class="panel__note">Lowest first — the squads to ask about.</p>
+        <app-bar-chart [data]="squadProgress()" />
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Where the people are</h2>
+        <p class="panel__note">Assignments across all squads, by role.</p>
+        <app-bar-chart [data]="roleTotals()" unit="" color="var(--role-developer)" />
+      </section>
+
+      <section class="panel panel--wide">
+        <h2 class="panel__title">Risk register</h2>
+        @if (s.riskRegister.length === 0) {
+          <p class="panel__empty">Nothing blocked and no notable risk. Rare and good.</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Board</th>
+                  <th scope="col">Squad</th>
+                  <th scope="col">Risk</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Progress</th>
+                  <th scope="col">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (risk of s.riskRegister; track risk.boardId) {
+                  <tr>
+                    <th scope="row">
+                      <a [routerLink]="['/boards', risk.boardId]">{{ risk.title }}</a>
+                    </th>
+                    <td class="muted">{{ risk.squadName }}</td>
+                    <td>
+                      <!-- Status colours ship with a label, never colour alone. -->
+                      <span class="pill" [style.color]="risk.levelColor">
+                        <span
+                          class="pill__dot"
+                          [style.background]="risk.levelColor"
+                          aria-hidden="true"
+                        ></span>
+                        {{ risk.levelLabel }}
+                      </span>
+                    </td>
+                    <td class="muted">{{ risk.statusLabel }}</td>
+                    <td class="muted">{{ risk.progressPercent }}%</td>
+                    <td class="muted">{{ risk.riskNote ?? '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="panel panel--wide">
+        <h2 class="panel__title">Needs attention</h2>
+        @if (s.needsAttention.length === 0) {
+          <p class="panel__empty">Every board is clean.</p>
+        } @else {
+          <ul class="attention">
+            @for (item of s.needsAttention; track item.boardId) {
+              <li class="attention__item">
+                <a class="attention__board" [routerLink]="['/boards', item.boardId]">
+                  {{ item.title }}
+                </a>
+                <span class="attention__squad">{{ item.squadName }}</span>
+                <ul class="attention__reasons">
+                  @for (reason of item.reasons; track reason) {
+                    <li>{{ reason }}</li>
+                  }
+                </ul>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>

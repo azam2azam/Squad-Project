@@ -16,6 +16,8 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
         builder.Property(b => b.SquadName).IsRequired().HasMaxLength(100);
         builder.Property(b => b.Sprint).HasMaxLength(100);
         builder.Property(b => b.BlockerNote).HasMaxLength(1000);
+        builder.Property(b => b.RiskNote).HasMaxLength(1000);
+        builder.Property(b => b.RiskLevel).HasConversion<int>();
         builder.Property(b => b.JiraProjectKey).HasMaxLength(50);
         builder.Property(b => b.JiraBoardId).HasMaxLength(50);
         builder.Property(b => b.CreatedBy).IsRequired().HasMaxLength(200);
@@ -39,6 +41,8 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
 
         builder.HasIndex(b => b.OrderIndex);
         builder.HasIndex(b => b.IsDeleted);
+        // The dashboard risk register filters on this.
+        builder.HasIndex(b => b.RiskLevel);
 
         // Soft-deleted boards drop out of every query unless explicitly asked for.
         builder.HasQueryFilter(b => !b.IsDeleted);

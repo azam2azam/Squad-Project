@@ -17,6 +17,8 @@ public sealed record UpdateBoardMetaCommand(
     BoardStatus Status,
     int ProgressPercent,
     string? BlockerNote = null,
+    RiskLevel RiskLevel = RiskLevel.None,
+    string? RiskNote = null,
     double? Velocity = null,
     DateOnly? TargetDate = null,
     string? JiraProjectKey = null,
@@ -61,7 +63,8 @@ public sealed class UpdateBoardMetaCommandHandler(
         board.UpdateMeta(
             request.Title, request.Product, request.SquadName, request.Sprint,
             request.Status, request.ProgressPercent, request.BlockerNote,
-            request.Velocity, request.TargetDate, request.JiraProjectKey, request.JiraBoardId);
+            request.Velocity, request.TargetDate, request.JiraProjectKey, request.JiraBoardId,
+            request.RiskLevel, request.RiskNote);
 
         // Status and progress are the two fields reviewers ask "who changed this?" about.
         if (previousStatus != board.Status)

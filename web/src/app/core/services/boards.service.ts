@@ -17,6 +17,9 @@ export interface CreateBoardRequest {
 /** Payload for updating board metadata. Sent whole, not patched. */
 export interface UpdateBoardRequest extends CreateBoardRequest {
   blockerNote?: string | null;
+  /** Delivery risk, tracked separately from status. */
+  riskLevel?: number;
+  riskNote?: string | null;
   velocity?: number | null;
   targetDate?: string | null;
   jiraProjectKey?: string | null;
