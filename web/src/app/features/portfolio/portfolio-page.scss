@@ -247,3 +247,38 @@
     color: var(--tx);
   }
 }
+
+.portfolio__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+// The import control is a <label> wrapping a hidden file input, so it needs the
+// button's affordances applied by hand.
+label.btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+
+  &:focus-within {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
+  }
+
+  &.is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+.portfolio__notice {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #0d7a5f;
+  background: color-mix(in srgb, var(--status-on-track) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--status-on-track) 40%, var(--card-line));
+}

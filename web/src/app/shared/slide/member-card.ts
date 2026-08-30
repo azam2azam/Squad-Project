@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { SquadMember } from '../../core/models/board.models';
+import { withAlpha } from './color';
 
 /**
  * One person on the slide, transcribed from the prototype: a 36px rounded-square
@@ -11,7 +12,9 @@ import type { SquadMember } from '../../core/models/board.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="member" [style.--member-color]="member().roleColor">
-      <span class="member__ava" aria-hidden="true">{{ member().initials }}</span>
+      <span class="member__ava" [style.box-shadow]="halo()" aria-hidden="true">{{
+        member().initials
+      }}</span>
 
       <div class="member__meta">
         <p class="member__name">{{ member().fullName }}</p>
@@ -51,8 +54,7 @@ import type { SquadMember } from '../../core/models/board.models';
       font-size: 13px;
       color: #fff;
       background: var(--member-color);
-      /* Soft halo in the same colour, as in the prototype. */
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--member-color) 25%, transparent);
+      /* Halo is bound inline as rgba so the PNG exporter can parse it. */
     }
 
     .member__meta {
@@ -94,4 +96,10 @@ import type { SquadMember } from '../../core/models/board.models';
 })
 export class MemberCard {
   readonly member = input.required<SquadMember>();
+
+  /**
+   * Soft halo in the role colour, as in the prototype. Bound inline as rgba rather
+   * than written as `color-mix()` so the PNG exporter can parse it — see color.ts.
+   */
+  protected readonly halo = computed(() => `0 0 0 2px ${withAlpha(this.member().roleColor, 0.25)}`);
 }

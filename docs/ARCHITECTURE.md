@@ -111,3 +111,37 @@ explicitly with `db.SquadMembers.Add(member)`: `Entity` assigns its own GUID in 
 constructor, and EF Core marks an untracked entity reached through a tracked parent's
 navigation as `Modified` rather than `Added` when its key is already set — which emits an
 UPDATE against a row that does not exist yet.
+
+## Realtime
+
+Handlers publish through `IBoardNotifier`; `SignalRBoardNotifier` in the API layer is the
+only code that knows the transport exists. Infrastructure registers a no-op notifier and
+the API composition root replaces it, so the Application layer and its tests never take a
+SignalR dependency.
+
+Viewers join a per-board group (`board:{id}`), so an edit reaches only the people looking
+at that board. A broadcast failure is caught and logged rather than propagated: a
+notification problem must never roll back a write that already succeeded.
+
+On the client, an incoming event bumps a revision counter and the editor refetches. The
+refetch reads `isDirty()` **before** replacing the server board — comparing the draft
+against already-updated server state would make a clean editor look dirty and silently
+discard the incoming values. Unsaved local edits always win over a broadcast; the server
+state updates underneath them.
+
+## Export
+
+`/slide/{id}` and `/slide/all` render the slide outside the app shell. The headless
+renderer loads those routes, so an export goes through the same `SlideCanvas` component
+the user sees — there is no parallel slide implementation to keep in step.
+
+The capture is clipped to the slide element rather than the viewport, because the slide is
+content-height: a fixed-height capture pads a short squad with dead space. The portfolio
+PDF renders `/slide/all`, which stacks every slide with a CSS page break, so Chromium
+paginates in one pass and no PDF-merging dependency is needed.
+
+**The slide deliberately avoids `color-mix()`.** It computes to `color(srgb …)`, which
+html2canvas cannot parse — client-side PNG export failed with "Attempting to parse an
+unsupported color function". Tints are computed to plain `rgba()` in `shared/slide/color.ts`
+instead, which is also what the prototype did by appending an alpha suffix to the hex.
+Keep new slide styles free of `color-mix`, `oklch` and other modern colour functions.

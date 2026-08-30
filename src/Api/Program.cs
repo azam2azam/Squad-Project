@@ -1,4 +1,5 @@
 using Api.Common;
+using Api.Hubs;
 using Application;
 using Application.Abstractions;
 using Infrastructure;
@@ -19,6 +20,12 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+
+builder.Services.AddSignalR();
+
+// Replaces the no-op notifier registered by Infrastructure: handlers publish through
+// IBoardNotifier and this is the only place that knows the transport is SignalR.
+builder.Services.AddSingleton<IBoardNotifier, SignalRBoardNotifier>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -70,6 +77,7 @@ app.UseSerilogRequestLogging();
 app.UseCors(WebCorsPolicy);
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapHub<BoardsHub>("/hubs/boards");
 
 await MigrateAndSeedAsync(app);
 

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { BoardsService } from '../../core/services/boards.service';
 import { MetadataService } from '../../core/services/metadata.service';
 import type { BoardStatus, BoardSummary } from '../../core/models/board.models';
@@ -31,6 +32,8 @@ export class PortfolioPage {
   protected readonly statusFilter = signal<BoardStatus | null>(null);
 
   protected readonly totalCount = signal(0);
+  protected readonly importing = signal(false);
+  protected readonly importSummary = signal<string | null>(null);
 
   protected readonly isEmpty = computed(() => !this.loading() && this.items().length === 0);
 
@@ -101,6 +104,49 @@ export class PortfolioPage {
       });
   }
 
+  protected present(): void {
+    void this.router.navigate(['/present']);
+  }
+
+  /** Downloads every board and the roster as JSON (spec FR-9). */
+  protected exportAll(): void {
+    window.open('/api/v1/export', '_blank');
+  }
+
+  protected exportPortfolioPdf(): void {
+    window.open('/api/v1/portfolio/export/pdf', '_blank');
+  }
+
+  /** Reads a previously exported file back in. Upserts, so re-importing is safe. */
+  protected async importFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.importing.set(true);
+    this.error.set(null);
+    this.importSummary.set(null);
+
+    try {
+      const parsed = JSON.parse(await file.text());
+      const result = await firstValueFrom(this.boards.import(parsed));
+
+      this.importSummary.set(
+        `Imported ${result.boardsCreated} new and ${result.boardsUpdated} updated ${
+          result.boardsCreated + result.boardsUpdated === 1 ? 'board' : 'boards'
+        }, ${result.peopleCreated + result.peopleUpdated} people.` +
+          (result.warnings.length > 0 ? ` ${result.warnings.length} warning(s).` : ''),
+      );
+      this.reload();
+    } catch (err) {
+      this.error.set(readProblem(err) ?? 'That file could not be imported.');
+    } finally {
+      this.importing.set(false);
+      // Cleared so re-picking the same file fires change again.
+      input.value = '';
+    }
+  }
+
   protected deleteBoard(board: BoardSummary, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
@@ -110,4 +156,9 @@ export class PortfolioPage {
       error: () => this.error.set(`Could not delete "${board.title}".`),
     });
   }
+}
+
+function readProblem(err: unknown): string | null {
+  const problem = (err as { error?: { detail?: string; title?: string } })?.error;
+  return problem?.detail ?? problem?.title ?? null;
 }

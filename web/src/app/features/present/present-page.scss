@@ -1,0 +1,105 @@
+@use '../../../styles/mixins' as *;
+
+// Present takes over the viewport entirely — the prototype's body.present, as a route.
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #070b10;
+}
+
+.present__stage {
+  // Matches the prototype's min(1024px, 96vw).
+  width: min(1024px, 96vw);
+  max-height: 92vh;
+}
+
+.present__state {
+  color: var(--tx);
+  font-family: var(--font-ui);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.present__controls {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(22, 32, 45, 0.85);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+}
+
+.present__counter {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx-mut);
+  min-width: 54px;
+  text-align: center;
+}
+
+.present__btn {
+  min-width: 34px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--tx);
+  font-size: 17px;
+  line-height: 1;
+  @include focus-ring;
+
+  &:hover:not(:disabled) {
+    background: #24344a;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.present__exit {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--tx);
+  font-weight: 600;
+  font-size: 13px;
+  @include focus-ring;
+
+  &:hover {
+    background: #24344a;
+  }
+}
+
+.present__hint {
+  position: fixed;
+  bottom: 20px;
+  right: 18px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--tx-dim);
+  font-family: var(--font-ui);
+
+  @media (max-width: 720px) {
+    display: none;
+  }
+}

@@ -9,19 +9,20 @@ cards — ready to present or export.
 
 ---
 
-## Current status — M3 complete
+## Current status — M4 complete
 
 | Milestone | Scope | State |
 |---|---|---|
 | **M1** | Solution + Angular scaffold, domain model, EF migration + seed, health check, CI | ✅ Done |
 | **M2** | Board CRUD API + board editor wired to the live `SlideCanvas` | ✅ Done |
 | **M3** | Roster CRUD, typeahead, membership, composition | ✅ Done |
-| M4 | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | Planned |
+| **M4** | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | ✅ Done |
 | M5 | JWT auth + RBAC, portfolio view, Jira sync, audit log | Planned |
 | M6 | Test coverage, e2e, Dockerfiles, K8s/Helm, docs | Planned |
 
-M3 completes the core loop: boards, the live slide, and full squad membership picked from
-an org-wide roster. Every screen in the app is now real.
+M4 makes it a review tool: edits broadcast live to other viewers, Present mode runs the
+portfolio full-screen from the keyboard, slides export to PNG and PDF at 2x, and the whole
+dataset round-trips through JSON.
 
 The reference prototype is checked in at [docs/prototype/squad-status-board.html](docs/prototype/squad-status-board.html)
  and the `SlideCanvas` is a deliberate transcription of it — see [Architecture](docs/ARCHITECTURE.md)
@@ -118,9 +119,18 @@ appear in `Domain`.
 - **Docker is not installed on the development machine.** The Dockerfiles, compose file
   and Kubernetes/Helm manifests land in M6 as real deliverables but cannot be verified
   locally — they need validating in an environment that has a container runtime.
-- **Server-side PDF export needs headless Chromium.** Until it is provisioned the API
-  reports `serverExportEnabled: false` at `/api/v1/metadata/capabilities` and the client
-  hides the affordance rather than offering a button that fails.
+- **Server-side export needs a headless browser and is off by default.** Set
+  `Export__Enabled=true`. On this machine PuppeteerSharp's downloaded Chromium would not
+  launch (blocked by the host's security software), so point `Export__ChromiumPath` at an
+  installed browser instead:
+
+  ```bash
+  setx Export__ChromiumPath "C:\Program Files\Google\Chrome\Application\chrome.exe"
+  ```
+
+  With that set, PNG and PDF render correctly at 2x. While it is off the API reports
+  `serverExportEnabled: false` at `/api/v1/metadata/capabilities` and the client hides the
+  PDF button rather than offering something that fails — client-side PNG always works.
 
 ## Documentation
 

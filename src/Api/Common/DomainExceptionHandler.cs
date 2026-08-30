@@ -1,3 +1,4 @@
+using Application.Abstractions;
 using Domain.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
@@ -21,6 +22,10 @@ public sealed class DomainExceptionHandler(
             ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
             DomainException => (StatusCodes.Status400BadRequest, "Request violates a domain rule"),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
+            // A missing rendering engine is a deployment gap, not a server fault: 503
+            // says "not here", and the message tells the operator how to fix it.
+            ExportUnavailableException => (StatusCodes.Status503ServiceUnavailable,
+                "Export is unavailable"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
         };
 

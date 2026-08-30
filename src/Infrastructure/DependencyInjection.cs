@@ -56,10 +56,22 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         // Integrations are abstracted so they can be swapped or mocked (spec section 10).
-        // The real implementations land in M4 (export) and M5 (Jira).
+        // The Jira implementation lands in M5; the notifier is replaced by the SignalR
+        // one in the API composition root.
         services.AddSingleton<IBoardNotifier, NullBoardNotifier>();
         services.AddSingleton<IJiraClient, DisabledJiraClient>();
-        services.AddSingleton<IExportRenderer, UnavailableExportRenderer>();
+
+        // Server-side export needs a headless browser, which not every host has.
+        // Off by default so a deployment opts in rather than discovering at runtime
+        // that the first export tries to download Chromium.
+        if (configuration.GetValue("Export:Enabled", false))
+        {
+            services.AddSingleton<IExportRenderer, ChromiumExportRenderer>();
+        }
+        else
+        {
+            services.AddSingleton<IExportRenderer, UnavailableExportRenderer>();
+        }
 
         return services;
     }

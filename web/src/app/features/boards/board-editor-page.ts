@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -7,6 +16,8 @@ import { BoardsService } from '../../core/services/boards.service';
 import { MetadataService } from '../../core/services/metadata.service';
 import { SlideCanvas } from '../../shared/slide/slide-canvas';
 import { SquadEditor } from './squad-editor';
+import { BoardRealtimeService } from '../../core/services/board-realtime.service';
+import { SlideExportService } from '../../core/services/slide-export.service';
 import type { BoardDetail, BoardStatus } from '../../core/models/board.models';
 
 type MobileTab = 'build' | 'slide';
@@ -28,8 +39,17 @@ export class BoardEditorPage {
   private readonly router = inject(Router);
   private readonly boards = inject(BoardsService);
   private readonly metadata = inject(MetadataService);
+  private readonly realtime = inject(BoardRealtimeService);
+  private readonly exporter = inject(SlideExportService);
 
   protected readonly statuses = this.metadata.statuses;
+  protected readonly realtimeStatus = this.realtime.status;
+  protected readonly serverExportEnabled = this.metadata.serverExportEnabled;
+
+  /** The rendered slide element, captured for client-side PNG export. */
+  private readonly slideHost = viewChild<ElementRef<HTMLElement>>('slideHost');
+
+  protected readonly exporting = signal(false);
 
   private readonly boardId = toSignal(this.route.paramMap.pipe(map((params) => params.get('id'))), {
     initialValue: null,
@@ -112,7 +132,38 @@ export class BoardEditorPage {
     const id = this.boardId();
     if (id) {
       this.load(id);
+      void this.realtime.join(id);
     }
+
+    // Another viewer changed this board. Refetch the server state, but never clobber
+    // edits in progress — an unsaved draft belongs to this user, not the broadcast.
+    let seen = this.realtime.revision();
+    effect(() => {
+      const revision = this.realtime.revision();
+      if (revision === seen) return;
+      seen = revision;
+
+      const board = this.serverBoard();
+      if (!board) return;
+
+      // Read before the swap: isDirty() compares the draft against serverBoard, so
+      // replacing it first would make a clean editor look dirty and the incoming
+      // values would be thrown away.
+      const hadLocalEdits = this.isDirty();
+
+      this.boards.get(board.id).subscribe({
+        next: (fresh) => {
+          this.serverBoard.set(fresh);
+          if (!hadLocalEdits) {
+            this.draft.set(toDraft(fresh));
+          }
+        },
+        error: () => {
+          // A failed refresh is not worth interrupting the user over; the next
+          // save will surface any real problem.
+        },
+      });
+    });
   }
 
   private load(id: string): void {
@@ -190,6 +241,39 @@ export class BoardEditorPage {
       next: (fresh) => this.serverBoard.set(fresh),
       error: () => this.error.set('Could not refresh the squad.'),
     });
+  }
+
+  /** Client-side PNG of exactly what is on screen (spec FR-7). */
+  protected async downloadPng(): Promise<void> {
+    const host = this.slideHost();
+    const board = this.preview();
+    if (!host || !board || this.exporting()) return;
+
+    this.exporting.set(true);
+    this.error.set(null);
+
+    try {
+      await this.exporter.downloadPng(host.nativeElement, board.title);
+    } catch {
+      this.error.set('Could not capture the slide as a PNG.');
+    } finally {
+      this.exporting.set(false);
+    }
+  }
+
+  /** Server-rendered PDF; only offered when the host actually has a renderer. */
+  protected downloadPdf(): void {
+    const board = this.serverBoard();
+    if (!board) return;
+
+    window.open(`/api/v1/boards/${board.id}/export/pdf`, '_blank');
+  }
+
+  protected present(): void {
+    const board = this.serverBoard();
+    if (board) {
+      void this.router.navigate(['/present', board.id]);
+    }
   }
 
   protected revert(): void {

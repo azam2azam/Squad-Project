@@ -1,0 +1,45 @@
+@if (loading()) {
+  <p class="present__state">Loading…</p>
+} @else if (error()) {
+  <div class="present__state">
+    <p>{{ error() }}</p>
+    <button type="button" class="present__btn" (click)="exit()">Back</button>
+  </div>
+} @else if (current(); as board) {
+  <!-- Announces slide changes to screen readers without stealing focus. -->
+  <p class="visually-hidden" role="status" aria-live="polite">
+    Slide {{ index() + 1 }} of {{ boards().length }}: {{ board.title }}
+  </p>
+
+  <div class="present__stage">
+    <app-slide-canvas [board]="board" />
+  </div>
+
+  <div class="present__controls">
+    <button
+      type="button"
+      class="present__btn"
+      (click)="previous()"
+      [disabled]="!hasPrevious()"
+      aria-label="Previous slide"
+    >
+      ‹
+    </button>
+
+    <span class="present__counter">{{ index() + 1 }} / {{ boards().length }}</span>
+
+    <button
+      type="button"
+      class="present__btn"
+      (click)="next()"
+      [disabled]="!hasNext()"
+      aria-label="Next slide"
+    >
+      ›
+    </button>
+  </div>
+
+  <button type="button" class="present__exit" (click)="exit()">Exit present</button>
+
+  <p class="present__hint">Arrow keys to move · Esc to exit</p>
+}

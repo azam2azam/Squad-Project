@@ -13,8 +13,12 @@ public interface IExportRenderer
 
     Task<byte[]> RenderPdfAsync(ExportRequest request, CancellationToken cancellationToken = default);
 
-    /// <summary>Multi-page PDF for the portfolio export.</summary>
-    Task<byte[]> RenderPortfolioPdfAsync(IReadOnlyList<ExportRequest> requests,
+    /// <summary>
+    /// Multi-page PDF for the portfolio export. Takes a single URL pointing at a route
+    /// that stacks every slide with page breaks between them, so the renderer paginates
+    /// in one pass rather than producing N documents that then need merging.
+    /// </summary>
+    Task<byte[]> RenderPortfolioPdfAsync(ExportRequest request,
         CancellationToken cancellationToken = default);
 }
 

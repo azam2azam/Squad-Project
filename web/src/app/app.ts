@@ -1,10 +1,14 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 import { MetadataService } from './core/services/metadata.service';
 
 /**
  * Application shell: the persistent header and the routed outlet.
- * Present mode and the export slide route render outside this chrome.
+ *
+ * Present mode and the export slide route render chromeless — the header must not
+ * appear in a screenshot of the slide, and it would be a distraction in a review.
  */
 @Component({
   selector: 'app-root',
@@ -14,8 +18,24 @@ import { MetadataService } from './core/services/metadata.service';
 })
 export class App {
   private readonly metadata = inject(MetadataService);
+  private readonly router = inject(Router);
 
   protected readonly serverExportEnabled = this.metadata.serverExportEnabled;
   protected readonly jiraSyncEnabled = this.metadata.jiraSyncEnabled;
   protected readonly roleCount = this.metadata.roles;
+
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** Routes that own the whole viewport and must not show app chrome. */
+  protected readonly chromeless = computed(() => {
+    const url = this.url();
+    return url.startsWith('/slide') || url.startsWith('/present');
+  });
 }

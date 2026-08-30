@@ -104,6 +104,41 @@ it never edits the roster. `?q=` matches name, email and default detail.
 Deleting a person is always soft: they leave the picker but every `SquadMember` row they
 appear in survives, so historical boards still show who delivered them.
 
+### Realtime, export and bulk data (M4)
+
+```
+GET    /api/v1/boards/{id}/export/png    2x PNG of the slide
+GET    /api/v1/boards/{id}/export/pdf    single-slide PDF
+GET    /api/v1/portfolio/export/pdf      every board, one slide per page
+GET    /api/v1/export                    bulk JSON download
+POST   /api/v1/import                    bulk JSON restore
+```
+
+SignalR hub at `/hubs/boards`. Clients call `JoinBoard(boardId)` / `LeaveBoard(boardId)`
+and receive `BoardUpdated` and `MemberChanged` for the board they joined — updates are
+scoped to a per-board group rather than broadcast to everyone connected.
+
+The render endpoints load the web app's own `/slide/{id}` route in headless Chromium, so
+exports go through the same `SlideCanvas` the user sees; there is no second implementation
+of the slide to keep in step. The capture is clipped to the slide element, so a short
+squad does not produce an image padded with empty space.
+
+Export is **off by default** and returns `503` with a remediation message when no renderer
+is configured. `/api/v1/metadata/capabilities` reports `serverExportEnabled` so the client
+can hide the affordance instead of offering a button that fails.
+
+`GET /export` returns a versioned file; `POST /import` accepts it back and **upserts by
+id**, so importing the same file twice changes nothing the second time:
+
+```json
+{ "peopleCreated": 0, "peopleUpdated": 9, "boardsCreated": 0,
+  "boardsUpdated": 2, "membersLinked": 6, "warnings": [] }
+```
+
+A member whose person is missing from both the file and the database is skipped with a
+warning rather than failing the whole import. Deactivated people round-trip as inactive,
+and an imported board keeps members who have since left — history is not rewritten.
+
 ### Metadata (M1)
 
 `GET /api/v1/metadata` — role and status reference data with canonical labels and design-token colours. The client
@@ -148,19 +183,6 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 ## Planned
 
 Signatures are fixed; the implementations arrive in the milestone noted.
-
-### Realtime, export and bulk data — M4
-
-```
-GET    /api/v1/boards/{id}/export/png
-GET    /api/v1/boards/{id}/export/pdf
-GET    /api/v1/portfolio/export/pdf
-POST   /api/v1/import                  bulk import boards + roster
-GET    /api/v1/export                  bulk export
-```
-
-SignalR hub at `/hubs/boards`: client calls `JoinBoard(boardId)`; the server raises
-`BoardUpdated` and `MemberChanged`.
 
 ### Jira — M5
 

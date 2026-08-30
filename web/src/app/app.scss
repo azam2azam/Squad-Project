@@ -161,3 +161,9 @@
   flex: 1 1 auto;
   min-height: 0;
 }
+
+// Chromeless routes (slide export, present) own the viewport: no shell padding,
+// no scroll gutter, and the dark surface behind the slide.
+.shell-main--bare {
+  background: var(--ink);
+}

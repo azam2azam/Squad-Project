@@ -1,30 +1,32 @@
-<a class="skip-link" href="#main">Skip to content</a>
+@if (!chromeless()) {
+  <a class="skip-link" href="#main">Skip to content</a>
 
-<header class="shell-header">
-  <div class="shell-header__brand">
-    <span class="shell-header__mark" aria-hidden="true"></span>
-    <span class="shell-header__title">Squad Status Board</span>
-    <span class="shell-header__org">PIRT</span>
-  </div>
+  <header class="shell-header">
+    <div class="shell-header__brand">
+      <span class="shell-header__mark" aria-hidden="true"></span>
+      <span class="shell-header__title">Squad Status Board</span>
+      <span class="shell-header__org">PIRT</span>
+    </div>
 
-  <nav class="shell-nav" aria-label="Primary">
-    <a routerLink="/portfolio" routerLinkActive="is-active" class="shell-nav__link">Portfolio</a>
-    <a routerLink="/roster" routerLinkActive="is-active" class="shell-nav__link">Roster</a>
-  </nav>
+    <nav class="shell-nav" aria-label="Primary">
+      <a routerLink="/portfolio" routerLinkActive="is-active" class="shell-nav__link">Portfolio</a>
+      <a routerLink="/roster" routerLinkActive="is-active" class="shell-nav__link">Roster</a>
+    </nav>
 
-  <div class="shell-header__status">
-    @if (roleCount().length > 0) {
-      <span class="shell-chip shell-chip--ok" title="Reference data loaded from the API">
-        API connected
-      </span>
-    } @else {
-      <span class="shell-chip shell-chip--warn" title="Reference data could not be loaded">
-        API unavailable
-      </span>
-    }
-  </div>
-</header>
+    <div class="shell-header__status">
+      @if (roleCount().length > 0) {
+        <span class="shell-chip shell-chip--ok" title="Reference data loaded from the API">
+          API connected
+        </span>
+      } @else {
+        <span class="shell-chip shell-chip--warn" title="Reference data could not be loaded">
+          API unavailable
+        </span>
+      }
+    </div>
+  </header>
+}
 
-<main id="main" class="shell-main">
+<main id="main" class="shell-main" [class.shell-main--bare]="chromeless()">
   <router-outlet />
 </main>

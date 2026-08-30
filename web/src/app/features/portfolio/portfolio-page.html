@@ -7,10 +7,30 @@
       </p>
     </div>
 
-    <button type="button" class="btn btn--primary" (click)="createBoard()" [disabled]="creating()">
-      {{ creating() ? 'Creating…' : 'New board' }}
-    </button>
+    <div class="portfolio__actions">
+      <button type="button" class="btn" (click)="present()" [disabled]="isEmpty()">Present</button>
+
+      <button type="button" class="btn" (click)="exportAll()">Export JSON</button>
+
+      <label class="btn" [class.is-busy]="importing()">
+        {{ importing() ? 'Importing…' : 'Import JSON' }}
+        <input type="file" accept="application/json" hidden (change)="importFile($event)" />
+      </label>
+
+      <button
+        type="button"
+        class="btn btn--primary"
+        (click)="createBoard()"
+        [disabled]="creating()"
+      >
+        {{ creating() ? 'Creating…' : 'New board' }}
+      </button>
+    </div>
   </header>
+
+  @if (importSummary()) {
+    <p class="portfolio__notice" role="status">{{ importSummary() }}</p>
+  }
 
   <div class="portfolio__filters">
     <label class="filter">

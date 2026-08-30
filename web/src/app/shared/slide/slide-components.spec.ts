@@ -5,6 +5,7 @@ import { ProgressRing } from './progress-ring';
 import { CompositionBar } from './composition-bar';
 import { StatusBadge } from './status-badge';
 import { SlideCanvas } from './slide-canvas';
+import { withAlpha } from './color';
 import type { BoardDetail, Composition } from '../../core/models/board.models';
 
 const composition: Composition = {
@@ -199,10 +200,33 @@ describe('StatusBadge', () => {
     await fixture.whenStable();
 
     const el = fixture.nativeElement as HTMLElement;
+    const badge = el.querySelector('.badge') as HTMLElement;
+
     expect(el.querySelector('.badge__label')?.textContent?.trim()).toBe('Blocked');
-    expect(
-      (el.querySelector('.badge') as HTMLElement).style.getPropertyValue('--badge-color'),
-    ).toBe('#F87171');
+    expect(badge.style.color).toBe('rgb(248, 113, 113)');
+  });
+
+  it('tints fill and border as rgba, not color-mix, so PNG export can parse them', async () => {
+    const fixture = TestBed.createComponent(StatusBadge);
+    fixture.componentRef.setInput('label', 'Blocked');
+    fixture.componentRef.setInput('color', '#F87171');
+    await fixture.whenStable();
+
+    const badge = (fixture.nativeElement as HTMLElement).querySelector('.badge') as HTMLElement;
+
+    expect(badge.style.background).toBe('rgba(248, 113, 113, 0.1)');
+    expect(badge.style.borderColor).toBe('rgba(248, 113, 113, 0.33)');
+  });
+});
+
+describe('withAlpha', () => {
+  it('converts hex tokens to rgba', () => {
+    expect(withAlpha('#2DD4BF', 0.25)).toBe('rgba(45, 212, 191, 0.25)');
+    expect(withAlpha('#fff', 0.5)).toBe('rgba(255, 255, 255, 0.5)');
+  });
+
+  it('leaves non-hex values untouched so CSS variables still render', () => {
+    expect(withAlpha('var(--accent)', 0.5)).toBe('var(--accent)');
   });
 });
 

@@ -21,7 +21,7 @@ public sealed class UnavailableExportRenderer : IExportRenderer
     public Task<byte[]> RenderPdfAsync(ExportRequest request, CancellationToken cancellationToken = default)
         => throw new ExportUnavailableException(Message);
 
-    public Task<byte[]> RenderPortfolioPdfAsync(IReadOnlyList<ExportRequest> requests,
+    public Task<byte[]> RenderPortfolioPdfAsync(ExportRequest request,
         CancellationToken cancellationToken = default)
         => throw new ExportUnavailableException(Message);
 }

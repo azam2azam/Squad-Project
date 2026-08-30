@@ -187,7 +187,23 @@
 
     <!-- ---------- Live slide ---------- -->
     <div class="stage" [class.is-hidden-mobile]="mobileTab() !== 'slide'">
-      <div class="stage__inner">
+      <div class="stage__toolbar">
+        @if (realtimeStatus() === 'live') {
+          <span class="stage__live" title="Edits from other viewers appear here instantly">
+            Live
+          </span>
+        }
+        <span class="stage__spacer"></span>
+        <button type="button" class="btn" (click)="present()">Present</button>
+        <button type="button" class="btn" (click)="downloadPng()" [disabled]="exporting()">
+          {{ exporting() ? 'Capturing…' : 'PNG' }}
+        </button>
+        @if (serverExportEnabled()) {
+          <button type="button" class="btn" (click)="downloadPdf()">PDF</button>
+        }
+      </div>
+
+      <div class="stage__inner" #slideHost>
         <app-slide-canvas [board]="preview()!" />
       </div>
     </div>

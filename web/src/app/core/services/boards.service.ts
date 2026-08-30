@@ -63,4 +63,19 @@ export class BoardsService {
   reorder(items: { id: string; orderIndex: number }[]): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/boards/reorder`, items);
   }
+
+  /** Bulk restore from an exported file. Upserts by id, so re-importing is a no-op. */
+  import(file: unknown): Observable<ImportResult> {
+    return this.http.post<ImportResult>(`${this.baseUrl}/import`, file);
+  }
+}
+
+/** What a bulk import actually changed, so the UI can report it rather than guess. */
+export interface ImportResult {
+  peopleCreated: number;
+  peopleUpdated: number;
+  boardsCreated: number;
+  boardsUpdated: number;
+  membersLinked: number;
+  warnings: string[];
 }
