@@ -3,72 +3,45 @@ using System.Text;
 using System.Text.Json;
 using Application.Abstractions;
 using Domain.Enums;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Integrations;
 
 /// <summary>
-/// Read-only Jira Cloud client. Config-gated: when Jira is not configured this reports
-/// itself disabled and the UI hides the sync affordance rather than offering a button
-/// that fails.
+/// Read-only Jira Cloud client.
 ///
-/// It never writes to Jira, and the caller never writes the result straight to a board —
-/// the Product Owner reviews the suggestion first (spec section 10).
+/// Credentials come from <see cref="IJiraSettingsService"/> on every call rather than
+/// being captured at construction, so saving the settings screen takes effect
+/// immediately — no restart, and no stale token cached in a singleton.
+///
+/// It never writes to Jira, and the caller does not write the result straight to a board
+/// unless auto-apply is explicitly switched on (spec section 10).
 /// </summary>
-public sealed class JiraClient : IJiraClient
+public sealed class JiraClient(
+    HttpClient http,
+    IJiraSettingsService settings,
+    ILogger<JiraClient> logger) : IJiraClient
 {
-    private readonly HttpClient _http;
-    private readonly ILogger<JiraClient> _logger;
-    private readonly string? _baseUrl;
-
-    public JiraClient(HttpClient http, IConfiguration configuration, ILogger<JiraClient> logger)
-    {
-        _http = http;
-        _logger = logger;
-
-        var section = configuration.GetSection("Jira");
-        var enabled = section.GetValue("Enabled", false);
-        _baseUrl = section["BaseUrl"]?.TrimEnd('/');
-        var email = section["Email"];
-        var apiToken = section["ApiToken"];
-
-        IsEnabled = enabled
-            && !string.IsNullOrWhiteSpace(_baseUrl)
-            && !string.IsNullOrWhiteSpace(email)
-            && !string.IsNullOrWhiteSpace(apiToken);
-
-        if (IsEnabled)
-        {
-            // Jira Cloud uses Basic auth with email + API token.
-            var credentials = Convert.ToBase64String(
-                Encoding.UTF8.GetBytes($"{email}:{apiToken}"));
-            _http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Basic", credentials);
-            _http.Timeout = TimeSpan.FromSeconds(20);
-        }
-    }
-
-    public bool IsEnabled { get; }
+    public async Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default) =>
+        await settings.GetCredentialsAsync(cancellationToken) is not null;
 
     public async Task<JiraSnapshot?> GetSnapshotAsync(string projectKey, string? boardId,
         CancellationToken cancellationToken = default)
     {
-        if (!IsEnabled)
+        var credentials = await settings.GetCredentialsAsync(cancellationToken);
+        if (credentials is null)
         {
             return null;
         }
 
         try
         {
-            var jql = Uri.EscapeDataString($"project = \"{projectKey}\" ORDER BY updated DESC");
-            var url = $"{_baseUrl}/rest/api/3/search?jql={jql}&maxResults=200" +
-                      "&fields=status,statuscategorychangedate,sprint,customfield_10020";
+            using var request = BuildSearchRequest(credentials, projectKey);
+            using var response = await http.SendAsync(request, cancellationToken);
 
-            using var response = await _http.GetAsync(url, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Jira search for {ProjectKey} returned {Status}",
+                logger.LogWarning("Jira search for {ProjectKey} returned {Status}",
                     projectKey, (int)response.StatusCode);
                 return null;
             }
@@ -81,14 +54,32 @@ public sealed class JiraClient : IJiraClient
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             // A Jira outage must not break the board; the caller reports it as unavailable.
-            _logger.LogWarning(ex, "Could not reach Jira for project {ProjectKey}", projectKey);
+            logger.LogWarning(ex, "Could not reach Jira for project {ProjectKey}", projectKey);
             return null;
         }
     }
 
+    private static HttpRequestMessage BuildSearchRequest(JiraCredentials credentials, string projectKey)
+    {
+        var jql = Uri.EscapeDataString($"project = \"{projectKey}\" ORDER BY updated DESC");
+        var url = $"{credentials.BaseUrl}/rest/api/3/search?jql={jql}&maxResults=200" +
+                  "&fields=status,statuscategorychangedate,sprint,customfield_10020";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+        // Jira Cloud uses Basic auth with email + API token. Built per request so a
+        // credential change takes effect without recycling the client.
+        var basic = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes($"{credentials.Email}:{credentials.ApiToken}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        return request;
+    }
+
     /// <summary>
     /// Turns raw issues into a progress and status suggestion. Kept deliberately simple
-    /// and explainable — the Rationale is shown to the PO so they can judge it.
+    /// and explainable — the rationale is shown to the PO so they can judge it.
     /// </summary>
     private static JiraSnapshot Summarise(JsonElement root)
     {
@@ -134,16 +125,14 @@ public sealed class JiraClient : IJiraClient
 
         var progress = total == 0 ? 0 : (int)Math.Round(done * 100d / total);
 
-        // Thresholds chosen to be conservative: a suggestion that over-reports health is
-        // worse than one a PO has to correct upward.
+        // Conservative on purpose: a suggestion that over-reports health is worse than
+        // one a PO has to correct upward.
         var (suggested, rationale) = (blocked, total) switch
         {
             ( > 0, > 0) when blocked * 100d / total >= 20 =>
-                (BoardStatus.Blocked,
-                    $"{blocked} of {total} issues are blocked."),
+                (BoardStatus.Blocked, $"{blocked} of {total} issues are blocked."),
             ( > 0, _) =>
-                (BoardStatus.AtRisk,
-                    $"{blocked} blocked issue(s) out of {total}."),
+                (BoardStatus.AtRisk, $"{blocked} blocked issue(s) out of {total}."),
             (_, 0) =>
                 (BoardStatus.OnTrack, "No issues found in this project."),
             _ when progress >= 100 =>

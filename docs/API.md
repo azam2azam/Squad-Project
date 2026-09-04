@@ -180,18 +180,39 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 
 ---
 
-## Planned
+### Jira integration (M5, M8)
 
-Signatures are fixed; the implementations arrive in the milestone noted.
-
-### Jira — M5
+Administering the connection. **Every route here is Admin-only** — they read and write a
+credential that acts on behalf of the whole organisation.
 
 ```
+GET    /api/v1/integrations/jira
+PUT    /api/v1/integrations/jira
+DELETE /api/v1/integrations/jira
+POST   /api/v1/integrations/jira/test
+POST   /api/v1/integrations/jira/sync
 POST   /api/v1/boards/{id}/jira/sync
 ```
 
-Returns the pulled sprint name, done-vs-total ratio and a suggested progress/status.
-It never writes to the board — the Product Owner reviews and accepts.
+`GET` returns the connection with the token **masked** — `tokenHint` is `••••••••` plus the
+last four characters. The plaintext token is never serialised to a client.
+
+`PUT` saves it. An **empty `apiToken` means "keep the stored one"**: the client is never
+given the token, so it cannot send it back, and a blank field must not wipe a working
+connection. The URL must be https (http is accepted only for a loopback host).
+
+`POST .../test` makes a real call, so *not configured*, *unreachable* and *connected* can be
+told apart. Pass `{ "projectKey": "ABC" }` to check the account can actually read a project.
+
+`POST .../sync` runs the sync across every board with a project key and returns
+`{ ran, message, boardsConsidered, boardsUpdated, boardsUnreachable, details }`. Pressing it
+is an explicit instruction, so it writes even when auto-apply is off; the scheduled run
+respects that switch. Changes land in each board's audit trail.
+
+`POST /boards/{id}/jira/sync` returns a **suggestion** for one board and never writes.
+
+When `Jira__ApiToken` is set in configuration it overrides anything saved here, and `GET`
+reports `overriddenByConfiguration: true`.
 
 ## Conventions
 

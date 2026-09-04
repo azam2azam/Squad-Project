@@ -44,7 +44,7 @@ public sealed class GetJiraSuggestionQueryHandler(IAppDbContext db, IJiraClient 
             .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
             ?? throw new KeyNotFoundException($"Board {request.BoardId} was not found.");
 
-        if (!jira.IsEnabled)
+        if (!await jira.IsEnabledAsync(cancellationToken))
         {
             return JiraSuggestionDto.Unavailable(
                 "Jira is not configured for this deployment.");

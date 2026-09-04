@@ -9,7 +9,8 @@ namespace Infrastructure.Integrations;
 /// </summary>
 public sealed class DisabledJiraClient : IJiraClient
 {
-    public bool IsEnabled => false;
+    public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(false);
 
     public Task<JiraSnapshot?> GetSnapshotAsync(string projectKey, string? boardId,
         CancellationToken cancellationToken = default)

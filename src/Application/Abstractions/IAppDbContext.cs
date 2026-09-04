@@ -14,6 +14,7 @@ public interface IAppDbContext
     DbSet<SquadMember> SquadMembers { get; }
     DbSet<BoardAuditEntry> BoardAuditEntries { get; }
     DbSet<AppUser> Users { get; }
+    DbSet<JiraSettings> JiraSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

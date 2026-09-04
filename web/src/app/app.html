@@ -17,6 +17,9 @@
         <!-- The roster is org-wide, so it is offered only to those the API would let in. -->
         @if (isAdmin()) {
           <a routerLink="/roster" routerLinkActive="is-active" class="shell-nav__link">Roster</a>
+          <a routerLink="/settings/jira" routerLinkActive="is-active" class="shell-nav__link">
+            Jira
+          </a>
         }
       </nav>
     }

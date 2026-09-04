@@ -68,17 +68,15 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<IBoardAuthorizer, BoardAuthorizer>();
 
-        // Jira is config-gated. Registering the null object when it is off means the
-        // capability endpoint reports it honestly instead of the UI discovering at
-        // click time that nothing is configured.
-        if (configuration.GetValue("Jira:Enabled", false))
+        // Jira credentials now live in the database and are managed from the settings
+        // screen, so the client is always registered. Whether it is usable is answered
+        // at call time by IJiraSettingsService, not at startup.
+        services.AddDataProtection();
+        services.AddScoped<IJiraSettingsService, JiraSettingsService>();
+        services.AddHttpClient<IJiraClient, JiraClient>(client =>
         {
-            services.AddHttpClient<IJiraClient, JiraClient>();
-        }
-        else
-        {
-            services.AddSingleton<IJiraClient, DisabledJiraClient>();
-        }
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
 
         // Server-side export needs a headless browser, which not every host has.
         // Off by default so a deployment opts in rather than discovering at runtime

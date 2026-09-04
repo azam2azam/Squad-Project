@@ -29,7 +29,7 @@ public sealed class GetJiraConnectionQueryHandler(IJiraClient jira, IBoardAuthor
         // Probing an external system with our credentials is an administrative action.
         authorizer.EnsureIsAdmin();
 
-        if (!jira.IsEnabled)
+        if (!await jira.IsEnabledAsync(cancellationToken))
         {
             return new JiraConnectionDto(
                 false, false,

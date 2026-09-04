@@ -8,7 +8,12 @@ namespace Application.Abstractions;
 /// </summary>
 public interface IJiraClient
 {
-    bool IsEnabled { get; }
+    /// <summary>
+    /// Whether a usable connection exists. Async because the credentials live in the
+    /// database now — a synchronous property here would mean sync-over-async on every
+    /// capabilities check.
+    /// </summary>
+    Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Pulls the active sprint and issue counts for a board. Never writes to the board —

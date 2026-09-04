@@ -47,6 +47,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/roster/roster-page').then((m) => m.RosterPage),
   },
   {
+    // The Jira connection acts on behalf of the whole org and holds a credential,
+    // so it is Admin-only — matching the API, which refuses these routes to anyone else.
+    path: 'settings/jira',
+    title: 'Jira connection · Squad Status Board',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/settings/jira-settings-page').then((m) => m.JiraSettingsPage),
+  },
+  {
     path: 'present/:id',
     title: 'Present · Squad Status Board',
     canActivate: [authGuard],

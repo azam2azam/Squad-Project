@@ -62,6 +62,10 @@ builder.Services.AddCors(options => options.AddPolicy(WebCorsPolicy, policy =>
         .AllowCredentials();
 }));
 
+// Polls for Jira updates on the admin-configured interval. Inert until an admin turns
+// auto-apply on, so it costs nothing in a deployment that does not use Jira.
+builder.Services.AddHostedService<Api.Workers.JiraSyncWorker>();
+
 var app = builder.Build();
 
 app.UseExceptionHandler();

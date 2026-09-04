@@ -4,9 +4,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { MetadataService } from '../../core/services/metadata.service';
 
 /**
- * Local sign-in. The demo accounts are listed on the page because this build seeds them
- * in Development — that is a deliberate convenience for reviewers, and the seeding is
- * gated off outside Development.
+ * Local sign-in.
+ *
+ * Only the seeded administrator is offered here. The demo squads and their Product Owner
+ * and Viewer logins were removed when the app was cleared for real use, so listing them
+ * would hand someone credentials that fail.
  */
 @Component({
   selector: 'app-login-page',
@@ -27,8 +29,6 @@ export class LoginPage {
 
   protected readonly demoAccounts = [
     { email: 'admin@pirt.example', role: 'Admin', can: 'Everything' },
-    { email: 'po@pirt.example', role: 'Product Owner', can: 'Owns the demo board' },
-    { email: 'viewer@pirt.example', role: 'Viewer', can: 'Read, present, export' },
   ];
 
   protected readonly demoPassword = 'Demo!Pass123';

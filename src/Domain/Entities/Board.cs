@@ -1,3 +1,4 @@
+using System.Globalization;
 using Domain.Common;
 using Domain.Enums;
 using Domain.ValueObjects;
@@ -5,7 +6,7 @@ using Domain.ValueObjects;
 namespace Domain.Entities;
 
 /// <summary>
-/// A project/initiative snapshot — one slide. Owns its squad membership.
+/// A project/initiative snapshot â one slide. Owns its squad membership.
 /// </summary>
 public class Board : Entity
 {
@@ -70,7 +71,7 @@ public class Board : Entity
 
     public IReadOnlyCollection<SquadMember> Members => _members;
 
-    /// <summary>Per-role headcount, legend text and bar segments — derived, never stored.</summary>
+    /// <summary>Per-role headcount, legend text and bar segments â derived, never stored.</summary>
     public SquadComposition Composition => SquadComposition.From(_members.Select(m => m.Role));
 
     /// <summary>
@@ -99,7 +100,7 @@ public class Board : Entity
                 warnings.Add("Status is Blocked but no blocker note has been recorded.");
             }
 
-            // A risk with no description is unactionable — it tells a reviewer to worry
+            // A risk with no description is unactionable â it tells a reviewer to worry
             // without telling them what about.
             if (RiskLevelMetadata.IsNotable(RiskLevel) && string.IsNullOrWhiteSpace(RiskNote))
             {
@@ -316,4 +317,52 @@ public class Board : Entity
 
     private static string? Trim(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Applies figures pulled from Jira.
+    ///
+    /// Deliberately narrow: a sync owns sprint, progress and status, and never touches the
+    /// fields a Product Owner writes by hand — the blocker note, the risk, the roster.
+    /// Automation that silently rewrites someone's commentary is worse than no automation.
+    ///
+    /// Returns the fields that actually changed, so the caller audits real edits only and an
+    /// unchanged board does not generate noise every sync interval.
+    /// </summary>
+    public IReadOnlyList<JiraFieldChange> ApplyJiraSnapshot(
+        string? sprint, int progressPercent, BoardStatus status)
+    {
+        var changes = new List<JiraFieldChange>();
+
+        var newSprint = Trim(sprint);
+        if (newSprint is not null && newSprint != Sprint)
+        {
+            changes.Add(new JiraFieldChange(nameof(Sprint), Sprint, newSprint));
+            Sprint = newSprint;
+        }
+
+        if (progressPercent != ProgressPercent)
+        {
+            changes.Add(new JiraFieldChange(nameof(ProgressPercent),
+                ProgressPercent.ToString(CultureInfo.InvariantCulture),
+                progressPercent.ToString(CultureInfo.InvariantCulture)));
+            SetProgress(progressPercent);
+        }
+
+        if (status != Status)
+        {
+            changes.Add(new JiraFieldChange(nameof(Status),
+                BoardStatusMetadata.Label(Status), BoardStatusMetadata.Label(status)));
+            Status = status;
+        }
+
+        if (changes.Count > 0)
+        {
+            Touch();
+        }
+
+        return changes;
+    }
 }
+
+/// <summary>One field a Jira sync changed, in the shape the audit trail records.</summary>
+public sealed record JiraFieldChange(string Field, string? OldValue, string? NewValue);

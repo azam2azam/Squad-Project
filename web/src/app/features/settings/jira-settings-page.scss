@@ -1,0 +1,322 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.jira-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.jira-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.jira-page__title {
+  font-size: 26px;
+  margin: 0;
+}
+
+.jira-page__sub {
+  margin: 6px 0 0;
+  max-width: 60ch;
+  color: #5d6b7e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.jira-page__muted {
+  color: #5d6b7e;
+}
+
+// Status pill carries a word, never colour alone.
+.pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &--on {
+    border-color: #34d399;
+    background: #ecfdf5;
+    color: #065f46;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Banners
+// ---------------------------------------------------------------------------
+
+.banner {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 13px;
+  line-height: 1.5;
+
+  &--error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  &--warn {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  &--ok {
+    border-color: #6ee7b7;
+    background: #ecfdf5;
+    color: #065f46;
+  }
+
+  &--info {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1e40af;
+  }
+}
+
+.banner__lead {
+  margin: 0;
+  font-weight: 600;
+}
+
+.banner__list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+
+  li {
+    margin-bottom: 3px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// How-to
+// ---------------------------------------------------------------------------
+
+.howto {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--card);
+}
+
+.howto__summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.howto__list {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    font-size: 12px;
+    word-break: break-all;
+  }
+}
+
+.howto__note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #5d6b7e;
+}
+
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+
+.card {
+  margin-bottom: 18px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--card);
+}
+
+.card__title {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.card__sub {
+  margin: 0 0 14px;
+  max-width: 68ch;
+  color: #5d6b7e;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.card__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.card__meta {
+  margin: 14px 0 0;
+  color: #5d6b7e;
+  font-size: 12px;
+
+  span {
+    display: block;
+    margin-top: 2px;
+  }
+}
+
+.saved-note {
+  color: #047857;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
+// Fields
+// ---------------------------------------------------------------------------
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
+
+  &--narrow {
+    max-width: 200px;
+    margin-top: 14px;
+  }
+}
+
+.field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5d6b7e;
+}
+
+.field__hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: #5d6b7e;
+
+  code {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+}
+
+.field__error {
+  font-size: 12px;
+  color: #991b1b;
+}
+
+.field__input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-deep);
+  }
+
+  &:disabled {
+    background: #f8fafc;
+    color: #64748b;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 13px;
+
+  input {
+    margin-top: 2px;
+  }
+
+  small {
+    display: block;
+    margin-top: 2px;
+    color: #5d6b7e;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Buttons
+// ---------------------------------------------------------------------------
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+  }
+
+  &--danger {
+    border-color: #fca5a5;
+    color: #991b1b;
+  }
+}

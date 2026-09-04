@@ -23,13 +23,14 @@ public sealed class MetadataController(
 
     /// <summary>Which optional capabilities this deployment actually has.</summary>
     [HttpGet("capabilities")]
-    public ActionResult<object> GetCapabilities() => Ok(new
-    {
-        jiraSyncEnabled = jiraClient.IsEnabled,
-        serverExportEnabled = exportRenderer.IsAvailable,
-        // Excel is always available: it needs no external service, unlike the other two.
-        excelEnabled = true
-    });
+    public async Task<ActionResult<object>> GetCapabilities(CancellationToken cancellationToken)
+        => Ok(new
+        {
+            jiraSyncEnabled = await jiraClient.IsEnabledAsync(cancellationToken),
+            serverExportEnabled = exportRenderer.IsAvailable,
+            // Excel is always available: it needs no external service, unlike the other two.
+            excelEnabled = true
+        });
 
     /// <summary>
     /// Tests the Jira connection for real, so an admin can tell "not configured" from

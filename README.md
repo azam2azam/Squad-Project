@@ -1,3 +1,6 @@
+| `Jira__Enabled` | `false` | Pins Jira on via configuration, overriding the settings screen |
+| `Jira__BaseUrl` | — | e.g. `https://you.atlassian.net` |
+| `Jira__Email` / `Jira__ApiToken` | — | Jira Cloud credentials. Set these only to pin them; otherwise use the settings screen |
 # Squad Status Board
 
 A production web application for composing, maintaining and presenting live status
@@ -109,34 +112,78 @@ generic failure, because that is the only way to fix the file.
 Removing a row from `Members` takes that person off the squad. Removing a **board** row
 does not delete the board; delete it in the app so the audit trail is kept.
 
-## Linking a board to Jira
+## Connecting to your company's Jira
 
-Each board has **Jira project key** and **Jira board id** fields in the builder. These can
-be filled in whether or not sync is switched on, so boards can be prepared in advance.
+There are two ways to supply the credentials. **Most people should use the settings
+screen**; the environment variables exist for locked-down deployments.
 
-To enable the integration, set these and restart the API:
+### 1. The settings screen (recommended)
+
+Sign in as an Admin and open **Jira** in the top nav (`/settings/jira`).
+
+| Field | What to put in it |
+|---|---|
+| **Jira URL** | Your Jira site, e.g. `https://yourcompany.atlassian.net`. Must be https (http is allowed only for a loopback address). |
+| **Account email** | The Atlassian account the board reads as. |
+| **API token** | Created at **id.atlassian.com → Security → API tokens** while signed in as that account. |
+
+Use a **service account**, not your own login — when a person leaves the company their
+token is revoked and every board would stop updating.
+
+The account only needs **Browse projects** on the projects you want on the board. The
+integration is read-only: it issues `GET /rest/api/3/search` and never writes to Jira.
+
+Press **Test connection** with a project key to prove the credentials actually work. The
+result distinguishes *not configured*, *configured but unreachable*, and *connected*, with
+the issue count it read — because "no data" and "wrong token" look identical otherwise.
+
+Then open each board and set its **Jira project key** (e.g. `PIRT`) in the builder. Boards
+without a key are left alone.
+
+#### How the token is stored
+
+It is encrypted with ASP.NET Core Data Protection before it touches the database, under
+its own named purpose. The API never sends it back to a browser — the screen shows only
+`••••••••` plus the last four characters, which is enough to tell *which* token is in
+place without exposing it. Leaving the token field blank on a later save keeps the stored
+one, so an admin can change the interval without re-pasting the secret.
+
+> The Data Protection key ring must be persisted. In a container without a mounted key
+> directory the keys are regenerated on restart and the stored token can no longer be
+> decrypted — the app logs this plainly and the fix is to re-enter the token.
+
+### 2. Environment variables (pinned deployments)
 
 ```bash
 setx Jira__Enabled true
+setx Jira__BaseUrl https://yourcompany.atlassian.net
+setx Jira__Email squad-board@yourcompany.com
+setx Jira__ApiToken <token>
 ```
 
-`Jira__BaseUrl` (e.g. `https://yourcompany.atlassian.net`), `Jira__Email`, and
-`Jira__ApiToken` (from id.atlassian.com → Security → API tokens) are also required.
+**Configuration wins over the settings screen.** When these are set, the API uses them and
+the screen says so and goes read-only — so a hardened environment can pin the credentials
+beyond the reach of an application admin.
 
-Check it worked — admin only, because it spends your credentials:
+### Automatic updates
 
-```bash
-curl -H "Authorization: Bearer <token>" "http://localhost:5220/api/v1/metadata/jira/connection?projectKey=ABC"
-```
+Two modes, and the safe one is the default:
 
-It reports one of three things: not configured, configured but unreachable, or connected
-with the issue count it read. That distinction matters — "no data" and "wrong token" look
-identical otherwise.
+| Auto-apply | What happens |
+|---|---|
+| **Off** (default) | Jira only *suggests*. The board editor shows what Jira says and the Product Owner presses Save. Nothing is written unattended. |
+| **On** | A background worker checks every *N* minutes and writes to every linked board on its own. |
 
-Once enabled, a **Sync from Jira** button appears on any board with a project key. It
-pulls the active sprint, the done-vs-total ratio and a blocked count, then shows a
-**suggestion**. It never writes to the board: applying it fills the form, and you still
-press Save.
+A sync only ever sets **sprint, progress and status**. The blocker note, the risk level and
+note, and the squad roster are written by people and are never overwritten — automation
+that silently rewrites someone's commentary is worse than no automation.
+
+Every change is recorded in the board's audit trail (as `Jira sync` for a scheduled run, or
+under the admin's name for the **Sync now** button), and a board whose figures did not
+change produces no audit entry and no realtime notification.
+
+Changing the interval takes effect without restarting the API; the worker re-reads the
+settings each minute.
 
 ## Configuration
 

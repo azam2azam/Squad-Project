@@ -1,0 +1,281 @@
+<div class="jira-page">
+  <header class="jira-page__head">
+    <div>
+      <h1 class="jira-page__title">Jira connection</h1>
+      <p class="jira-page__sub">
+        Link the board to your company's Jira so sprint, progress and status can be pulled
+        from the work your squads are already tracking.
+      </p>
+    </div>
+
+    @if (current(); as view) {
+      <span class="pill" [class.pill--on]="view.configured">
+        {{ view.configured ? 'Connected' : 'Not configured' }}
+      </span>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="jira-page__muted">Loading…</p>
+  } @else {
+    @if (error()) {
+      <p class="banner banner--error" role="alert">{{ error() }}</p>
+    }
+
+    @if (locked()) {
+      <!--
+        A deployment can pin credentials via environment variables, which deliberately
+        outrank anything set here. Saying so plainly prevents an admin editing this form
+        and wondering why nothing changes.
+      -->
+      <p class="banner banner--info">
+        These credentials are set by environment configuration on the server
+        (<code>Jira__BaseUrl</code>, <code>Jira__Email</code>, <code>Jira__ApiToken</code>)
+        and take precedence over anything saved here. To manage the connection from this
+        screen, clear those variables and restart the API.
+      </p>
+    }
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- How to get the credentials                                          -->
+    <!-- ------------------------------------------------------------------ -->
+    <details class="howto">
+      <summary class="howto__summary">Where do these values come from?</summary>
+      <ol class="howto__list">
+        <li>
+          <strong>Jira URL</strong> — your company's Jira site, e.g.
+          <code>https://yourcompany.atlassian.net</code>. It must be https.
+        </li>
+        <li>
+          <strong>Email</strong> — the Atlassian account the board reads as. Use a service
+          account with read access to the projects you want on the board, not a person's
+          own login: when that person leaves, the connection would break.
+        </li>
+        <li>
+          <strong>API token</strong> — create one at
+          <code>id.atlassian.com/manage-profile/security/api-tokens</code> while signed in
+          as that account. Paste it below; it is encrypted before it is stored and is never
+          sent back to a browser.
+        </li>
+        <li>
+          <strong>Per board</strong> — open a board and set its Jira project key (e.g.
+          <code>PIRT</code>). Boards without a key are left alone.
+        </li>
+      </ol>
+      <p class="howto__note">
+        The connection is read-only. This app never writes to your Jira.
+      </p>
+    </details>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Connection form                                                     -->
+    <!-- ------------------------------------------------------------------ -->
+    <form class="card" (submit)="$event.preventDefault(); save()">
+      <h2 class="card__title">Connection</h2>
+
+      <div class="card__grid">
+        <label class="field">
+          <span class="field__label">Jira URL</span>
+          <input
+            class="field__input"
+            type="url"
+            inputmode="url"
+            placeholder="https://yourcompany.atlassian.net"
+            [disabled]="locked()"
+            [ngModel]="baseUrl()"
+            (ngModelChange)="baseUrl.set($event)"
+            name="baseUrl"
+          />
+          @if (urlProblem(); as problem) {
+            <span class="field__error">{{ problem }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span class="field__label">Account email</span>
+          <input
+            class="field__input"
+            type="email"
+            autocomplete="off"
+            placeholder="squad-board@yourcompany.com"
+            [disabled]="locked()"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            name="email"
+          />
+        </label>
+
+        <label class="field field--wide">
+          <span class="field__label">
+            API token
+            @if (hasStoredToken()) {
+              <span class="field__hint">— leave blank to keep the stored one</span>
+            }
+          </span>
+          <input
+            class="field__input"
+            type="password"
+            autocomplete="new-password"
+            [placeholder]="hasStoredToken() ? 'Stored — type a new token to replace it' : 'Paste the API token'"
+            [disabled]="locked()"
+            [ngModel]="apiToken()"
+            (ngModelChange)="apiToken.set($event)"
+            name="apiToken"
+          />
+          @if (current()?.tokenHint; as hint) {
+            <span class="field__hint">Stored token: <code>{{ hint }}</code></span>
+          }
+        </label>
+      </div>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [disabled]="locked()"
+          [checked]="enabled()"
+          (change)="enabled.set($any($event.target).checked)"
+        />
+        <span>
+          <strong>Enable the connection</strong>
+          <small>Off means no Jira call is made at all.</small>
+        </span>
+      </label>
+
+      <div class="card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save connection' }}
+        </button>
+
+        @if (current()?.configured && !locked()) {
+          <button type="button" class="btn btn--danger" (click)="disconnect()" [disabled]="saving()">
+            Disconnect
+          </button>
+        }
+
+        @if (saved()) {
+          <span class="saved-note" role="status">Saved.</span>
+        }
+      </div>
+
+      @if (current(); as view) {
+        @if (view.updatedAt) {
+          <p class="card__meta">
+            Last changed by {{ view.updatedBy || 'unknown' }} on {{ formatDate(view.updatedAt) }}.
+          </p>
+        }
+      }
+    </form>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Test                                                                -->
+    <!-- ------------------------------------------------------------------ -->
+    <section class="card">
+      <h2 class="card__title">Test the connection</h2>
+      <p class="card__sub">
+        Makes a real call to Jira, so "not configured" can be told apart from "configured
+        but the token is wrong". Give a project key to check the account can actually read
+        that project.
+      </p>
+
+      <div class="card__row">
+        <label class="field">
+          <span class="field__label">Project key (optional)</span>
+          <input
+            class="field__input"
+            type="text"
+            placeholder="PIRT"
+            [ngModel]="probeProjectKey()"
+            (ngModelChange)="probeProjectKey.set($event)"
+            name="probeProjectKey"
+          />
+        </label>
+
+        <button type="button" class="btn" (click)="test()" [disabled]="testing()">
+          {{ testing() ? 'Testing…' : 'Test connection' }}
+        </button>
+      </div>
+
+      @if (testResult(); as result) {
+        <p
+          class="banner"
+          [class.banner--ok]="result.reachable"
+          [class.banner--warn]="!result.reachable"
+          role="status"
+        >
+          {{ result.message }}
+        </p>
+      }
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Automatic updates                                                   -->
+    <!-- ------------------------------------------------------------------ -->
+    <section class="card">
+      <h2 class="card__title">Automatic updates</h2>
+      <p class="card__sub">
+        With auto-apply off, Jira only <em>suggests</em> figures — the board editor shows
+        what Jira says and the Product Owner accepts it. With it on, a background job
+        writes sprint, progress and status to every linked board on the interval below.
+        Blocker notes, risks and the squad roster are never touched either way.
+      </p>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [disabled]="locked()"
+          [checked]="autoApply()"
+          (change)="autoApply.set($any($event.target).checked)"
+        />
+        <span>
+          <strong>Apply Jira figures automatically</strong>
+          <small>Every change is written to the board's audit trail as "Jira sync".</small>
+        </span>
+      </label>
+
+      <label class="field field--narrow">
+        <span class="field__label">Check every (minutes)</span>
+        <input
+          class="field__input"
+          type="number"
+          min="5"
+          max="1440"
+          step="5"
+          [disabled]="locked()"
+          [ngModel]="syncIntervalMinutes()"
+          (ngModelChange)="syncIntervalMinutes.set(+$event)"
+          name="syncIntervalMinutes"
+        />
+      </label>
+
+      <div class="card__actions">
+        <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save schedule' }}
+        </button>
+
+        <button type="button" class="btn" (click)="syncNow()" [disabled]="syncing()">
+          {{ syncing() ? 'Syncing…' : 'Sync now' }}
+        </button>
+      </div>
+
+      <p class="card__meta">
+        Last sync: {{ formatDate(current()?.lastSyncAt ?? null) }}.
+        @if (current()?.lastSyncResult; as result) {
+          <span>{{ result }}</span>
+        }
+      </p>
+
+      @if (syncResult(); as report) {
+        <div class="banner" [class.banner--ok]="report.ran" [class.banner--warn]="!report.ran">
+          <p class="banner__lead">{{ report.message }}</p>
+          @if (report.details.length) {
+            <ul class="banner__list">
+              @for (detail of report.details; track detail) {
+                <li>{{ detail }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>
