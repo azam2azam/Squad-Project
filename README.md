@@ -1,4 +1,4 @@
-| **M6** | e2e tests, Dockerfiles, K8s/Helm, docs | ✅ Done || **M7** | Delivery dashboard, portfolio charts, risk tracking | ✅ Done |# Squad Status Board
+# Squad Status Board
 
 A production web application for composing, maintaining and presenting live status
 snapshots for engineering squads inside the **Product Innovation & Revamp Team (PIRT)**.
@@ -19,17 +19,11 @@ cards — ready to present or export.
 | **M4** | SignalR realtime, Present mode, PNG/PDF export, JSON import/export | ✅ Done |
 | **M5** | JWT auth + RBAC, Jira sync, audit log | ✅ Done |
 | **M6** | e2e tests, Dockerfiles, K8s/Helm, docs | ✅ Done |
+| **M7** | Delivery dashboard, portfolio charts, risk tracking | ✅ Done |
+| **M8** | Clean install, Excel import/export, Jira linking | ✅ Done |
 
-All six milestones are done. Every functional requirement in the spec is implemented and
-demoable end to end.
-
-Sign in with one of the seeded demo accounts — password `Demo!Pass123`:
-
-| Account | Role | Can do |
-|---|---|---|
-| `admin@pirt.example` | Admin | Everything, including the roster and imports |
-| `po@pirt.example` | Product Owner | Full control of boards they own; reads the rest |
-| `viewer@pirt.example` | Viewer | Read, present and export only |
+Every functional requirement in the spec is implemented and demoable end to end, plus a
+delivery dashboard, risk tracking, and Excel round-tripping on top.
 
 The reference prototype is checked in at [docs/prototype/squad-status-board.html](docs/prototype/squad-status-board.html)
  and the `SlideCanvas` is a deliberate transcription of it — see [Architecture](docs/ARCHITECTURE.md)
@@ -78,7 +72,7 @@ Two terminals.
 dotnet run --project src/Api/Api.csproj --launch-profile http
 ```
 
-In `Development` this applies migrations and seeds the demo board automatically.
+In `Development` this applies migrations and creates the administrator automatically.
 
 **2. Web** (listens on `http://localhost:4220`, proxies `/api` to the API):
 
@@ -162,7 +156,6 @@ All settings are overridable by environment variable using the standard
 | `Jira__BaseUrl` | — | e.g. `https://you.atlassian.net` |
 | `Jira__Email` / `Jira__ApiToken` | — | Jira Cloud credentials |
 | `Cors__AllowedOrigins__0` | `http://localhost:4220` | Permitted web origin |
-| `Jira__Enabled` | `false` | Gates the Jira integration |
 
 Migrations are **never** applied automatically outside Development unless
 `Database__AutoMigrate` is explicitly set, so a production deploy cannot silently
@@ -170,7 +163,7 @@ alter schema.
 
 ## Tests
 
-Backend — 80 tests (domain rules, handlers, RBAC, import/export):
+Backend — 102 tests (domain rules, handlers, RBAC, Excel and JSON portability):
 
 ```bash
 dotnet test SquadStatusBoard.sln
@@ -182,7 +175,8 @@ Frontend — 20 component and shell tests:
 npx ng test --watch=false --prefix web
 ```
 
-End-to-end — 9 Playwright tests (2 skip on a clean install: they need the demo role accounts). **Both servers must already be running.**
+End-to-end — 9 Playwright tests; 2 skip on a clean install because they need the demo
+role accounts. **Both servers must already be running.**
 
 ```bash
 npm run e2e --prefix web
