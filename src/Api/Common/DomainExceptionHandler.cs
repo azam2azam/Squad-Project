@@ -20,6 +20,7 @@ public sealed class DomainExceptionHandler(
         var (status, title) = exception switch
         {
             ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
+            WorkbookFormatException => (StatusCodes.Status400BadRequest, "That spreadsheet could not be read"),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, "Not signed in"),
             ForbiddenException => (StatusCodes.Status403Forbidden, "Not permitted"),
             DomainException => (StatusCodes.Status400BadRequest, "Request violates a domain rule"),

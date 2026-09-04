@@ -39,7 +39,9 @@ public sealed record ExportedBoard(
     string? JiraProjectKey,
     string? JiraBoardId,
     int OrderIndex,
-    IReadOnlyList<ExportedMember> Members);
+    IReadOnlyList<ExportedMember> Members,
+    RiskLevel RiskLevel = RiskLevel.None,
+    string? RiskNote = null);
 
 public sealed record ExportedMember(
     Guid PersonId,

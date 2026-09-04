@@ -7,21 +7,39 @@ using Microsoft.Extensions.Logging;
 namespace Infrastructure.Persistence;
 
 /// <summary>
-/// Seeds the prototype example so the app is meaningful on first run:
-/// OPD Screen Revamp / Squad Alpha / 6 members (spec section 5).
-/// Idempotent — safe to run on every startup.
+/// Database seeding, split into two independent concerns:
+///
+/// - <b>The administrator account</b>, so a fresh install can be signed into at all.
+///   Controlled by <c>Database:SeedAdminUser</c> (on by default).
+/// - <b>Demo content</b> — example boards, a roster and extra role accounts.
+///   Controlled by <c>Database:SeedDemoData</c> (off by default).
+///
+/// They are separate because a clean deployment wants the first and not the second.
+/// Both are idempotent and safe to run on every startup.
 /// </summary>
 public static class DbSeeder
 {
-    /// <summary>Stable ids so re-seeding and JSON round-trips stay deterministic.</summary>
+    /// <summary>Stable id so demo re-seeding and JSON round-trips stay deterministic.</summary>
     private static readonly Guid DemoBoardId = new("8f1c4d10-0000-4000-a000-000000000001");
 
-    public static async Task SeedAsync(AppDbContext db, ILogger logger,
-        IPasswordHasher passwordHasher, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(
+        AppDbContext db,
+        ILogger logger,
+        IPasswordHasher passwordHasher,
+        SeedOptions options,
+        CancellationToken cancellationToken = default)
     {
-        // Users are seeded independently of boards: an existing database from before
-        // auth existed still needs accounts to sign in with.
-        await SeedUsersAsync(db, logger, passwordHasher, cancellationToken);
+        if (options.SeedAdminUser)
+        {
+            await SeedAdminAsync(db, logger, passwordHasher, options, cancellationToken);
+        }
+
+        if (!options.SeedDemoData)
+        {
+            return;
+        }
+
+        await SeedDemoUsersAsync(db, logger, passwordHasher, options, cancellationToken);
 
         if (await db.Boards.IgnoreQueryFilters().AnyAsync(cancellationToken))
         {
@@ -32,10 +50,63 @@ public static class DbSeeder
             // else's board is worse than requiring an Admin to assign one.
             await AdoptDemoBoardAsync(db, logger, cancellationToken);
 
-            logger.LogInformation("Seed skipped: boards already present.");
+            logger.LogInformation("Demo seed skipped: boards already present.");
             return;
         }
 
+        await SeedDemoBoardAsync(db, logger, cancellationToken);
+    }
+
+    /// <summary>
+    /// Ensures exactly one administrator exists so a clean install can be signed into.
+    /// Does nothing once any user is present, so it never fights with real accounts or
+    /// resets a password somebody has already changed.
+    /// </summary>
+    private static async Task SeedAdminAsync(AppDbContext db, ILogger logger,
+        IPasswordHasher passwordHasher, SeedOptions options, CancellationToken cancellationToken)
+    {
+        if (await db.Users.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var admin = new AppUser(
+            options.AdminEmail,
+            options.AdminDisplayName,
+            UserRole.Admin,
+            passwordHasher.Hash(options.AdminPassword));
+
+        db.Users.Add(admin);
+        await db.SaveChangesAsync(cancellationToken);
+
+        logger.LogWarning(
+            "Created the initial administrator {Email}. Change this password immediately — " +
+            "it comes from configuration and is not a secret.",
+            options.AdminEmail);
+    }
+
+    /// <summary>The extra role accounts, so the Product Owner and Viewer paths are demoable.</summary>
+    private static async Task SeedDemoUsersAsync(AppDbContext db, ILogger logger,
+        IPasswordHasher passwordHasher, SeedOptions options, CancellationToken cancellationToken)
+    {
+        if (await db.Users.AnyAsync(u => u.Role != UserRole.Admin, cancellationToken))
+        {
+            return;
+        }
+
+        var hash = passwordHasher.Hash(options.AdminPassword);
+
+        db.Users.AddRange(
+            new AppUser("po@pirt.example", "Nadia Al-Harbi", UserRole.ProductOwner, hash),
+            new AppUser("viewer@pirt.example", "Executive Viewer", UserRole.Viewer, hash));
+
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Seeded the demo Product Owner and Viewer accounts.");
+    }
+
+    private static async Task SeedDemoBoardAsync(AppDbContext db, ILogger logger,
+        CancellationToken cancellationToken)
+    {
         logger.LogInformation("Seeding demo data (OPD Screen Revamp / Squad Alpha).");
 
         var roster = BuildRoster();
@@ -60,8 +131,6 @@ public static class DbSeeder
         board.AddMember(roster["layla"], Role.QaEngineer, "Playwright · HL7 fixtures");
         board.AddMember(roster["yousef"], Role.UxDesigner, "Design system · WCAG AA");
 
-        // Owned by the demo Product Owner rather than left ownerless, so the
-        // "a PO may edit their own boards" path is demonstrable on first run.
         var productOwner = await db.Users
             .FirstOrDefaultAsync(u => u.Role == UserRole.ProductOwner, cancellationToken);
         board.AssignOwner(productOwner?.Id);
@@ -72,37 +141,7 @@ public static class DbSeeder
             board.Id, "Board", null, "Created from seed data", "seed"));
 
         await db.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Seed complete: 1 board, {PersonCount} people.", roster.Count);
-    }
-
-    /// <summary>
-    /// One account per role so every permission path is demonstrable on first run.
-    /// The password is a well-known development default and is fine to have in source
-    /// precisely because it is only ever seeded in Development — production is gated by
-    /// Database:SeedDemoData, which defaults to false outside Development.
-    /// </summary>
-    private const string DemoPassword = "Demo!Pass123";
-
-    private static async Task SeedUsersAsync(AppDbContext db, ILogger logger,
-        IPasswordHasher passwordHasher, CancellationToken cancellationToken)
-    {
-        if (await db.Users.AnyAsync(cancellationToken))
-        {
-            return;
-        }
-
-        var hash = passwordHasher.Hash(DemoPassword);
-
-        db.Users.AddRange(
-            new AppUser("admin@pirt.example", "Ghada Al-Suwaidi", UserRole.Admin, hash),
-            new AppUser("po@pirt.example", "Nadia Al-Harbi", UserRole.ProductOwner, hash),
-            new AppUser("viewer@pirt.example", "Executive Viewer", UserRole.Viewer, hash));
-
-        await db.SaveChangesAsync(cancellationToken);
-
-        logger.LogInformation(
-            "Seeded 3 demo accounts (admin@, po@, viewer@pirt.example). " +
-            "These exist only because Database:SeedDemoData is enabled.");
+        logger.LogInformation("Demo seed complete: 1 board, {PersonCount} people.", roster.Count);
     }
 
     /// <summary>
@@ -143,7 +182,6 @@ public static class DbSeeder
             "Playwright · HL7 fixtures", "layla.mansour@example.com"),
         ["yousef"] = new Person("Yousef Baraka", Role.UxDesigner,
             "Design system · WCAG AA", "yousef.baraka@example.com"),
-        // Bench roster so the typeahead has people beyond the demo squad.
         ["sara"] = new Person("Sara Al-Otaibi", Role.BusinessAnalyst,
             "Clinical workflows · BPMN", "sara.alotaibi@example.com"),
         ["tariq"] = new Person("Tariq Nawaz", Role.DevOps,
@@ -151,4 +189,24 @@ public static class DbSeeder
         ["mona"] = new Person("Mona Farouk", Role.QaEngineer,
             "Automation · performance", "mona.farouk@example.com")
     };
+}
+
+/// <summary>Seeding configuration, bound from the Database section.</summary>
+public sealed class SeedOptions
+{
+    /// <summary>Create an administrator when the database has no users at all.</summary>
+    public bool SeedAdminUser { get; init; } = true;
+
+    /// <summary>Create example boards, a roster and the extra role accounts.</summary>
+    public bool SeedDemoData { get; init; }
+
+    public string AdminEmail { get; init; } = "admin@pirt.example";
+
+    public string AdminDisplayName { get; init; } = "Administrator";
+
+    /// <summary>
+    /// Only ever used the first time, when no user exists. Supply a real one via
+    /// Database__AdminPassword; the default is a placeholder to be changed on first login.
+    /// </summary>
+    public string AdminPassword { get; init; } = "Admin!Pass123";
 }

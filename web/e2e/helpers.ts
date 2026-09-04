@@ -8,9 +8,6 @@ export const ACCOUNTS = {
   viewer: 'viewer@pirt.example',
 } as const;
 
-/** The seeded demo board — a stable id, so tests need not hunt for it. */
-export const DEMO_BOARD_ID = '8f1c4d10-0000-4000-a000-000000000001';
-
 /**
  * Signs in through the real login form rather than injecting a token, so the test
  * covers the same path a person takes.

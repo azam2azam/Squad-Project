@@ -10,6 +10,18 @@
     <div class="portfolio__actions">
       <button type="button" class="btn" (click)="present()" [disabled]="isEmpty()">Present</button>
 
+      <button type="button" class="btn" (click)="exportExcel()">Export Excel</button>
+
+      <label class="btn" [class.is-busy]="importing()">
+        {{ importing() ? 'Importing…' : 'Import Excel' }}
+        <input
+          type="file"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          hidden
+          (change)="importExcel($event)"
+        />
+      </label>
+
       <button type="button" class="btn" (click)="exportAll()">Export JSON</button>
 
       <label class="btn" [class.is-busy]="importing()">

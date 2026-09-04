@@ -142,7 +142,9 @@ export class BoardEditorPage {
       draft.progressPercent !== board.progressPercent ||
       draft.blockerNote !== (board.blockerNote ?? '') ||
       draft.riskLevel !== board.riskLevel ||
-      draft.riskNote !== (board.riskNote ?? '')
+      draft.riskNote !== (board.riskNote ?? '') ||
+      draft.jiraProjectKey !== (board.jiraProjectKey ?? '') ||
+      draft.jiraBoardId !== (board.jiraBoardId ?? '')
     );
   });
 
@@ -256,6 +258,8 @@ export class BoardEditorPage {
         blockerNote: draft.blockerNote.trim() || null,
         riskLevel: draft.riskLevel,
         riskNote: draft.riskNote.trim() || null,
+        jiraProjectKey: draft.jiraProjectKey.trim() || null,
+        jiraBoardId: draft.jiraBoardId.trim() || null,
       })
       .subscribe({
         next: (saved) => {
@@ -411,6 +415,8 @@ interface DraftState {
   blockerNote: string;
   riskLevel: number;
   riskNote: string;
+  jiraProjectKey: string;
+  jiraBoardId: string;
 }
 
 function toDraft(board: BoardDetail): DraftState {
@@ -424,6 +430,8 @@ function toDraft(board: BoardDetail): DraftState {
     blockerNote: board.blockerNote ?? '',
     riskLevel: board.riskLevel ?? 0,
     riskNote: board.riskNote ?? '',
+    jiraProjectKey: board.jiraProjectKey ?? '',
+    jiraBoardId: board.jiraBoardId ?? '',
   };
 }
 

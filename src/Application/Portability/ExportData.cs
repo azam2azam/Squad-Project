@@ -36,7 +36,9 @@ public sealed class ExportDataQueryHandler(IAppDbContext db)
                 b.Members.OrderBy(m => m.OrderIndex)
                     .Select(m => new ExportedMember(
                         m.PersonId, m.Role, m.Detail, m.AllocationPercent, m.OrderIndex))
-                    .ToList()))
+                    .ToList(),
+                b.RiskLevel,
+                b.RiskNote))
                 .ToList());
     }
 }

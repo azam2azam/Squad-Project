@@ -4,6 +4,7 @@ using Application;
 using Application.Abstractions;
 using Infrastructure;
 using Infrastructure.Persistence;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -33,6 +34,13 @@ builder.Services.AddSingleton<IBoardNotifier, SignalRBoardNotifier>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// An explicit bound on spreadsheet uploads rather than inheriting a framework default
+// that could change between versions. Matches the per-action RequestSizeLimit.
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 20 * 1024 * 1024;
+});
 
 // RFC 7807 for every unhandled failure and every 4xx/5xx status (spec section 7).
 builder.Services.AddProblemDetails();
@@ -104,9 +112,25 @@ static async Task MigrateAndSeedAsync(WebApplication app)
 {
     var config = app.Configuration;
     var autoMigrate = config.GetValue("Database:AutoMigrate", app.Environment.IsDevelopment());
-    var seedDemoData = config.GetValue("Database:SeedDemoData", app.Environment.IsDevelopment());
 
-    if (!autoMigrate && !seedDemoData)
+    // Seeding an administrator is on by default: without it a fresh install cannot be
+    // signed into at all. Demo content is off by default — a clean deployment does not
+    // want example boards in it.
+    var seedOptions = new SeedOptions
+    {
+        SeedAdminUser = config.GetValue("Database:SeedAdminUser", true),
+        SeedDemoData = config.GetValue("Database:SeedDemoData", false),
+        // Blank, not just missing, falls back: an empty value in appsettings.json is a
+        // placeholder, and must never become a literal empty password.
+        AdminEmail = Or(config["Database:AdminEmail"], "admin@pirt.example"),
+        AdminDisplayName = Or(config["Database:AdminDisplayName"], "Administrator"),
+        AdminPassword = Or(config["Database:AdminPassword"], "Admin!Pass123")
+    };
+
+    static string Or(string? value, string fallback) =>
+        string.IsNullOrWhiteSpace(value) ? fallback : value;
+
+    if (!autoMigrate && !seedOptions.SeedAdminUser && !seedOptions.SeedDemoData)
     {
         return;
     }
@@ -122,10 +146,10 @@ static async Task MigrateAndSeedAsync(WebApplication app)
         await db.Database.MigrateAsync();
     }
 
-    if (seedDemoData)
+    if (seedOptions.SeedAdminUser || seedOptions.SeedDemoData)
     {
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-        await DbSeeder.SeedAsync(db, logger, passwordHasher);
+        await DbSeeder.SeedAsync(db, logger, passwordHasher, seedOptions);
     }
 }
 

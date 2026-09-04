@@ -201,6 +201,52 @@
         </div>
       }
 
+      <!-- Linking a board to Jira. Always shown so a board can be linked before the
+           integration is switched on; the sync button only appears once it is. -->
+      @if (canWrite()) {
+        <div class="card">
+          <div class="card__head">
+            <h2 class="card__title">Jira link</h2>
+            @if (!jiraEnabled()) {
+              <span class="card__hint">Sync is off for this deployment</span>
+            }
+          </div>
+
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Project key</span>
+              <input
+                class="field__input"
+                type="text"
+                [value]="d.jiraProjectKey"
+                (input)="update('jiraProjectKey', $any($event.target).value)"
+                placeholder="OPD"
+                maxlength="50"
+              />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Board id</span>
+              <input
+                class="field__input"
+                type="text"
+                [value]="d.jiraBoardId"
+                (input)="update('jiraBoardId', $any($event.target).value)"
+                placeholder="42"
+                maxlength="50"
+              />
+            </label>
+          </div>
+
+          @if (d.jiraProjectKey && !jiraEnabled()) {
+            <p class="jira__note">
+              Saved with the board. An admin can switch sync on with
+              <code>Jira__Enabled</code>, and this board is then ready to pull.
+            </p>
+          }
+        </div>
+      }
+
       @if (jiraEnabled() && canWrite()) {
         <div class="card card--jira">
           <div class="card__head">

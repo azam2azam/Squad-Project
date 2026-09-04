@@ -67,7 +67,8 @@ public sealed class ImportDataCommandHandler(
             board.UpdateMeta(incoming.Title, incoming.Product, incoming.SquadName,
                 incoming.Sprint, incoming.Status, incoming.ProgressPercent,
                 incoming.BlockerNote, incoming.Velocity, incoming.TargetDate,
-                incoming.JiraProjectKey, incoming.JiraBoardId);
+                incoming.JiraProjectKey, incoming.JiraBoardId,
+                incoming.RiskLevel, incoming.RiskNote);
             board.SetOrder(incoming.OrderIndex);
 
             membersLinked += await SyncMembersAsync(board, incoming, peopleById, warnings, cancellationToken);

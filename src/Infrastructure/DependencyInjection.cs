@@ -2,6 +2,7 @@ using Application.Abstractions;
 using Infrastructure.Auth;
 using Infrastructure.Integrations;
 using Infrastructure.Persistence;
+using Infrastructure.Portability;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -62,6 +63,7 @@ public static class DependencyInjection
         services.AddSingleton<IBoardNotifier, NullBoardNotifier>();
 
         // Auth (spec section 8).
+        services.AddSingleton<IWorkbookSerializer, ExcelWorkbookSerializer>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<IBoardAuthorizer, BoardAuthorizer>();

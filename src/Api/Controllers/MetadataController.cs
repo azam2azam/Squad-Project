@@ -1,5 +1,7 @@
 using Application.Abstractions;
+using Application.Boards.Queries;
 using Application.Contracts;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -11,7 +13,8 @@ namespace Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/metadata")]
-public sealed class MetadataController(IJiraClient jiraClient, IExportRenderer exportRenderer)
+public sealed class MetadataController(
+    IJiraClient jiraClient, IExportRenderer exportRenderer, ISender sender)
     : ControllerBase
 {
     [HttpGet]
@@ -23,6 +26,19 @@ public sealed class MetadataController(IJiraClient jiraClient, IExportRenderer e
     public ActionResult<object> GetCapabilities() => Ok(new
     {
         jiraSyncEnabled = jiraClient.IsEnabled,
-        serverExportEnabled = exportRenderer.IsAvailable
+        serverExportEnabled = exportRenderer.IsAvailable,
+        // Excel is always available: it needs no external service, unlike the other two.
+        excelEnabled = true
     });
+
+    /// <summary>
+    /// Tests the Jira connection for real, so an admin can tell "not configured" from
+    /// "configured but the token is wrong". Admin-only — it spends our credentials.
+    /// </summary>
+    [HttpGet("jira/connection")]
+    [ProducesResponseType<JiraConnectionDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<JiraConnectionDto>> GetJiraConnection(
+        [FromQuery] string? projectKey, CancellationToken cancellationToken)
+        => Ok(await sender.Send(new GetJiraConnectionQuery(projectKey), cancellationToken));
 }
