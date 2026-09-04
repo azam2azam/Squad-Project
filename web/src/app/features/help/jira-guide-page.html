@@ -1,0 +1,546 @@
+<div class="guide">
+  <header class="guide__head">
+    <p class="guide__eyebrow">User guide</p>
+    <h1 class="guide__title">Keeping boards current from Jira</h1>
+    <p class="guide__sub">
+      How the Jira connection works, what it will and won't change on a board, and the
+      steps for setting it up and using it day to day.
+    </p>
+
+    <!-- Points at the next useful action rather than describing one the reader can't take. -->
+    <div class="guide__state" role="status">
+      @if (jiraEnabled()) {
+        <span class="dot dot--on"></span>
+        <span>Jira is connected for this deployment.</span>
+      } @else {
+        <span class="dot dot--off"></span>
+        @if (isAdmin()) {
+          <span>Jira isn't connected yet — <a routerLink="/settings/jira">set it up</a>.</span>
+        } @else {
+          <span>Jira isn't connected yet. An administrator sets this up.</span>
+        }
+      }
+    </div>
+  </header>
+
+  <nav class="guide__toc" aria-label="On this page">
+    <a href="#idea">The short version</a>
+    <a href="#modes">Two modes</a>
+    <a href="#setup">Admin setup</a>
+    <a href="#link">Linking a board</a>
+    <a href="#daily">Using a suggestion</a>
+    <a href="#mapping">How figures are read</a>
+    <a href="#schedule">The scheduled run</a>
+    <a href="#audit">What changed, and who by</a>
+    <a href="#security">The API token</a>
+    <a href="#trouble">When it doesn't work</a>
+  </nav>
+
+  <!-- ================================================================= -->
+  <section class="section" id="idea">
+    <h2 class="section__title">The short version</h2>
+    <p class="lede">
+      A board can be pointed at a Jira project. The app then reads that project's issues and
+      works out three things: which sprint is active, how far along the work is, and whether
+      the squad looks on track.
+    </p>
+    <p>
+      It reads Jira and nothing more — it never creates, edits, transitions or comments on an
+      issue. Everything flows one way, from Jira into the board.
+    </p>
+    <p>
+      The important design decision is what happens next. By default the app
+      <strong>shows you what Jira says and waits</strong>. A Product Owner looks at the
+      numbers and decides whether to take them. Nothing is written to a board until a person
+      agrees, unless an admin has deliberately turned that requirement off.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="modes">
+    <h2 class="section__title">Two modes</h2>
+    <p class="lede">
+      One switch on the settings screen decides how updates arrive. Pick it once; it applies
+      to every linked board.
+    </p>
+
+    <div class="modes">
+      <article class="mode mode--default">
+        <p class="mode__tag">Default</p>
+        <h3 class="mode__name">Suggest only</h3>
+        <p>
+          Jira is consulted when someone opens a board and presses <b>Sync from Jira</b>. The
+          pulled figures appear beside the current ones, with a short reason. The PO presses
+          <b>Apply to draft</b>, then <b>Save</b> — two deliberate steps. Nothing changes on
+          its own.
+        </p>
+      </article>
+
+      <article class="mode">
+        <p class="mode__tag">Opt in</p>
+        <h3 class="mode__name">Apply automatically</h3>
+        <p>
+          A background job checks Jira every few minutes and writes sprint, progress and
+          status straight to every linked board. Good for a large portfolio where chasing
+          people for updates is the real cost; it does mean figures can change under a reader
+          without anyone pressing anything.
+        </p>
+      </article>
+    </div>
+
+    <aside class="note">
+      <p class="note__label">Recommendation</p>
+      <p>
+        Start in suggest-only for a sprint or two. It shows you whether the numbers Jira
+        produces actually match how your squads describe themselves, before you let those
+        numbers write to a board unattended.
+      </p>
+    </aside>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="setup">
+    <h2 class="section__title">
+      Admin setup
+      <span class="chip chip--admin">Admin only</span>
+    </h2>
+    <p class="lede">
+      Done once for the whole organisation, on the
+      @if (isAdmin()) {
+        <a routerLink="/settings/jira">Jira settings screen</a>
+      } @else {
+        <span>Jira settings screen</span>
+      }. Everything there acts on behalf of every squad, so it is restricted to
+      administrators.
+    </p>
+
+    <h3 class="section__sub">1. Create a service account and token</h3>
+    <p>
+      In Jira, use a <strong>service account</strong> rather than your own login. When a
+      person leaves the company their token is revoked, and every board would quietly stop
+      updating. The account needs only <strong>Browse projects</strong> on the projects you
+      want on the board.
+    </p>
+    <p>
+      Signed in as that account, go to <b>id.atlassian.com → Security → API tokens</b> and
+      create one. Copy it — Atlassian shows it once.
+    </p>
+
+    <h3 class="section__sub">2. Fill in the connection</h3>
+    <dl class="fields">
+      <div class="field">
+        <dt>Jira URL</dt>
+        <dd>
+          Your Jira site, for example <code>https://yourcompany.atlassian.net</code>. It must
+          be <code>https</code>; the form refuses anything else, because a token sent over
+          plain http can be read in transit.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Account email</dt>
+        <dd>The service account's email address.</dd>
+      </div>
+      <div class="field">
+        <dt>API token</dt>
+        <dd>
+          The token from step 1. Once saved it is never shown again — the screen displays only
+          a mask and the last four characters, enough to tell <em>which</em> token is in place.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Enable the connection</dt>
+        <dd>Off means no call is made to Jira at all, whatever else is filled in.</dd>
+      </div>
+    </dl>
+
+    <h3 class="section__sub">3. Prove it works</h3>
+    <p>
+      Enter a project key and press <b>Test connection</b>. This makes a real call, so it can
+      tell three situations apart that otherwise look identical:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">What it says</th>
+            <th scope="col">What it means</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Not configured</td>
+            <td>The connection is off or incomplete. Nothing has been tried.</td>
+          </tr>
+          <tr>
+            <td>Configured but returned nothing</td>
+            <td>
+              Jira was reached but gave back no issues — usually a wrong project key, an
+              account without <strong>Browse projects</strong>, or a revoked token.
+            </td>
+          </tr>
+          <tr>
+            <td>Connected, read <em>n</em> issues</td>
+            <td>Working. The count is proof it actually read the project.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section__sub">4. Choose the mode</h3>
+    <p>
+      Leave <b>Apply Jira figures automatically</b> off to stay in suggest-only. Turning it on
+      reveals the interval — how often the background job checks, from 5 minutes to 24 hours.
+      Changing the interval takes effect without restarting anything.
+    </p>
+
+    <aside class="note">
+      <p class="note__label">If the fields are greyed out</p>
+      <p>
+        Your infrastructure team can pin the credentials as server environment variables,
+        which deliberately outrank the settings screen. When that is the case the form goes
+        read-only and says so — the connection is managed outside the app, on purpose, so that
+        an application admin cannot repoint it.
+      </p>
+    </aside>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="link">
+    <h2 class="section__title">Linking a board</h2>
+    <p class="lede">
+      Done per board, by anyone who can edit it. A board with no project key is ignored by
+      every sync, so you can link squads gradually.
+    </p>
+    <p>Open the board and find the <b>Jira link</b> card in the builder:</p>
+    <dl class="fields">
+      <div class="field">
+        <dt>Project key</dt>
+        <dd>
+          The short prefix on the squad's issues — the <code>PIRT</code> in
+          <code>PIRT-482</code>. This is the only field the sync needs.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Board id</dt>
+        <dd>
+          Optional, stored for future use. The number in a Jira board URL. Leave it blank if
+          you don't know it.
+        </dd>
+      </div>
+    </dl>
+    <p>
+      These can be filled in before the connection is switched on, so boards can be prepared
+      in advance and start pulling the moment an admin connects Jira.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="daily">
+    <h2 class="section__title">
+      Using a suggestion
+      <span class="chip">Product Owner</span>
+    </h2>
+    <p class="lede">
+      This is the day-to-day flow in suggest-only mode, and it stays available even when
+      automatic updates are on.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <span class="steps__n">1</span>
+        <div>
+          <b>Press Sync from Jira</b>
+          <p>On the board editor. The app queries the linked project.</p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">2</span>
+        <div>
+          <b>Read the comparison</b>
+          <p>
+            Current progress against suggested, current status against suggested, the done and
+            blocked counts behind them, and the active sprint. A one-line reason explains the
+            verdict — for example <em>"2 of 11 issues are blocked."</em>
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">3</span>
+        <div>
+          <b>Apply to draft, or dismiss</b>
+          <p>
+            Applying only fills the form. Nothing has been saved yet, and you can still edit
+            any field — including overriding the status Jira suggested.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">4</span>
+        <div>
+          <b>Save</b>
+          <p>Now the board changes, and the change is recorded under your name.</p>
+        </div>
+      </li>
+    </ol>
+
+    <aside class="note">
+      <p class="note__label">Why two steps</p>
+      <p>
+        Jira knows about tickets; it doesn't know that the vendor confirmed a slip on a call
+        this morning. The suggestion is evidence, not a verdict — the PO stays the author of
+        the board.
+      </p>
+    </aside>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="mapping">
+    <h2 class="section__title">How figures are read</h2>
+    <p class="lede">
+      The rules are deliberately simple, so that a number on a board can always be explained
+      to the person it describes.
+    </p>
+    <p>
+      Each sync asks Jira for the linked project's issues, most recently updated first, up to
+      200 of them. From those it derives three values.
+    </p>
+
+    <h3 class="section__sub">Progress</h3>
+    <p>
+      The share of issues Jira itself files under the <strong>Done</strong> status category,
+      rounded to a whole percent. It follows your own workflow — whatever your board treats as
+      done is what counts here.
+    </p>
+
+    <h3 class="section__sub">Sprint</h3>
+    <p>
+      The name of the <strong>active</strong> sprint on the issues. If it can't be found, the
+      board keeps the sprint it already has: not finding a sprint is ignorance, not evidence
+      the squad has none.
+    </p>
+
+    <h3 class="section__sub">Status</h3>
+    <p>
+      An issue counts as blocked when its status name contains "blocked" — so <em>Blocked</em>,
+      <em>Blocked – vendor</em> and <em>External block</em> all count. The first rule that
+      matches wins, reading top to bottom:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Suggested status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of statusRules; track $index) {
+            <tr>
+              <td>{{ rule.when }}</td>
+              <td>
+                <!-- Dot plus the word: status is never carried by colour alone. -->
+                <span class="status">
+                  <span class="status__dot" [style.background]="'var(' + rule.token + ')'"></span>
+                  {{ rule.status }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Two consequences worth knowing. Blocked outranks finished — a project that is 100% done
+      but still carries a blocked ticket reads as at risk, not delivered, because the blocker
+      is the thing worth discussing. And <b>In Review</b> is never suggested; it describes a
+      stage of your delivery process that Jira issue states don't reliably indicate, so it
+      stays a human choice.
+    </p>
+    <p>
+      The mapping errs on the pessimistic side by design. A suggestion that over-reports
+      health is worse than one a PO has to correct upward.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="schedule">
+    <h2 class="section__title">The scheduled run</h2>
+    <p class="lede">
+      Only relevant when automatic updates are switched on. With them off, this job wakes up,
+      sees the switch, and goes back to sleep.
+    </p>
+    <ul class="bullets">
+      <li>
+        It starts about half a minute after the API starts, then checks once a minute whether
+        the interval has elapsed.
+      </li>
+      <li>
+        Each run walks every board that has a project key. Boards without one are skipped
+        entirely.
+      </li>
+      <li>
+        A project that can't be reached is reported and the run carries on — one broken project
+        never stops the others.
+      </li>
+      <li>
+        A board whose figures haven't changed is left completely alone: no save, no audit
+        entry, no notification to people viewing it.
+      </li>
+    </ul>
+    <p>
+      An admin can also press <b>Sync now</b> to run it immediately. That is an explicit
+      instruction, so it writes to boards even when automatic updates are off, and the changes
+      are recorded under the admin's own name rather than as an automated run.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="audit">
+    <h2 class="section__title">What changed, and who by</h2>
+    <p class="lede">
+      A sync only ever touches three fields. Everything a person wrote by hand is left exactly
+      as they left it.
+    </p>
+
+    <div class="split">
+      <div class="split__card split__card--writes">
+        <h3 class="split__title">Written by a sync</h3>
+        <ul>
+          @for (field of writtenFields; track field) {
+            <li>{{ field }}</li>
+          }
+        </ul>
+      </div>
+      <div class="split__card">
+        <h3 class="split__title">Never touched by a sync</h3>
+        <ul>
+          @for (field of protectedFields; track field) {
+            <li>{{ field }}</li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <p>
+      Every change lands in the board's audit trail with the old and new value, so you can
+      always see where a figure came from. Scheduled runs are attributed to
+      <b>Jira sync</b>; a manual <b>Sync now</b> carries the admin's name; an accepted
+      suggestion carries the Product Owner's.
+    </p>
+    <p>
+      That distinction matters in a status meeting. "Progress went 40 → 65, Jira sync, Tuesday
+      09:14" answers a question that "it says 65" does not.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="security">
+    <h2 class="section__title">The API token</h2>
+    <p class="lede">
+      The token lets the app read your company's Jira, so it is treated as a credential rather
+      than a setting.
+    </p>
+    <ul class="bullets">
+      <li>
+        It is <strong>encrypted before it is stored</strong>, and never written to the database
+        in plain text.
+      </li>
+      <li>
+        It is <strong>never sent back to a browser</strong>. The screen shows a mask and the
+        last four characters — enough to identify it, not to use it.
+      </li>
+      <li>
+        Leaving the token field <strong>blank</strong> on a later save keeps the stored one, so
+        changing the interval never means re-pasting the secret.
+      </li>
+      <li><strong>Disconnect</strong> removes it entirely.</li>
+      <li>Only administrators can view, change or test the connection.</li>
+    </ul>
+
+    <aside class="note">
+      <p class="note__label">For whoever deploys this</p>
+      <p>
+        The encryption keys must be stored somewhere that survives a restart. In a container
+        with no persistent key directory the keys are regenerated on each deploy, and the
+        stored token can no longer be decrypted. The app reports this plainly; the fix is to
+        re-enter the token once keys are persisted.
+      </p>
+    </aside>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="trouble">
+    <h2 class="section__title">When it doesn't work</h2>
+    <p class="lede">Symptoms in the order they usually come up.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Symptom</th>
+            <th scope="col">Likely cause and fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>No <b>Sync from Jira</b> button on the board</td>
+            <td>The connection isn't enabled. An admin sets it up under Settings → Jira.</td>
+          </tr>
+          <tr>
+            <td>"This board has no Jira project key"</td>
+            <td>Add the key in the board's <b>Jira link</b> card and save.</td>
+          </tr>
+          <tr>
+            <td>"Jira returned nothing for project…"</td>
+            <td>
+              Wrong key, or the service account lacks <strong>Browse projects</strong> on it, or
+              the token was revoked. Test the connection with that key to narrow it down.
+            </td>
+          </tr>
+          <tr>
+            <td>Progress updates but the sprint never does</td>
+            <td>
+              Sprint lives in a custom field whose identifier differs between Jira sites, and
+              yours isn't the common default. Progress and status are unaffected; set the sprint
+              by hand, and ask your Jira admin for the sprint field id.
+            </td>
+          </tr>
+          <tr>
+            <td>Boards aren't updating on their own</td>
+            <td>
+              Expected unless <b>Apply Jira figures automatically</b> is on. Also check the
+              interval has elapsed and the boards have project keys.
+            </td>
+          </tr>
+          <tr>
+            <td>The form won't accept the URL</td>
+            <td>
+              It must start with <code>https://</code>. A token over plain http can be read in
+              transit.
+            </td>
+          </tr>
+          <tr>
+            <td>Everything worked, then stopped after a deploy</td>
+            <td>
+              Usually the encryption keys weren't persisted. Re-enter the token; see the note
+              above.
+            </td>
+          </tr>
+          <tr>
+            <td>Status looks wrong for the squad</td>
+            <td>
+              Check how your workflow names blocked states, and remember blocked outranks done.
+              A PO can always override the suggestion — that is what the two-step flow is for.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="guide__foot">
+    <p>The connection is read-only: this app never writes to your Jira.</p>
+    @if (isAdmin()) {
+      <a class="btn" routerLink="/settings/jira">Open Jira settings</a>
+    }
+  </footer>
+</div>

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   IntegrationsService,
   type JiraConnectionResult,
@@ -22,7 +23,7 @@ import {
 @Component({
   selector: 'app-jira-settings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './jira-settings-page.html',
   styleUrl: './jira-settings-page.scss',
 })

@@ -47,6 +47,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/roster/roster-page').then((m) => m.RosterPage),
   },
   {
+    // Open to everyone signed in, unlike the settings screen: the people who act on a
+    // Jira suggestion are Product Owners, and the admin-only parts are marked rather
+    // than hidden so a PO can see what to ask for.
+    path: 'help/jira-sync',
+    title: 'Jira sync guide · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/help/jira-guide-page').then((m) => m.JiraGuidePage),
+  },
+  {
     // The Jira connection acts on behalf of the whole org and holds a credential,
     // so it is Admin-only — matching the API, which refuses these routes to anyone else.
     path: 'settings/jira',

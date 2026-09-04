@@ -293,7 +293,10 @@
                 </button>
                 <button type="button" class="btn" (click)="dismissJira()">Dismiss</button>
               </div>
-              <p class="jira__note">Applying only fills the form — you still choose to save.</p>
+              <p class="jira__note">
+                Applying only fills the form — you still choose to save.
+                <a routerLink="/help/jira-sync">How these figures are worked out</a>
+              </p>
             } @else {
               <p class="jira__unavailable">{{ jira.reason }}</p>
             }

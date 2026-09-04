@@ -17,7 +17,13 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
+    // anchorScrolling lets the guide's contents links deep-link into a section — without
+    // it the browser looks for the fragment before the lazy component has rendered and
+    // silently lands at the top of the page.
+    provideRouter(
+      routes,
+      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
+    ),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
 
     // Restores the session before the first route resolves, so a signed-in user who

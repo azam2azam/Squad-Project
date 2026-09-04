@@ -280,3 +280,7 @@ appear in `Domain`.
 - [API](docs/API.md)
 - [Setup](docs/SETUP.md)
 - [Deployment](docs/DEPLOYMENT.md)
+
+End users don't need any of the above: the Jira sync guide ships **inside the app** at
+`/help/jira-sync` (**Guide** in the top nav, open to everyone signed in), and is linked from
+the Jira settings screen and from the suggestion panel on a board.
