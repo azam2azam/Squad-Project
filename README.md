@@ -1,6 +1,3 @@
-| `Jira__Enabled` | `false` | Pins Jira on via configuration, overriding the settings screen |
-| `Jira__BaseUrl` | — | e.g. `https://you.atlassian.net` |
-| `Jira__Email` / `Jira__ApiToken` | — | Jira Cloud credentials. Set these only to pin them; otherwise use the settings screen |
 # Squad Status Board
 
 A production web application for composing, maintaining and presenting live status
@@ -24,9 +21,10 @@ cards — ready to present or export.
 | **M6** | e2e tests, Dockerfiles, K8s/Helm, docs | ✅ Done |
 | **M7** | Delivery dashboard, portfolio charts, risk tracking | ✅ Done |
 | **M8** | Clean install, Excel import/export, Jira linking | ✅ Done |
+| **M9** | Jira settings screen, in-app guide, user management | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
-delivery dashboard, risk tracking, and Excel round-tripping on top.
+delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
 
 The reference prototype is checked in at [docs/prototype/squad-status-board.html](docs/prototype/squad-status-board.html)
  and the `SlideCanvas` is a deliberate transcription of it — see [Architecture](docs/ARCHITECTURE.md)
@@ -111,6 +109,42 @@ generic failure, because that is the only way to fix the file.
 
 Removing a row from `Members` takes that person off the squad. Removing a **board** row
 does not delete the board; delete it in the app so the audit trail is kept.
+
+## Users and access
+
+**Users** in the top nav (Admin only) manages who can sign in. This is deliberately
+separate from the **Roster**: the roster is who appears on a slide, users is who has
+access. Most roster members never log in, and an admin need not be on any squad — an
+account can optionally be linked to a roster person, but does not have to be.
+
+| Access level | Can do |
+|---|---|
+| **Admin** | Everything: all boards, the roster, users, imports and Jira |
+| **Product Owner** | Creates and edits their own boards; reads everyone else's |
+| **Viewer** | Read, present and export. Cannot change anything |
+
+### Adding someone
+
+Add user → name, email, a password of at least 12 characters, and an access level. Give
+them the password, and ask them to replace it: anyone signed in can change their own
+password from **their name in the top-right corner**. That is what makes an admin-set
+password acceptable — the admin only knows it until the person replaces it.
+
+### Rules the server enforces
+
+These live in the handlers, not the UI, so they hold however they are called:
+
+- You cannot deactivate your own account, or change your own role. Ask another admin.
+- The last active administrator cannot be deactivated or demoted.
+- Deactivating someone, changing their role, or resetting their password **ends their
+  session immediately** — an access token carries the old rights until it expires, so the
+  refresh token is cleared rather than left to run out.
+- Emails are unique and case-insensitive, so `P.Kumar@…` cannot become a second account
+  for the same person.
+
+Accounts are **deactivated, never deleted**. Boards and audit entries record who did what,
+and deleting an account would leave that history pointing at nobody. Deactivated accounts
+are hidden from the list until you tick *Show deactivated*.
 
 ## Connecting to your company's Jira
 
@@ -199,9 +233,9 @@ All settings are overridable by environment variable using the standard
 | `Database__AdminEmail` | `admin@pirt.example` | Initial administrator |
 | `Database__AdminPassword` | `Admin!Pass123` | **Change this.** Only used on first run |
 | `Database__SeedDemoData` | `false` | Example boards, roster and the extra role accounts |
-| `Jira__Enabled` | `false` | Turns on Jira sync |
+| `Jira__Enabled` | `false` | Pins Jira on via configuration, overriding the settings screen |
 | `Jira__BaseUrl` | — | e.g. `https://you.atlassian.net` |
-| `Jira__Email` / `Jira__ApiToken` | — | Jira Cloud credentials |
+| `Jira__Email` / `Jira__ApiToken` | — | Jira Cloud credentials. Set these only to pin them; otherwise use the settings screen |
 | `Cors__AllowedOrigins__0` | `http://localhost:4220` | Permitted web origin |
 
 Migrations are **never** applied automatically outside Development unless

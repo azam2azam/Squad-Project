@@ -17,6 +17,9 @@
         <!-- The roster is org-wide, so it is offered only to those the API would let in. -->
         @if (isAdmin()) {
           <a routerLink="/roster" routerLinkActive="is-active" class="shell-nav__link">Roster</a>
+          <a routerLink="/settings/users" routerLinkActive="is-active" class="shell-nav__link">
+            Users
+          </a>
           <a routerLink="/settings/jira" routerLinkActive="is-active" class="shell-nav__link">
             Jira
           </a>
@@ -30,12 +33,12 @@
 
     <div class="shell-header__status">
       @if (isSignedIn()) {
-        <span class="shell-user">
+        <a class="shell-user" routerLink="/settings/password" title="Change your password">
           <span class="shell-user__name">{{ user()!.displayName }}</span>
           <span class="shell-user__role" [class.is-readonly]="!canWrite()">
-            {{ user()!.roleName === 'ProductOwner' ? 'Product Owner' : user()!.roleName }}
+          {{ user()!.roleName === 'ProductOwner' ? 'Product Owner' : user()!.roleName }}
           </span>
-        </span>
+        </a>
         <button type="button" class="shell-signout" (click)="signOut()">Sign out</button>
       } @else if (roleCount().length > 0) {
         <span class="shell-chip shell-chip--ok" title="Reference data loaded from the API">

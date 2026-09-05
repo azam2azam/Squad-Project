@@ -1,0 +1,337 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.users-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.users-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.users-page__title {
+  margin: 0;
+  font-size: 26px;
+}
+
+.users-page__sub {
+  margin: 4px 0 0;
+  max-width: 70ch;
+  color: #4e5b6e;
+  font-size: 13px;
+  line-height: 1.6;
+
+  a {
+    color: #0a6e64;
+    font-weight: 600;
+  }
+}
+
+.users-page__muted {
+  color: #5d6b7e;
+}
+
+.users-page__filters {
+  margin-bottom: 14px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4e5b6e;
+}
+
+// ---------------------------------------------------------------------------
+// Banners
+// ---------------------------------------------------------------------------
+
+.banner {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 13px;
+  line-height: 1.5;
+
+  &--error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  &--ok {
+    border-color: #6ee7b7;
+    background: #ecfdf5;
+    color: #065f46;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Editor card
+// ---------------------------------------------------------------------------
+
+.editor-card {
+  margin-bottom: 20px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.editor-card__title {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+
+.editor-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.editor-card__note {
+  margin: 14px 0 0;
+  padding: 10px 13px;
+  border-left: 3px solid var(--accent-deep);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #e6faf6;
+  color: #14514a;
+  font-size: 12.5px;
+}
+
+.editor-card__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+// ---------------------------------------------------------------------------
+// Fields
+// ---------------------------------------------------------------------------
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &--inline {
+    max-width: 420px;
+  }
+}
+
+.field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5b6e;
+}
+
+.field__hint {
+  font-weight: 400;
+  color: #5d6b7e;
+}
+
+.field__input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-deep);
+  }
+
+  &:disabled {
+    background: #f6f8fa;
+    color: #64748b;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// Table
+// ---------------------------------------------------------------------------
+
+// Wide tables scroll inside their own container rather than the page body.
+.table-wrap {
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+th,
+td {
+  padding: 11px 14px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #eef2f6;
+}
+
+th {
+  background: #f6f8fa;
+  color: #59687e;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tr.is-inactive td {
+  color: #8595a9;
+}
+
+.who {
+  font-weight: 600;
+}
+
+.mono {
+  font-size: 12.5px;
+  color: #4e5b6e;
+}
+
+// Access level reads as a word; the admin case also carries a colour.
+.access {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--card-line);
+  background: #f6f8fa;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--admin {
+    border-color: var(--accent-deep);
+    background: #e6faf6;
+    color: #0a6e64;
+  }
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: #eef2f6;
+  color: #59687e;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  &--off {
+    background: #fef2f2;
+    color: #991b1b;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0a6e64;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--danger {
+    color: #b91c1c;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// Inline password reset
+// ---------------------------------------------------------------------------
+
+.reset-row td {
+  background: #f8fafc;
+}
+
+.reset {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reset__actions {
+  display: flex;
+  gap: 8px;
+}
+
+// ---------------------------------------------------------------------------
+// Buttons
+// ---------------------------------------------------------------------------
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+  }
+
+  @include focus-ring(var(--accent-deep));
+}

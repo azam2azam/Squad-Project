@@ -180,6 +180,38 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 
 ---
 
+### Users and access (M9)
+
+Accounts that can sign in — distinct from the roster, which is who appears on slides.
+
+```
+GET    /api/v1/users            ?q=&includeInactive=&page=&pageSize=
+GET    /api/v1/users/roles
+POST   /api/v1/users
+PUT    /api/v1/users/{id}
+PUT    /api/v1/users/{id}/active
+PUT    /api/v1/users/{id}/password
+PUT    /api/v1/users/me/password
+```
+
+**Admin-only except `PUT me/password`**, which any signed-in user may call — that is what
+makes an admin-set password acceptable, since the owner can replace it. Authorisation is
+enforced in the handlers, not on the routes.
+
+A password is only ever accepted, never returned: `UserDto` carries `hasPassword`, never a
+hash. Passwords must be at least 12 characters.
+
+Rules the API enforces, each returning `400` with a readable `detail`:
+
+- You cannot deactivate your own account or change your own role (`PUT {id}` / `{id}/active`).
+- The last active administrator cannot be deactivated or demoted.
+- Emails are unique, compared case-insensitively.
+
+Deactivating a user, changing their role, or resetting their password **clears their
+refresh token**, ending the session rather than letting the old access token run to expiry.
+
+Accounts are deactivated, never deleted — boards and audit entries reference who did what.
+
 ### Jira integration (M5, M8)
 
 Administering the connection. **Every route here is Admin-only** — they read and write a

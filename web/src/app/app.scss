@@ -178,11 +178,22 @@
   gap: 10px;
 }
 
+// A link to "change your password", so it must not inherit the browser's link styling.
 .shell-user {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   line-height: 1.25;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+
+  &:hover .shell-user__name {
+    text-decoration: underline;
+  }
+
+  @include focus-ring(var(--accent));
 
   @media (max-width: 620px) {
     display: none;

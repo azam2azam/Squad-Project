@@ -1,0 +1,252 @@
+<div class="users-page">
+  <header class="users-page__head">
+    <div>
+      <h1 class="users-page__title">Users</h1>
+      <p class="users-page__sub">
+        {{ activeCount() }} active {{ activeCount() === 1 ? 'account' : 'accounts' }},
+        {{ adminCount() }} {{ adminCount() === 1 ? 'administrator' : 'administrators' }} — who can
+        sign in, which is separate from the <a routerLink="/roster">roster</a> of who appears on
+        slides.
+      </p>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="startAdd()">Add user</button>
+  </header>
+
+  <div class="users-page__filters">
+    <label class="toggle">
+      <input
+        type="checkbox"
+        [checked]="includeInactive()"
+        (change)="toggleInactive($any($event.target).checked)"
+      />
+      Show deactivated
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="banner banner--ok" role="status">{{ notice() }}</p>
+  }
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Add / edit                                                          -->
+  <!-- ------------------------------------------------------------------ -->
+  @if (adding() || editingId()) {
+    <form class="editor-card" (submit)="$event.preventDefault(); saveDraft()">
+      <h2 class="editor-card__title">{{ editingId() ? 'Edit account' : 'Add user' }}</h2>
+
+      <div class="editor-card__grid">
+        <label class="field">
+          <span class="field__label">Full name</span>
+          <input
+            class="field__input"
+            type="text"
+            required
+            autocomplete="off"
+            [value]="draft().displayName"
+            (input)="updateDraft('displayName', $any($event.target).value)"
+            placeholder="Pradeep Kumar"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">
+            Email
+            @if (editingId()) {
+              <span class="field__hint">— cannot be changed</span>
+            }
+          </span>
+          <input
+            class="field__input"
+            type="email"
+            autocomplete="off"
+            [value]="draft().email"
+            [disabled]="!!editingId()"
+            (input)="updateDraft('email', $any($event.target).value)"
+            placeholder="pradeep@pirt.example"
+          />
+        </label>
+
+        @if (!editingId()) {
+          <label class="field">
+            <span class="field__label">
+              Password
+              <span class="field__hint">— at least {{ minPasswordLength }} characters</span>
+            </span>
+            <input
+              class="field__input"
+              type="password"
+              autocomplete="new-password"
+              [value]="draft().password"
+              (input)="updateDraft('password', $any($event.target).value)"
+            />
+          </label>
+        }
+
+        <label class="field">
+          <span class="field__label">Access level</span>
+          <select class="field__input" (change)="setDraftRole($any($event.target).value)">
+            @for (level of levels(); track level.value) {
+              <option [value]="level.value" [selected]="level.value === draft().role">
+                {{ level.label }}
+              </option>
+            }
+          </select>
+          <span class="field__hint">{{ levelDescription(draft().role) }}</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">
+            Roster link
+            <span class="field__hint">— optional</span>
+          </span>
+          <select class="field__input" (change)="setDraftPerson($any($event.target).value)">
+            <option value="" [selected]="draft().personId === null">Not on the roster</option>
+            @for (person of roster(); track person.id) {
+              <option [value]="person.id" [selected]="person.id === draft().personId">
+                {{ person.fullName }}
+              </option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (!editingId()) {
+        <p class="editor-card__note">
+          You will know this password. Ask them to change it at
+          <strong>Change password</strong> once they are in.
+        </p>
+      }
+
+      <div class="editor-card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!canSaveDraft()">
+          {{ editingId() ? 'Save changes' : 'Create account' }}
+        </button>
+        <button type="button" class="btn" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </form>
+  }
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- List                                                                -->
+  <!-- ------------------------------------------------------------------ -->
+  @if (loading()) {
+    <p class="users-page__muted">Loading…</p>
+  } @else if (items().length === 0) {
+    <p class="users-page__muted">No accounts yet.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Access</th>
+            <th scope="col">Roster</th>
+            <th scope="col">Last sign-in</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of items(); track user.id) {
+            <tr [class.is-inactive]="!user.isActive">
+              <td>
+                <span class="who">{{ user.displayName }}</span>
+                @if (user.id === myId()) {
+                  <span class="tag">you</span>
+                }
+                @if (!user.isActive) {
+                  <span class="tag tag--off">deactivated</span>
+                }
+              </td>
+              <td class="mono">{{ user.email }}</td>
+              <td>
+                <span class="access" [class.access--admin]="user.role === 2">
+                  {{ user.roleLabel }}
+                </span>
+              </td>
+              <td>{{ user.personName ?? '—' }}</td>
+              <td>{{ formatDate(user.lastLoginAt) }}</td>
+              <td class="actions">
+                <button type="button" class="link-btn" (click)="startEdit(user)">Edit</button>
+
+                <button
+                  type="button"
+                  class="link-btn"
+                  [disabled]="busyId() === user.id"
+                  (click)="startReset(user)"
+                >
+                  Set password
+                </button>
+
+                <!-- The server refuses these on your own account; the UI does not offer them. -->
+                @if (user.id !== myId()) {
+                  @if (user.isActive) {
+                    <button
+                      type="button"
+                      class="link-btn link-btn--danger"
+                      [disabled]="busyId() === user.id"
+                      (click)="setActive(user, false)"
+                    >
+                      Deactivate
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="link-btn"
+                      [disabled]="busyId() === user.id"
+                      (click)="setActive(user, true)"
+                    >
+                      Reactivate
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+
+            @if (resettingId() === user.id) {
+              <tr class="reset-row">
+                <td colspan="6">
+                  <form
+                    class="reset"
+                    (submit)="$event.preventDefault(); confirmReset(user)"
+                  >
+                    <label class="field field--inline">
+                      <span class="field__label">
+                        New password for {{ user.displayName }}
+                        <span class="field__hint">
+                          — at least {{ minPasswordLength }} characters. This signs them out.
+                        </span>
+                      </span>
+                      <input
+                        class="field__input"
+                        type="password"
+                        autocomplete="new-password"
+                        [value]="newPassword()"
+                        (input)="newPassword.set($any($event.target).value)"
+                      />
+                    </label>
+
+                    <div class="reset__actions">
+                      <button
+                        type="submit"
+                        class="btn btn--primary"
+                        [disabled]="newPassword().length < minPasswordLength || busyId() === user.id"
+                      >
+                        Set password
+                      </button>
+                      <button type="button" class="btn" (click)="cancelReset()">Cancel</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

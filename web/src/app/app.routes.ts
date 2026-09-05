@@ -47,6 +47,23 @@ export const routes: Routes = [
     loadComponent: () => import('./features/roster/roster-page').then((m) => m.RosterPage),
   },
   {
+    // Accounts that can sign in. Admin-only, matching the API, which enforces the same
+    // rules in its handlers rather than relying on this guard.
+    path: 'settings/users',
+    title: 'Users · Squad Status Board',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/users/users-page').then((m) => m.UsersPage),
+  },
+  {
+    // Everyone may change their own password — that is what makes an admin-set password
+    // acceptable, so this one is not admin-guarded.
+    path: 'settings/password',
+    title: 'Change password · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/users/change-password-page').then((m) => m.ChangePasswordPage),
+  },
+  {
     // Open to everyone signed in, unlike the settings screen: the people who act on a
     // Jira suggestion are Product Owners, and the admin-only parts are marked rather
     // than hidden so a PO can see what to ask for.

@@ -62,6 +62,15 @@ public class AppUser : Entity
 
     public void LinkToPerson(Guid personId) => PersonId = personId;
 
+    /// <summary>Breaks the roster link without touching the account itself.</summary>
+    public void UnlinkPerson() => PersonId = null;
+
+    /// <summary>
+    /// Renames the account. Separate from the constructor so an admin can correct a
+    /// display name without the email — the identity — being touched.
+    /// </summary>
+    public void Rename(string displayName) => SetDisplayName(displayName);
+
     public void ChangeRole(UserRole role) => Role = role;
 
     public void Deactivate() => IsActive = false;
