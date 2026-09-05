@@ -30,13 +30,24 @@ export const appConfig: ApplicationConfig = {
     // reloads is not bounced to the login page. Reference data follows, since the API
     // now requires a token for it.
     provideAppInitializer(async () => {
-      await inject(AuthService).restore();
+      // Both services are resolved here, before the first await: inject() only works
+      // inside an injection context, and awaiting leaves it. Resolving MetadataService
+      // after the await threw on every page load, which left roles and statuses empty
+      // everywhere — the roster could not add a person because the role list was blank.
+      const auth = inject(AuthService);
+      const metadata = inject(MetadataService);
+
+      await auth.restore();
 
       try {
-        await inject(MetadataService).load();
-      } catch {
-        // Signed-out users cannot read metadata; the login page does not need it,
-        // and it loads on demand once they are in.
+        await metadata.load();
+      } catch (error) {
+        // A signed-out visitor cannot read metadata, and the login page does not need
+        // it — that case is expected and silent. Anything else is logged rather than
+        // swallowed, because a silent failure here empties every dropdown in the app.
+        if (auth.isSignedIn()) {
+          console.error('Could not load reference data (roles and statuses).', error);
+        }
       }
     }),
   ],
