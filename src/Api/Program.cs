@@ -98,6 +98,11 @@ app.MapHub<BoardsHub>("/hubs/boards");
 
 await MigrateAndSeedAsync(app);
 
+// Loads the configurable roles into the in-process catalogue that renders labels and
+// colours. Must run after migrations, since it reads the table they create; if it fails
+// the app still starts on the built-in seven.
+await LoadRoleCatalogueAsync(app);
+
 // Lets a Kubernetes Job run migrations once per release and exit, instead of every
 // replica racing to alter the same schema on startup. See deploy/k8s/api.yaml.
 if (app.Configuration.GetValue("RunMigrationsAndExit", false))
@@ -107,6 +112,20 @@ if (app.Configuration.GetValue("RunMigrationsAndExit", false))
 }
 
 app.Run();
+
+/// <summary>
+/// Reads the role catalogue into <see cref="Domain.Enums.RoleMetadata"/> so slides,
+/// exports and the composition bar use the labels and colours an admin configured.
+/// </summary>
+static async Task LoadRoleCatalogueAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var catalog = scope.ServiceProvider.GetRequiredService<Application.Abstractions.IRoleCatalog>();
+
+    // RoleCatalog logs and swallows its own failures: an unreachable database at startup
+    // must not stop the app, it just leaves the built-in roles in place.
+    await catalog.RefreshAsync();
+}
 
 /// <summary>
 /// Applies migrations and demo data. Migration is automatic in development and must be

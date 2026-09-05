@@ -195,10 +195,13 @@ public sealed record MetadataDto(
     IReadOnlyList<RoleOptionDto> Roles,
     IReadOnlyList<StatusOptionDto> Statuses)
 {
-    public static MetadataDto Build() => new(
-        RoleMetadata.DisplayOrder
-            .Select(r => new RoleOptionDto(r, r.ToString(), RoleMetadata.Label(r), RoleMetadata.Color(r)))
-            .ToList(),
+    /// <summary>
+    /// Roles come from the caller, because they are configurable and the pickers must show
+    /// only the active ones — the in-process catalogue deliberately keeps retired roles so
+    /// people still holding them keep rendering.
+    /// </summary>
+    public static MetadataDto Build(IReadOnlyList<RoleOptionDto> roles) => new(
+        roles,
         Enum.GetValues<BoardStatus>()
             .Select(s => new StatusOptionDto(s, s.ToString(), BoardStatusMetadata.Label(s),
                 BoardStatusMetadata.Color(s)))

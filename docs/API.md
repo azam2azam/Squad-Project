@@ -180,6 +180,32 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 
 ---
 
+### Roles (M9)
+
+The values behind "Default role". Reading is open to anyone signed in — every picker needs
+the list. Writing is **Admin only**, enforced in the handlers.
+
+```
+GET  /api/v1/roles          ?includeInactive=
+POST /api/v1/roles
+PUT  /api/v1/roles/{value}
+PUT  /api/v1/roles/{value}/active
+```
+
+`value` is the number stored on every `SquadMember` and `Person`. The built-in seven keep
+**0–6**, the values they have always had, so nothing already stored needed migrating.
+Roles added by an admin are numbered from **100** up, and numbers are never reused.
+
+- The built-ins can be renamed and recoloured but **not retired**, and their `name` is
+  fixed — it is what spreadsheets match on.
+- `name` must be a plain word (`^[A-Za-z][A-Za-z0-9]*$`); `color` must be `#RRGGBB`.
+- Retiring is soft: the role leaves `/metadata`, but people already holding it keep it and
+  still render with their label and colour.
+
+`GET /api/v1/metadata` reads the database directly and returns only **active** roles, so
+pickers are never stale. Role assignment is validated against the catalogue rather than the
+enum, so custom roles are accepted and retired ones remain editable.
+
 ### Users and access (M9)
 
 Accounts that can sign in — distinct from the roster, which is who appears on slides.

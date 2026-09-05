@@ -1,0 +1,366 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.roles-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.roles-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.roles-page__title {
+  margin: 0;
+  font-size: 26px;
+}
+
+.roles-page__sub {
+  margin: 4px 0 0;
+  max-width: 66ch;
+  color: #4e5b6e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.roles-page__muted {
+  color: #5d6b7e;
+}
+
+.roles-page__filters {
+  margin-bottom: 14px;
+}
+
+.roles-page__note {
+  margin: 14px 0 0;
+  max-width: 74ch;
+  color: #5d6b7e;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4e5b6e;
+}
+
+// ---------------------------------------------------------------------------
+// Banners
+// ---------------------------------------------------------------------------
+
+.banner {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 13px;
+  line-height: 1.5;
+
+  &--error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  &--ok {
+    border-color: #6ee7b7;
+    background: #ecfdf5;
+    color: #065f46;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Editor
+// ---------------------------------------------------------------------------
+
+.editor-card {
+  margin-bottom: 20px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.editor-card__title {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+
+.editor-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.editor-card__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5b6e;
+}
+
+.field__hint {
+  font-weight: 400;
+  color: #5d6b7e;
+}
+
+.field__error {
+  font-size: 12px;
+  color: #991b1b;
+}
+
+.field__input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-deep);
+  }
+
+  &:disabled {
+    background: #f6f8fa;
+    color: #64748b;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.colour {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colour__picker {
+  width: 42px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  cursor: pointer;
+  flex: none;
+}
+
+.colour__hex {
+  font-family: ui-monospace, Consolas, monospace;
+  text-transform: uppercase;
+}
+
+// ---------------------------------------------------------------------------
+// Preview — shows the avatar and legend the role will actually produce
+// ---------------------------------------------------------------------------
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px dashed var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  flex-wrap: wrap;
+}
+
+.preview__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #5d6b7e;
+}
+
+.preview__text {
+  font-size: 13px;
+  color: #4e5b6e;
+
+  em {
+    color: #59687e;
+  }
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #0e1520;
+  font-weight: 700;
+  font-size: 13px;
+  flex: none;
+}
+
+// ---------------------------------------------------------------------------
+// Table
+// ---------------------------------------------------------------------------
+
+// Wide tables scroll inside their own container rather than the page body.
+.table-wrap {
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+th,
+td {
+  padding: 11px 14px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #eef2f6;
+}
+
+th {
+  background: #f6f8fa;
+  color: #59687e;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tr.is-retired td {
+  color: #8595a9;
+}
+
+.role-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+}
+
+// The swatch carries the colour; the label beside it carries the meaning.
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex: none;
+  box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.18);
+}
+
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  color: #4e5b6e;
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: #eef2f6;
+  color: #59687e;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  &--off {
+    background: #fef2f2;
+    color: #991b1b;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0a6e64;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--danger {
+    color: #b91c1c;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+  }
+
+  @include focus-ring(var(--accent-deep));
+}

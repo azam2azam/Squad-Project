@@ -17,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BoardAuditEntry> BoardAuditEntries => Set<BoardAuditEntry>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<JiraSettings> JiraSettings => Set<JiraSettings>();
+    public DbSet<SquadRole> SquadRoles => Set<SquadRole>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

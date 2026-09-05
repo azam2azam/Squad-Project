@@ -241,8 +241,7 @@ public sealed class ExcelWorkbookSerializer : IWorkbookSerializer
             people.Add(new ExportedPerson(
                 ParseIdOrNew(row, 1, PeopleSheet),
                 name,
-                ParseEnumByLabel(Text(row, 3), RoleMetadata.DisplayOrder,
-                    RoleMetadata.Label, Role.Developer, PeopleSheet, row.RowNumber(), "Default role"),
+                ParseRole(Text(row, 3), PeopleSheet, row.RowNumber(), "Default role"),
                 NullIfBlank(Text(row, 4)),
                 NullIfBlank(Text(row, 5)),
                 null,
@@ -274,8 +273,7 @@ public sealed class ExcelWorkbookSerializer : IWorkbookSerializer
 
             var member = new ExportedMember(
                 personId,
-                ParseEnumByLabel(Text(row, 5), RoleMetadata.DisplayOrder,
-                    RoleMetadata.Label, Role.Developer, MembersSheet, row.RowNumber(), "Role"),
+                ParseRole(Text(row, 5), MembersSheet, row.RowNumber(), "Role"),
                 NullIfBlank(Text(row, 6)),
                 ParseNullableInt(Text(row, 7)),
                 ParseNullableInt(Text(row, 8)) ?? 0);
@@ -409,6 +407,44 @@ public sealed class ExcelWorkbookSerializer : IWorkbookSerializer
     /// Matches a cell against enum labels, then against the enum name, then the number —
     /// so a hand-edited "At Risk", a pasted "AtRisk" and a raw "1" all work.
     /// </summary>
+    /// <summary>
+    /// Roles are no longer a fixed enum — an admin can add them — so they are matched
+    /// against the live catalogue rather than <c>Enum.IsDefined</c>, which would refuse
+    /// every custom role. Accepts the display label, the identifier, or the number, so a
+    /// file exported before a rename still imports.
+    /// </summary>
+    private static Role ParseRole(string text, string sheet, int rowNumber, string column)
+    {
+        var catalogue = RoleMetadata.All;
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            // A blank cell is not an error: it means "the default", as elsewhere.
+            return Role.Developer;
+        }
+
+        var trimmed = text.Trim();
+
+        var byLabel = catalogue.FirstOrDefault(
+            r => r.Label.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
+        if (byLabel is not null) return byLabel.Role;
+
+        var collapsed = trimmed.Replace(" ", string.Empty);
+        var byName = catalogue.FirstOrDefault(
+            r => r.Name.Equals(collapsed, StringComparison.OrdinalIgnoreCase));
+        if (byName is not null) return byName.Role;
+
+        if (int.TryParse(trimmed, out var number))
+        {
+            var byValue = catalogue.FirstOrDefault(r => (int)r.Role == number);
+            if (byValue is not null) return byValue.Role;
+        }
+
+        throw new WorkbookFormatException(
+            $"{sheet}!{column} on row {rowNumber} is '{trimmed}', which is not a recognised role. " +
+            $"Allowed: {string.Join(", ", catalogue.Select(r => r.Label))}.");
+    }
+
     private static TEnum ParseEnumByLabel<TEnum>(
         string text,
         IEnumerable<TEnum> candidates,

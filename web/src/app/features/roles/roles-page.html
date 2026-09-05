@@ -1,0 +1,211 @@
+<div class="roles-page">
+  <header class="roles-page__head">
+    <div>
+      <h1 class="roles-page__title">Roles</h1>
+      <p class="roles-page__sub">
+        The values behind <strong>Default role</strong> on the roster and on every squad.
+        {{ customCount() }} added to the seven built in.
+      </p>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="startAdd()">Add role</button>
+  </header>
+
+  <div class="roles-page__filters">
+    <label class="toggle">
+      <input
+        type="checkbox"
+        [checked]="includeInactive()"
+        (change)="toggleInactive($any($event.target).checked)"
+      />
+      Show retired
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="banner banner--ok" role="status">{{ notice() }}</p>
+  }
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Add / edit                                                          -->
+  <!-- ------------------------------------------------------------------ -->
+  @if (adding() || editingValue() !== null) {
+    <form class="editor-card" (submit)="$event.preventDefault(); save()">
+      <h2 class="editor-card__title">
+        {{ editingValue() !== null ? 'Edit role' : 'Add role' }}
+      </h2>
+
+      <div class="editor-card__grid">
+        <label class="field">
+          <span class="field__label">Name shown on screen</span>
+          <input
+            class="field__input"
+            type="text"
+            required
+            [value]="draft().label"
+            (input)="onLabelInput($any($event.target).value)"
+            placeholder="Scrum Master"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">
+            Plural
+            <span class="field__hint">— for the legend, "2 Scrum Masters"</span>
+          </span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="draft().pluralLabel"
+            (input)="updateDraft('pluralLabel', $any($event.target).value)"
+            [placeholder]="draft().label || 'Scrum Masters'"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">
+            Identifier
+            @if (editingValue() !== null) {
+              <span class="field__hint">— fixed once created</span>
+            } @else {
+              <span class="field__hint">— used by spreadsheets</span>
+            }
+          </span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="draft().name"
+            [disabled]="editingValue() !== null"
+            (input)="updateDraft('name', $any($event.target).value)"
+            placeholder="ScrumMaster"
+          />
+          @if (nameProblem(); as problem) {
+            <span class="field__error">{{ problem }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span class="field__label">Colour</span>
+          <div class="colour">
+            <input
+              class="colour__picker"
+              type="color"
+              [value]="draft().color"
+              (input)="updateDraft('color', $any($event.target).value)"
+              aria-label="Role colour"
+            />
+            <input
+              class="field__input colour__hex"
+              type="text"
+              [value]="draft().color"
+              (input)="updateDraft('color', $any($event.target).value)"
+              placeholder="#F472B6"
+            />
+          </div>
+          @if (colorProblem(); as problem) {
+            <span class="field__error">{{ problem }}</span>
+          }
+        </label>
+      </div>
+
+      <!-- Shows the avatar and legend the role will actually produce. -->
+      <div class="preview">
+        <span class="preview__label">Preview</span>
+        <span class="avatar" [style.background]="draft().color">
+          {{ (draft().label || 'Role').charAt(0) }}
+        </span>
+        <span class="preview__text">
+          {{ draft().label || 'Role name' }} ·
+          <em>2 {{ draft().pluralLabel || draft().label || 'Role names' }}</em>
+        </span>
+      </div>
+
+      <div class="editor-card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
+          {{ editingValue() !== null ? 'Save changes' : 'Add role' }}
+        </button>
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  }
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- List                                                                -->
+  <!-- ------------------------------------------------------------------ -->
+  @if (loading()) {
+    <p class="roles-page__muted">Loading…</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Role</th>
+            <th scope="col">Plural</th>
+            <th scope="col">Identifier</th>
+            <th scope="col">In use</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (role of items(); track role.value) {
+            <tr [class.is-retired]="!role.isActive">
+              <td>
+                <span class="role-name">
+                  <span class="swatch" [style.background]="role.color"></span>
+                  {{ role.label }}
+                </span>
+                @if (role.isBuiltIn) {
+                  <span class="tag">built in</span>
+                }
+                @if (!role.isActive) {
+                  <span class="tag tag--off">retired</span>
+                }
+              </td>
+              <td>{{ role.pluralLabel }}</td>
+              <td class="mono">{{ role.name }}</td>
+              <td>
+                {{ role.peopleUsing }}
+                {{ role.peopleUsing === 1 ? 'person' : 'people' }}
+              </td>
+              <td class="actions">
+                <button type="button" class="link-btn" (click)="startEdit(role)">Edit</button>
+
+                <!-- Built-ins cannot be retired: every board already stores their numbers. -->
+                @if (!role.isBuiltIn) {
+                  @if (role.isActive) {
+                    <button
+                      type="button"
+                      class="link-btn link-btn--danger"
+                      [disabled]="busyValue() === role.value"
+                      (click)="setActive(role, false)"
+                    >
+                      Retire
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="link-btn"
+                      [disabled]="busyValue() === role.value"
+                      (click)="setActive(role, true)"
+                    >
+                      Restore
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="roles-page__note">
+      The seven built-in roles can be renamed and recoloured but not removed — every board
+      and exported spreadsheet already stores their values. A retired role leaves the
+      pickers, but anyone who already holds it keeps it, so past boards still render.
+    </p>
+  }
+</div>

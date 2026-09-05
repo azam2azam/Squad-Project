@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Common;
 using Application.Contracts;
 using Domain.Entities;
 using Domain.Enums;
@@ -37,7 +38,7 @@ public sealed class AddMemberCommandValidator : AbstractValidator<AddMemberComma
     public AddMemberCommandValidator()
     {
         RuleFor(c => c.BoardId).NotEmpty();
-        RuleFor(c => c.Role).IsInEnum();
+        RuleFor(c => c.Role).MustBeAKnownRole();
         RuleFor(c => c.Detail).MaximumLength(200);
         RuleFor(c => c.AllocationPercent).InclusiveBetween(0, 100)
             .When(c => c.AllocationPercent.HasValue);
@@ -49,7 +50,7 @@ public sealed class AddMemberCommandValidator : AbstractValidator<AddMemberComma
         When(c => c.NewPerson is not null, () =>
         {
             RuleFor(c => c.NewPerson!.FullName).NotEmpty().MaximumLength(200);
-            RuleFor(c => c.NewPerson!.DefaultRole).IsInEnum();
+            RuleFor(c => c.NewPerson!.DefaultRole).MustBeAKnownRole();
             RuleFor(c => c.NewPerson!.DefaultDetail).MaximumLength(200);
         });
     }
@@ -117,7 +118,7 @@ public sealed class UpdateMemberCommandValidator : AbstractValidator<UpdateMembe
     public UpdateMemberCommandValidator()
     {
         RuleFor(c => c.Id).NotEmpty();
-        RuleFor(c => c.Role).IsInEnum();
+        RuleFor(c => c.Role).MustBeAKnownRole();
         RuleFor(c => c.Detail).MaximumLength(200);
         RuleFor(c => c.AllocationPercent).InclusiveBetween(0, 100)
             .When(c => c.AllocationPercent.HasValue);

@@ -46,8 +46,14 @@ public sealed record SquadComposition
             return new SquadComposition([], 0);
         }
 
-        var segments = RoleMetadata.DisplayOrder
+        // Catalogue order first, then anything counted that the catalogue does not know
+        // about — a custom role added on another instance must still appear on the bar
+        // rather than silently vanishing and leaving the percentages short of 100.
+        var ordered = RoleMetadata.DisplayOrder
             .Where(counts.ContainsKey)
+            .Concat(counts.Keys.Where(r => !RoleMetadata.IsKnown(r)).OrderBy(r => (int)r));
+
+        var segments = ordered
             .Select(role => new CompositionSegment(
                 role,
                 RoleMetadata.Label(role),

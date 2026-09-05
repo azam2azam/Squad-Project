@@ -17,6 +17,9 @@
         <!-- The roster is org-wide, so it is offered only to those the API would let in. -->
         @if (isAdmin()) {
           <a routerLink="/roster" routerLinkActive="is-active" class="shell-nav__link">Roster</a>
+          <a routerLink="/settings/roles" routerLinkActive="is-active" class="shell-nav__link">
+            Roles
+          </a>
           <a routerLink="/settings/users" routerLinkActive="is-active" class="shell-nav__link">
             Users
           </a>

@@ -21,7 +21,7 @@ cards — ready to present or export.
 | **M6** | e2e tests, Dockerfiles, K8s/Helm, docs | ✅ Done |
 | **M7** | Delivery dashboard, portfolio charts, risk tracking | ✅ Done |
 | **M8** | Clean install, Excel import/export, Jira linking | ✅ Done |
-| **M9** | Jira settings screen, in-app guide, user management | ✅ Done |
+| **M9** | Jira settings screen, in-app guide, user management, configurable roles | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -109,6 +109,46 @@ generic failure, because that is the only way to fix the file.
 
 Removing a row from `Members` takes that person off the squad. Removing a **board** row
 does not delete the board; delete it in the app so the audit trail is kept.
+
+## Roles
+
+**Roles** in the top nav (Admin only) manages the values behind **Default role** on the
+roster and on every squad.
+
+Add one with a display name, a plural for the legend ("2 Scrum Masters"), and a colour —
+the colour is the avatar and the composition-bar segment, so the form previews both. The
+identifier is suggested from the display name and is what spreadsheets match on.
+
+### What can and cannot change
+
+| | Built-in seven | Roles you add |
+|---|---|---|
+| Rename and recolour | Yes | Yes |
+| Change the identifier | No | No, once created |
+| Retire | No | Yes |
+
+The seven built-ins cannot be removed because every board and every exported spreadsheet
+already stores their numbers. Renaming is enough: if your org says "Delivery Lead" rather
+than "Tech Lead", say so and every screen follows.
+
+**Retiring is soft.** The role leaves the pickers, but anyone already holding it keeps it
+and still renders with the right label and colour — retiring a role must not blank out
+last quarter's boards. The list shows how many people hold each role, so it is an
+informed decision. Numbers are never reused, so a retired role's value cannot come back
+attached to different people.
+
+### How it works underneath
+
+Roles a squad member holds are stored as numbers. The built-in seven keep the values 0–6
+they have always had; roles you add are numbered from 100 up, so nothing already stored
+had to be migrated and old spreadsheets still import.
+
+Labels and colours are held in a process-wide catalogue, loaded at startup and refreshed
+after every change, so adding a role applies without a restart. A role the catalogue does
+not recognise renders as a neutral placeholder rather than throwing — worth knowing if you
+run more than one API instance, where a role added on one is not known to the others until
+they refresh. The role list itself always reads the database, so the pickers are never
+stale.
 
 ## Users and access
 

@@ -73,6 +73,7 @@ public static class DependencyInjection
         // at call time by IJiraSettingsService, not at startup.
         services.AddDataProtection();
         services.AddScoped<IJiraSettingsService, JiraSettingsService>();
+        services.AddScoped<IRoleCatalog, RoleCatalog>();
         services.AddHttpClient<IJiraClient, JiraClient>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(20);

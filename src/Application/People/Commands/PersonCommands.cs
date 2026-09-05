@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Common;
 using Application.Contracts;
 using Domain.Entities;
 using Domain.Enums;
@@ -32,7 +33,7 @@ public sealed class CreatePersonCommandValidator : AbstractValidator<CreatePerso
     public CreatePersonCommandValidator()
     {
         RuleFor(c => c.FullName).NotEmpty().MaximumLength(200);
-        RuleFor(c => c.DefaultRole).IsInEnum();
+        RuleFor(c => c.DefaultRole).MustBeAKnownRole();
         RuleFor(c => c.DefaultDetail).MaximumLength(200);
         RuleFor(c => c.Email).MaximumLength(320).EmailAddress()
             .When(c => !string.IsNullOrWhiteSpace(c.Email));
@@ -78,7 +79,7 @@ public sealed class UpdatePersonCommandValidator : AbstractValidator<UpdatePerso
     {
         RuleFor(c => c.Id).NotEmpty();
         RuleFor(c => c.FullName).NotEmpty().MaximumLength(200);
-        RuleFor(c => c.DefaultRole).IsInEnum();
+        RuleFor(c => c.DefaultRole).MustBeAKnownRole();
         RuleFor(c => c.DefaultDetail).MaximumLength(200);
         RuleFor(c => c.Email).MaximumLength(320).EmailAddress()
             .When(c => !string.IsNullOrWhiteSpace(c.Email));

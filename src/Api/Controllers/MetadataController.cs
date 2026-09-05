@@ -1,6 +1,8 @@
 using Application.Abstractions;
 using Application.Boards.Queries;
 using Application.Contracts;
+using Application.Roles;
+using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +21,18 @@ public sealed class MetadataController(
 {
     [HttpGet]
     [ProducesResponseType<MetadataDto>(StatusCodes.Status200OK)]
-    public ActionResult<MetadataDto> Get() => Ok(MetadataDto.Build());
+    public async Task<ActionResult<MetadataDto>> Get(CancellationToken cancellationToken)
+    {
+        // Read from the database rather than the in-process catalogue: roles are
+        // configurable, and this list drives every picker, so it must be current and must
+        // exclude retired roles even if another instance has not refreshed yet.
+        var roles = await sender.Send(new ListRolesQuery(), cancellationToken);
+
+        return Ok(MetadataDto.Build(
+            roles
+                .Select(r => new RoleOptionDto((Role)r.Value, r.Name, r.Label, r.Color))
+                .ToList()));
+    }
 
     /// <summary>Which optional capabilities this deployment actually has.</summary>
     [HttpGet("capabilities")]

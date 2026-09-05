@@ -47,6 +47,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/roster/roster-page').then((m) => m.RosterPage),
   },
   {
+    // Roles are org-wide reference data that change what every board renders, so only an
+    // admin may edit them — matching the API, which enforces it in the handlers.
+    path: 'settings/roles',
+    title: 'Roles · Squad Status Board',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/roles/roles-page').then((m) => m.RolesPage),
+  },
+  {
     // Accounts that can sign in. Admin-only, matching the API, which enforces the same
     // rules in its handlers rather than relying on this guard.
     path: 'settings/users',
