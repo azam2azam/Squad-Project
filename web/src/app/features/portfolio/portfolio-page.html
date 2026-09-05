@@ -1,138 +1,270 @@
-<div class="portfolio">
-  <header class="portfolio__head">
+<div class="cc">
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Header                                                              -->
+  <!-- ------------------------------------------------------------------ -->
+  <header class="cc__head">
     <div>
-      <h1 class="portfolio__title">Portfolio</h1>
-      <p class="portfolio__sub">
-        {{ totalCount() }} {{ totalCount() === 1 ? 'board' : 'boards' }} across the squad
+      <h1 class="cc__title">Squad Delivery Command Center</h1>
+      <p class="cc__sub">
+        Software Delivery Portfolio · Squad Capacity · Project Progress · Risks &amp; Dependencies
       </p>
+      <p class="cc__date">{{ today }}</p>
     </div>
 
-    <div class="portfolio__actions">
-      <button type="button" class="btn" (click)="present()" [disabled]="isEmpty()">Present</button>
-
-      <button type="button" class="btn" (click)="exportExcel()">Export Excel</button>
-
-      <label class="btn" [class.is-busy]="importing()">
-        {{ importing() ? 'Importing…' : 'Import Excel' }}
-        <input
-          type="file"
-          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          hidden
-          (change)="importExcel($event)"
-        />
-      </label>
-
-      <button type="button" class="btn" (click)="exportAll()">Export JSON</button>
-
-      <label class="btn" [class.is-busy]="importing()">
-        {{ importing() ? 'Importing…' : 'Import JSON' }}
-        <input type="file" accept="application/json" hidden (change)="importFile($event)" />
-      </label>
-
-      <button
-        type="button"
-        class="btn btn--primary"
-        (click)="createBoard()"
-        [disabled]="creating()"
-      >
-        {{ creating() ? 'Creating…' : 'New board' }}
+    <div class="cc__actions">
+      <button type="button" class="btn" (click)="present()">
+        <span aria-hidden="true">▷</span> Presentation Mode
+      </button>
+      <button type="button" class="btn btn--primary" (click)="createBoard()" [disabled]="creating()">
+        <span aria-hidden="true">+</span> {{ creating() ? 'Adding…' : 'Add Squad' }}
       </button>
     </div>
   </header>
 
-  @if (importSummary()) {
-    <p class="portfolio__notice" role="status">{{ importSummary() }}</p>
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Headline figures                                                    -->
+  <!-- ------------------------------------------------------------------ -->
+  @if (kpis().length > 0) {
+    <div class="kpis">
+      @for (kpi of kpis(); track kpi.label; let first = $first) {
+        <div class="kpi" [class.kpi--lead]="first">
+          <p class="kpi__label">{{ kpi.label }}</p>
+          <p
+            class="kpi__value"
+            [class.kpi__value--warn]="kpi.tone === 'warn'"
+            [class.kpi__value--bad]="kpi.tone === 'bad'"
+          >
+            {{ kpi.value }}
+          </p>
+        </div>
+      }
+    </div>
   }
 
-  <div class="portfolio__filters">
-    <label class="filter">
-      <span class="visually-hidden">Search boards</span>
-      <input
-        class="filter__input"
-        type="search"
-        placeholder="Search title, product or squad…"
-        [value]="search()"
-        (change)="onSearch($any($event.target).value)"
-      />
-    </label>
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Filters                                                             -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="filters">
+    <div class="filters__row">
+      <label class="search">
+        <span class="visually-hidden">Search the portfolio</span>
+        <span class="search__icon" aria-hidden="true">⌕</span>
+        <input
+          class="search__input"
+          type="search"
+          placeholder="Search squad, project, member, product, owner, technology…"
+          [value]="search()"
+          (change)="onSearch($any($event.target).value)"
+        />
+      </label>
 
-    <label class="filter">
-      <span class="visually-hidden">Filter by status</span>
-      <select class="filter__input" (change)="onStatusFilter($any($event.target).value)">
-        <option value="">All statuses</option>
+      <select
+        class="select"
+        aria-label="Filter by status"
+        (change)="onStatusFilter($any($event.target).value)"
+      >
+        <option value="" [selected]="statusFilter() === null">All status</option>
         @for (status of statuses(); track status.value) {
-          <option [value]="status.value">{{ status.label }}</option>
+          <option [value]="status.value" [selected]="status.value === statusFilter()">
+            {{ status.label }}
+          </option>
         }
       </select>
-    </label>
+
+      <select
+        class="select"
+        aria-label="Filter by product"
+        (change)="onProductFilter($any($event.target).value)"
+      >
+        <option value="" [selected]="productFilter() === null">All products</option>
+        @for (product of products(); track product) {
+          <option [value]="product" [selected]="product === productFilter()">{{ product }}</option>
+        }
+      </select>
+
+      <!-- Sprint, not "release": it is the field the app actually stores. -->
+      <select
+        class="select"
+        aria-label="Filter by sprint"
+        (change)="onSprintFilter($any($event.target).value)"
+      >
+        <option value="" [selected]="sprintFilter() === null">All sprints</option>
+        @for (sprint of sprints(); track sprint) {
+          <option [value]="sprint" [selected]="sprint === sprintFilter()">{{ sprint }}</option>
+        }
+      </select>
+
+      <button type="button" class="btn btn--quiet" (click)="toggleMoreFilters()">
+        {{ showMoreFilters() ? 'Fewer filters' : 'More filters' }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn--quiet"
+        (click)="resetFilters()"
+        [disabled]="!isFiltered()"
+      >
+        Reset Filters
+      </button>
+    </div>
+
+    @if (showMoreFilters()) {
+      <div class="filters__row filters__row--more">
+        <select
+          class="select"
+          aria-label="Filter by squad"
+          (change)="onSquadFilter($any($event.target).value)"
+        >
+          <option value="" [selected]="squadFilter() === null">All squads</option>
+          @for (squad of squads(); track squad) {
+            <option [value]="squad" [selected]="squad === squadFilter()">{{ squad }}</option>
+          }
+        </select>
+
+        <!-- Data actions live here rather than the header, which the design keeps to two
+             primary buttons. -->
+        <div class="datatools">
+          <button type="button" class="link-btn" (click)="exportExcel()">Export Excel</button>
+          <button type="button" class="link-btn" (click)="exportAll()">Export JSON</button>
+          <button type="button" class="link-btn" (click)="exportPortfolioPdf()">Export PDF</button>
+
+          <label class="link-btn">
+            {{ importing() ? 'Importing…' : 'Import Excel' }}
+            <input
+              class="visually-hidden"
+              type="file"
+              accept=".xlsx"
+              [disabled]="importing()"
+              (change)="importExcel($event)"
+            />
+          </label>
+
+          <label class="link-btn">
+            Import JSON
+            <input
+              class="visually-hidden"
+              type="file"
+              accept="application/json,.json"
+              [disabled]="importing()"
+              (change)="importFile($event)"
+            />
+          </label>
+        </div>
+      </div>
+    }
   </div>
 
   @if (error()) {
-    <p class="portfolio__error" role="alert">{{ error() }}</p>
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+  @if (importSummary()) {
+    <p class="banner banner--ok" role="status">{{ importSummary() }}</p>
   }
 
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Cards                                                               -->
+  <!-- ------------------------------------------------------------------ -->
   @if (loading()) {
-    <p class="portfolio__state">Loading boards…</p>
+    <p class="cc__muted">Loading the portfolio…</p>
   } @else if (isEmpty()) {
-    <div class="portfolio__state portfolio__state--empty">
+    <div class="empty">
       @if (isFiltered()) {
-        <p>No boards match those filters.</p>
+        <p class="empty__lead">Nothing matches those filters.</p>
+        <button type="button" class="btn" (click)="resetFilters()">Reset Filters</button>
       } @else {
-        <p>No boards yet.</p>
-        <button type="button" class="btn btn--primary" (click)="createBoard()">
-          Create the first one
-        </button>
+        <p class="empty__lead">No squads yet.</p>
+        <p class="empty__sub">Add one, or import your delivery tracker from Excel.</p>
+        <button type="button" class="btn btn--primary" (click)="createBoard()">Add Squad</button>
       }
     </div>
   } @else {
-    <ul class="grid">
+    <div class="grid">
       @for (board of items(); track board.id) {
-        <li class="grid__cell">
-          <a
-            class="board"
-            [routerLink]="['/boards', board.id]"
-            [style.--board-color]="board.statusColor"
-          >
-            <div class="board__top">
-              <span class="board__product">{{ board.product }}</span>
-              @if (board.sprint) {
-                <span class="board__sprint">{{ board.sprint }}</span>
+        <article class="card">
+          <header class="card__head">
+            <p class="card__eyebrow">
+              {{ board.squadName }}
+              @if (board.product) {
+                <span class="tag">{{ board.product }}</span>
+              }
+            </p>
+            <!-- Status carries a dot and the word, never colour alone. -->
+            <span
+              class="pill"
+              [style.color]="board.statusColor"
+              [style.border-color]="board.statusColor"
+            >
+              <span class="pill__dot" [style.background]="board.statusColor"></span>
+              {{ board.statusLabel }}
+            </span>
+          </header>
+
+          <h2 class="card__title">
+            <a [routerLink]="['/boards', board.id]">{{ board.title }}</a>
+          </h2>
+
+          <div class="progress">
+            <div class="progress__head">
+              <span>Overall Progress</span>
+              <span class="progress__value">{{ board.progressPercent }}%</span>
+            </div>
+            <div
+              class="progress__track"
+              role="progressbar"
+              [attr.aria-valuenow]="board.progressPercent"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="'Progress for ' + board.title"
+            >
+              <div class="progress__fill" [style.width.%]="board.progressPercent"></div>
+            </div>
+          </div>
+
+          <div class="card__people">
+            <div class="faces">
+              @for (face of board.faces; track face.initials + face.fullName) {
+                <span class="face" [style.background]="face.color" [title]="face.fullName">
+                  {{ face.initials }}
+                </span>
+              }
+              @if (overflowCount(board) > 0) {
+                <span class="face face--more">+{{ overflowCount(board) }}</span>
               }
             </div>
 
-            <h2 class="board__title">{{ board.title }}</h2>
-            <p class="board__squad">{{ board.squadName }}</p>
+            <p class="composition">{{ board.compositionLegend }}</p>
+          </div>
 
-            <div class="board__status">
-              <span class="board__badge">
-                <span class="board__dot" aria-hidden="true"></span>
-                {{ board.statusLabel }}
+          @if (formatTarget(board.targetDate); as target) {
+            <p class="card__target">Target Release: {{ target }}</p>
+          }
+
+          @for (concern of concerns(board); track concern.text) {
+            <p class="concern" [class.concern--blocking]="concern.blocking">
+              <span class="concern__icon" aria-hidden="true">
+                {{ concern.blocking ? '⛔' : '⚠' }}
               </span>
-              <span class="board__percent">{{ board.progressPercent }}%</span>
+              <span>{{ concern.text }}</span>
+            </p>
+          }
+
+          <footer class="card__foot">
+            <div class="card__buttons">
+              <a class="btn btn--primary btn--sm" [routerLink]="['/boards', board.id]">
+                View Details
+              </a>
+              <a class="btn btn--sm" [routerLink]="['/present', board.id]">
+                <span aria-hidden="true">▷</span> Presentation
+              </a>
+              <a class="btn btn--sm" [routerLink]="['/boards', board.id]">
+                <span aria-hidden="true">✎</span> Edit
+              </a>
             </div>
 
-            <div
-              class="board__track"
-              role="img"
-              [attr.aria-label]="board.progressPercent + ' percent complete'"
-            >
-              <span class="board__fill" [style.width.%]="board.progressPercent"></span>
-            </div>
-
-            <p class="board__legend">{{ board.compositionLegend }}</p>
-
-            <button
-              type="button"
-              class="board__delete"
-              (click)="deleteBoard(board, $event)"
-              [attr.aria-label]="'Delete ' + board.title"
-              title="Delete board"
-            >
-              ×
-            </button>
-          </a>
-        </li>
+            <p class="card__updated">Updated {{ formatUpdated(board.updatedAt) }}</p>
+          </footer>
+        </article>
       }
-    </ul>
+    </div>
   }
 </div>

@@ -1,9 +1,15 @@
 @use '../styles/mixins' as *;
 
+// The shell is a dark rail beside a light working area. On narrow screens the rail
+// becomes a horizontal strip above the content rather than eating half the width.
 :host {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
   min-height: 100%;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .skip-link {
@@ -21,213 +27,226 @@
   }
 }
 
-.shell-header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 0 20px;
-  height: 56px;
-  background: var(--ink);
-  color: var(--tx);
-  border-bottom: 1px solid var(--line);
-  flex: none;
-
-  // Narrow viewports: tighten the gutters before anything is allowed to wrap.
-  @media (max-width: 700px) {
-    gap: 12px;
-    padding: 0 12px;
-  }
-
-  &__brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-
-  &__mark {
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: linear-gradient(140deg, var(--accent), var(--accent-deep));
-    flex: none;
-  }
-
-  &__title {
-    font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    // The header is a fixed 56px, so the brand must never wrap to a second line.
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    // Below this the mark alone identifies the product and the nav gets the room.
-    @media (max-width: 560px) {
-      display: none;
-    }
-  }
-
-  &__org {
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--tx-dim);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-pill);
-    padding: 2px 8px;
-    white-space: nowrap;
-    flex: none;
-
-    @media (max-width: 700px) {
-      display: none;
-    }
-  }
-
-  &__status {
-    margin-left: auto;
-    flex: none;
-  }
-}
-
-.shell-nav {
-  display: flex;
-  gap: 4px;
-
-  &__link {
-    display: inline-flex;
-    align-items: center;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: var(--radius-sm);
-    color: var(--tx-mut);
-    text-decoration: none;
-    font-weight: 500;
-    transition:
-      background var(--transition-fast),
-      color var(--transition-fast);
-    @include focus-ring;
-
-    &:hover {
-      color: var(--tx);
-      background: var(--panel);
-    }
-
-    &.is-active {
-      color: var(--ink);
-      background: var(--accent);
-    }
-  }
-}
-
-.shell-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--line);
-  white-space: nowrap;
-
-  &::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    flex: none;
-  }
-
-  // On phones the dot alone carries the signal; the label stays available to
-  // screen readers and as the element's title tooltip.
-  @media (max-width: 480px) {
-    padding: 4px;
-    gap: 0;
-    font-size: 0;
-  }
-
-  &--ok {
-    color: var(--status-on-track);
-  }
-
-  &--warn {
-    color: var(--status-blocked);
-  }
-}
-
-.shell-main {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-// Chromeless routes (slide export, present) own the viewport: no shell padding,
-// no scroll gutter, and the dark surface behind the slide.
-.shell-main--bare {
-  background: var(--ink);
-}
-
 // ---------------------------------------------------------------------------
-// Signed-in identity
+// Rail
 // ---------------------------------------------------------------------------
 
-.shell-header__status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-// A link to "change your password", so it must not inherit the browser's link styling.
-.shell-user {
+.rail {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.25;
-  color: inherit;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-  padding: 2px 4px;
+  gap: 4px;
+  padding: 20px 12px 16px;
+  background: var(--ink);
+  color: var(--tx);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 
-  &:hover .shell-user__name {
-    text-decoration: underline;
+  // Sticks while the working area scrolls, which is the point of a rail.
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+
+  @media (max-width: 900px) {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
+}
 
-  @include focus-ring(var(--accent));
+.rail__brand {
+  padding: 0 10px 18px;
 
-  @media (max-width: 620px) {
+  @media (max-width: 900px) {
+    padding: 0;
+    margin-right: auto;
+  }
+}
+
+.rail__eyebrow {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.rail__title {
+  margin: 3px 0 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  @media (max-width: 900px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+.rail__group {
+  margin: 16px 0 4px;
+  padding: 0 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tx-dim);
+
+  @media (max-width: 900px) {
     display: none;
   }
 }
 
-.shell-user__name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--tx);
+.rail__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--tx-mut);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--tx);
+  }
+
+  // The current screen is the one thing in the rail that should read as solid.
+  &.is-active {
+    background: var(--panel-2);
+    color: var(--tx);
+    font-weight: 600;
+  }
+
+  @include focus-ring(var(--accent));
 }
 
-.shell-user__role {
-  font-size: 11px;
+.rail__icon {
+  width: 15px;
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.85;
+  flex: none;
+}
+
+.rail__foot {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  @media (max-width: 900px) {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+// A link to "change your password", so it must not inherit browser link styling.
+.rail__user {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .rail__user-name {
+    text-decoration: underline;
+  }
+
+  @include focus-ring(var(--accent));
+}
+
+.rail__user-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rail__user-role {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--accent);
 
-  // Viewers get a muted badge — a standing reminder the app is read-only for them.
   &.is-readonly {
     color: var(--tx-dim);
   }
 }
 
-.shell-signout {
-  padding: 5px 11px;
+.rail__signout {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  background: transparent;
+  background: none;
   color: var(--tx-mut);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  white-space: nowrap;
+  cursor: pointer;
+  text-align: left;
 
   &:hover {
     color: var(--tx);
-    background: var(--panel);
+    border-color: rgba(255, 255, 255, 0.28);
   }
+
+  @include focus-ring(var(--accent));
+}
+
+.rail__chip {
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+
+  &--ok {
+    background: rgba(45, 212, 191, 0.14);
+    color: var(--accent);
+  }
+
+  &--warn {
+    background: rgba(251, 191, 36, 0.14);
+    color: var(--status-at-risk);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Working area
+// ---------------------------------------------------------------------------
+
+.shell-main {
+  min-width: 0;
+  background: var(--bg);
+}
+
+// Present mode and the export-only slide route render with no chrome at all.
+.shell-main--bare {
+  grid-column: 1 / -1;
+  background: transparent;
 }

@@ -20,8 +20,18 @@ public sealed record BoardSummaryDto(
     int MemberCount,
     string CompositionLegend,
     int OrderIndex,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    // The portfolio card shows the target date, the notes and a few faces. Carrying them
+    // on the summary keeps the grid to one request instead of one per card.
+    DateOnly? TargetDate,
+    string? BlockerNote,
+    string? RiskNote,
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<BoardFaceDto> Faces)
 {
+    /// <summary>How many avatars a card shows before collapsing the rest into "+n".</summary>
+    private const int FacesShown = 5;
+
     public static BoardSummaryDto From(Board board) => new(
         board.Id,
         board.Title,
@@ -38,8 +48,23 @@ public sealed record BoardSummaryDto(
         board.Members.Count,
         board.Composition.LegendText,
         board.OrderIndex,
-        board.UpdatedAt);
+        board.UpdatedAt,
+        board.TargetDate,
+        board.BlockerNote,
+        board.RiskNote,
+        board.Warnings,
+        board.Members
+            .OrderBy(m => m.OrderIndex)
+            .Take(FacesShown)
+            .Select(m => new BoardFaceDto(
+                m.Person.Initials,
+                m.Person.FullName,
+                m.Person.AvatarColorOverride ?? RoleMetadata.Color(m.Role)))
+            .ToList());
 }
+
+/// <summary>One avatar on a portfolio card.</summary>
+public sealed record BoardFaceDto(string Initials, string FullName, string Color);
 
 /// <summary>Full board shape for the editor, present mode and exports.</summary>
 public sealed record BoardDetailDto(

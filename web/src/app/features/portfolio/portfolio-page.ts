@@ -1,15 +1,27 @@
+import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../../core/api.config';
 import { BoardsService } from '../../core/services/boards.service';
 import { MetadataService } from '../../core/services/metadata.service';
 import { AuthService } from '../../core/services/auth.service';
 import type { BoardStatus, BoardSummary } from '../../core/models/board.models';
+import type { PortfolioSummary } from '../../core/models/portfolio.models';
+
+/** One figure in the headline strip. */
+interface Kpi {
+  label: string;
+  value: string;
+  tone?: 'warn' | 'bad';
+}
 
 /**
- * The exec-level read: every board as a compact card showing title, squad, status and
- * progress, mirroring the slide's colour system so the portfolio and the slides look
- * like one product.
+ * The delivery command centre: the headline figures, a filter bar, and every board as a
+ * card carrying its squad, progress, faces, target release and anything wrong with it.
+ *
+ * Colours come from the same tokens as the slide, so the portfolio and the deck read as
+ * one product rather than two.
  */
 @Component({
   selector: 'app-portfolio-page',
@@ -23,29 +35,90 @@ export class PortfolioPage {
   private readonly metadata = inject(MetadataService);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = inject(API_BASE_URL);
 
   protected readonly statuses = this.metadata.statuses;
 
   protected readonly items = signal<BoardSummary[]>([]);
+  protected readonly summary = signal<PortfolioSummary | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly creating = signal(false);
   protected readonly search = signal('');
   protected readonly statusFilter = signal<BoardStatus | null>(null);
+  protected readonly productFilter = signal<string | null>(null);
+  protected readonly sprintFilter = signal<string | null>(null);
+  protected readonly squadFilter = signal<string | null>(null);
+  protected readonly showMoreFilters = signal(false);
 
   protected readonly totalCount = signal(0);
   protected readonly importing = signal(false);
   protected readonly importSummary = signal<string | null>(null);
 
+  /**
+   * The filter dropdowns are built from every board, not the filtered ones — otherwise
+   * choosing a product would empty the product list you just chose from.
+   */
+  private readonly allBoards = signal<BoardSummary[]>([]);
+
+  protected readonly today = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  protected readonly products = computed(() =>
+    [...new Set(this.allBoards().map((b) => b.product).filter(Boolean))].sort(),
+  );
+
+  protected readonly sprints = computed(() =>
+    [...new Set(this.allBoards().map((b) => b.sprint).filter((s): s is string => !!s))].sort(),
+  );
+
+  protected readonly squads = computed(() =>
+    [...new Set(this.allBoards().map((b) => b.squadName).filter(Boolean))].sort(),
+  );
+
+  /** The headline strip. Every figure is real; none is derived from a guess. */
+  protected readonly kpis = computed<Kpi[]>(() => {
+    const s = this.summary();
+    if (!s) return [];
+
+    const statusCount = (status: number) =>
+      s.statusBreakdown.find((b) => b.status === status)?.count ?? 0;
+
+    // Matched by label rather than a hardcoded number, because roles are configurable.
+    const roleCount = (matches: (label: string) => boolean) =>
+      s.roleTotals.filter((r) => matches(r.label.toLowerCase())).reduce((n, r) => n + r.count, 0);
+
+    return [
+      { label: 'Total squads', value: String(s.headline.squadCount) },
+      { label: 'Active projects', value: String(s.headline.totalBoards) },
+      { label: 'Average progress', value: `${s.headline.averageProgressPercent}%` },
+      { label: 'Developers', value: String(roleCount((l) => l.includes('develop'))) },
+      { label: 'QA', value: String(roleCount((l) => l.includes('qa') || l.includes('quality'))) },
+      { label: 'At risk', value: String(statusCount(1)), tone: 'warn' },
+      { label: 'Blocked', value: String(statusCount(2)), tone: 'bad' },
+    ];
+  });
+
   protected readonly isEmpty = computed(() => !this.loading() && this.items().length === 0);
 
   /** True when the list is empty only because of the filters, not because there are none. */
   protected readonly isFiltered = computed(
-    () => this.search().trim().length > 0 || this.statusFilter() !== null,
+    () =>
+      this.search().trim().length > 0 ||
+      this.statusFilter() !== null ||
+      this.productFilter() !== null ||
+      this.sprintFilter() !== null ||
+      this.squadFilter() !== null,
   );
 
   constructor() {
     this.reload();
+    this.loadHeadline();
   }
 
   protected reload(): void {
@@ -59,8 +132,16 @@ export class PortfolioPage {
       })
       .subscribe({
         next: (result) => {
-          this.items.set(result.items);
+          // Product, sprint and squad have no server-side filter, so they are applied
+          // here over what the server returned.
+          this.items.set(result.items.filter((b) => this.matchesLocalFilters(b)));
           this.totalCount.set(result.totalCount);
+
+          // Remember the unfiltered set the first time, to populate the dropdowns.
+          if (!this.isFiltered()) {
+            this.allBoards.set(result.items);
+          }
+
           this.loading.set(false);
         },
         error: () => {
@@ -68,6 +149,26 @@ export class PortfolioPage {
           this.loading.set(false);
         },
       });
+  }
+
+  private matchesLocalFilters(board: BoardSummary): boolean {
+    const product = this.productFilter();
+    const sprint = this.sprintFilter();
+    const squad = this.squadFilter();
+
+    return (
+      (product === null || board.product === product) &&
+      (sprint === null || board.sprint === sprint) &&
+      (squad === null || board.squadName === squad)
+    );
+  }
+
+  private loadHeadline(): void {
+    this.http.get<PortfolioSummary>(`${this.baseUrl}/portfolio/summary`).subscribe({
+      // The strip is a summary, not the page: if it fails the boards still render.
+      next: (summary) => this.summary.set(summary),
+      error: () => this.summary.set(null),
+    });
   }
 
   protected onSearch(value: string): void {
@@ -78,6 +179,66 @@ export class PortfolioPage {
   protected onStatusFilter(value: string): void {
     this.statusFilter.set(value === '' ? null : (Number(value) as BoardStatus));
     this.reload();
+  }
+
+  protected onProductFilter(value: string): void {
+    this.productFilter.set(value === '' ? null : value);
+    this.reload();
+  }
+
+  protected onSprintFilter(value: string): void {
+    this.sprintFilter.set(value === '' ? null : value);
+    this.reload();
+  }
+
+  protected onSquadFilter(value: string): void {
+    this.squadFilter.set(value === '' ? null : value);
+    this.reload();
+  }
+
+  protected toggleMoreFilters(): void {
+    this.showMoreFilters.update((v) => !v);
+  }
+
+  protected resetFilters(): void {
+    this.search.set('');
+    this.statusFilter.set(null);
+    this.productFilter.set(null);
+    this.sprintFilter.set(null);
+    this.squadFilter.set(null);
+    this.reload();
+  }
+
+  /** Everything a card needs to flag, in the order a reader should see it. */
+  protected concerns(board: BoardSummary): { text: string; blocking: boolean }[] {
+    const out: { text: string; blocking: boolean }[] = [];
+
+    if (board.blockerNote) out.push({ text: board.blockerNote, blocking: true });
+    if (board.riskNote) out.push({ text: board.riskNote, blocking: false });
+
+    for (const warning of board.warnings) {
+      out.push({ text: warning, blocking: false });
+    }
+
+    return out;
+  }
+
+  protected overflowCount(board: BoardSummary): number {
+    return Math.max(0, board.memberCount - board.faces.length);
+  }
+
+  protected formatTarget(value: string | null): string | null {
+    if (!value) return null;
+
+    return new Date(value).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  }
+
+  protected formatUpdated(value: string): string {
+    return new Date(value).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
   /** Creates a blank board and drops the user straight into the editor. */

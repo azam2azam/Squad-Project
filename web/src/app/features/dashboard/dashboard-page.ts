@@ -5,53 +5,7 @@ import { API_BASE_URL } from '../../core/api.config';
 import { BarChart, type BarDatum } from '../../shared/charts/bar-chart';
 import { DonutChart, type DonutSlice } from '../../shared/charts/donut-chart';
 
-interface PortfolioSummary {
-  headline: {
-    totalBoards: number;
-    totalPeople: number;
-    averageProgressPercent: number;
-    onTrackPercent: number;
-    squadCount: number;
-    boardsNeedingAttention: number;
-  };
-  statusBreakdown: {
-    status: number;
-    label: string;
-    color: string;
-    count: number;
-    percent: number;
-    needsTexture: boolean;
-  }[];
-  squads: {
-    squadName: string;
-    boardCount: number;
-    memberCount: number;
-    averageProgressPercent: number;
-    onTrackCount: number;
-    atRiskCount: number;
-    blockedCount: number;
-    deliveredCount: number;
-  }[];
-  riskRegister: {
-    boardId: string;
-    title: string;
-    squadName: string;
-    level: number;
-    levelLabel: string;
-    levelColor: string;
-    riskNote: string | null;
-    status: number;
-    statusLabel: string;
-    progressPercent: number;
-  }[];
-  roleTotals: { role: number; label: string; color: string; count: number }[];
-  needsAttention: {
-    boardId: string;
-    title: string;
-    squadName: string;
-    reasons: string[];
-  }[];
-}
+import type { PortfolioSummary } from '../../core/models/portfolio.models';
 
 /**
  * The delivery-lead landing page: portfolio health at a glance, then the things that

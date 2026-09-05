@@ -110,6 +110,19 @@ export interface BoardSummary {
   compositionLegend: string;
   orderIndex: number;
   updatedAt: string;
+  /** Carried on the summary so the portfolio grid needs one request, not one per card. */
+  targetDate: string | null;
+  blockerNote: string | null;
+  riskNote: string | null;
+  warnings: string[];
+  faces: BoardFace[];
+}
+
+/** One avatar on a portfolio card. */
+export interface BoardFace {
+  initials: string;
+  fullName: string;
+  color: string;
 }
 
 export interface BoardDetail extends Omit<BoardSummary, 'memberCount' | 'compositionLegend'> {
