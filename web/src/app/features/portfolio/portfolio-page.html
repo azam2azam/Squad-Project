@@ -11,15 +11,55 @@
       <p class="cc__date">{{ today }}</p>
     </div>
 
+    <!--
+      Excel round-tripping is how the portfolio is actually maintained in bulk, so it sits
+      in the header beside the other primary actions. It was briefly tucked behind the
+      filters toggle to keep the header to the two buttons the reference design shows,
+      which made a core feature undiscoverable — the wrong trade.
+    -->
     <div class="cc__actions">
+      <label class="btn" [class.is-busy]="importing()">
+        <span aria-hidden="true">↑</span>
+        {{ importing() ? 'Importing…' : 'Import Excel' }}
+        <input
+          class="visually-hidden"
+          type="file"
+          accept=".xlsx"
+          [disabled]="importing()"
+          (change)="importExcel($event)"
+        />
+      </label>
+
+      <button type="button" class="btn" (click)="exportExcel()">
+        <span aria-hidden="true">↓</span> Export Excel
+      </button>
+
       <button type="button" class="btn" (click)="present()">
         <span aria-hidden="true">▷</span> Presentation Mode
       </button>
+
       <button type="button" class="btn btn--primary" (click)="createBoard()" [disabled]="creating()">
         <span aria-hidden="true">+</span> {{ creating() ? 'Adding…' : 'Add Squad' }}
       </button>
     </div>
   </header>
+
+  <!-- The other formats stay visible too, just quieter — nothing to do with filtering. -->
+  <div class="datatools">
+    <span class="datatools__label">Also:</span>
+    <button type="button" class="link-btn" (click)="exportPortfolioPdf()">Export PDF</button>
+    <button type="button" class="link-btn" (click)="exportAll()">Export JSON</button>
+    <label class="link-btn">
+      Import JSON
+      <input
+        class="visually-hidden"
+        type="file"
+        accept="application/json,.json"
+        [disabled]="importing()"
+        (change)="importFile($event)"
+      />
+    </label>
+  </div>
 
   <!-- ------------------------------------------------------------------ -->
   <!-- Headline figures                                                    -->
@@ -121,35 +161,6 @@
           }
         </select>
 
-        <!-- Data actions live here rather than the header, which the design keeps to two
-             primary buttons. -->
-        <div class="datatools">
-          <button type="button" class="link-btn" (click)="exportExcel()">Export Excel</button>
-          <button type="button" class="link-btn" (click)="exportAll()">Export JSON</button>
-          <button type="button" class="link-btn" (click)="exportPortfolioPdf()">Export PDF</button>
-
-          <label class="link-btn">
-            {{ importing() ? 'Importing…' : 'Import Excel' }}
-            <input
-              class="visually-hidden"
-              type="file"
-              accept=".xlsx"
-              [disabled]="importing()"
-              (change)="importExcel($event)"
-            />
-          </label>
-
-          <label class="link-btn">
-            Import JSON
-            <input
-              class="visually-hidden"
-              type="file"
-              accept="application/json,.json"
-              [disabled]="importing()"
-              (change)="importFile($event)"
-            />
-          </label>
-        </div>
       </div>
     }
   </div>

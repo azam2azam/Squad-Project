@@ -176,12 +176,22 @@
   @include focus-ring(var(--accent-deep));
 }
 
+// Secondary formats, kept visible rather than hidden behind a toggle: exporting is not
+// a filtering concern and burying it once already made it look deleted.
 .datatools {
   display: flex;
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  margin-left: auto;
+  margin: -6px 0 14px;
+}
+
+.datatools__label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8595a9;
 }
 
 // ---------------------------------------------------------------------------
@@ -500,6 +510,13 @@
   &--sm {
     padding: 6px 11px;
     font-size: 12.5px;
+  }
+
+  // A file input is a label, not a button, so it cannot be :disabled — this stands in
+  // while an import is running.
+  &.is-busy {
+    opacity: 0.6;
+    pointer-events: none;
   }
 
   @include focus-ring(var(--accent-deep));
