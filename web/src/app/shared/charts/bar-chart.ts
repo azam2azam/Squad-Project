@@ -18,6 +18,7 @@ export interface BarDatum {
 @Component({
   selector: 'app-bar-chart',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.bars--on-light]': 'surface() === "light"' },
   template: `
     <figure class="bars">
       @for (bar of bars(); track bar.label) {
@@ -114,6 +115,25 @@ export interface BarDatum {
       color: var(--tx-dim);
       font-style: italic;
     }
+
+    /*
+     * The defaults above are the dark dashboard panels this chart was built for.
+     * On a light card those tokens invert into near-white text on a black track, so a
+     * host that sits on a light surface asks for this variant instead.
+     */
+    :host(.bars--on-light) .bars__label,
+    :host(.bars--on-light) .bars__value {
+      color: var(--ink-tx);
+    }
+
+    :host(.bars--on-light) .bars__detail,
+    :host(.bars--on-light) .bars__empty {
+      color: #5d6b7e;
+    }
+
+    :host(.bars--on-light) .bars__track {
+      background: #e7ecf2;
+    }
   `,
 })
 export class BarChart {
@@ -121,10 +141,21 @@ export class BarChart {
   readonly unit = input('%');
   readonly color = input('var(--accent)');
 
+  /**
+   * Overrides the scale. Needed where a percentage can legitimately exceed 100 — someone
+   * allocated 150% across squads must not draw the same full bar as someone at 100%,
+   * because being over-committed is the whole point of looking.
+   */
+  readonly max = input<number | null>(null);
+
+  /** The surface the chart is placed on, so its text and track stay legible. */
+  readonly surface = input<'dark' | 'light'>('dark');
+
   /** Bars scale to the largest value, or to 100 when the unit is a percentage. */
   protected readonly bars = computed(() => {
     const data = this.data();
-    const max = this.unit() === '%' ? 100 : Math.max(1, ...data.map((d) => d.value));
+    const max =
+      this.max() ?? (this.unit() === '%' ? 100 : Math.max(1, ...data.map((d) => d.value)));
 
     return data.map((d) => ({
       ...d,

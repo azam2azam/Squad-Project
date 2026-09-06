@@ -47,6 +47,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/roster/roster-page').then((m) => m.RosterPage),
   },
   {
+    // Analytics is read-only comparison, so any signed-in user may open it — reading
+    // this is precisely a Viewer's job.
+    path: 'analytics',
+    title: 'Analytics · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/analytics/analytics-page').then((m) => m.AnalyticsPage),
+  },
+  {
     // Roles are org-wide reference data that change what every board renders, so only an
     // admin may edit them — matching the API, which enforces it in the handlers.
     path: 'settings/roles',

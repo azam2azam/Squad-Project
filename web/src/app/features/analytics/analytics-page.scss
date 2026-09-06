@@ -1,0 +1,273 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.an {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 26px 60px;
+}
+
+.an__muted {
+  color: #5d6b7e;
+  font-size: 13px;
+}
+
+// ---------------------------------------------------------------------------
+// Head
+// ---------------------------------------------------------------------------
+
+.an__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.an__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.an__sub {
+  margin: 5px 0 0;
+  max-width: 70ch;
+  color: #5d6b7e;
+  font-size: 13px;
+}
+
+.an__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+// ---------------------------------------------------------------------------
+// Panels
+// ---------------------------------------------------------------------------
+
+.panel {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  margin-bottom: 16px;
+}
+
+.panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.panel__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.panel__sub {
+  margin: 4px 0 14px;
+  max-width: 74ch;
+  color: #5d6b7e;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+// Two panels side by side on wide screens, stacked when there is no room.
+.an__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+// ---------------------------------------------------------------------------
+// Notes and banners
+// ---------------------------------------------------------------------------
+
+.note {
+  margin: 0 0 14px;
+  padding: 10px 13px;
+  border-left: 3px solid var(--accent-deep);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #e6faf6;
+  color: #14514a;
+  font-size: 12.5px;
+  line-height: 1.55;
+
+  // A trend drawn from too little history is flagged amber, not teal: it is a caveat,
+  // not a reassurance.
+  &--thin {
+    border-left-color: #d97706;
+    background: #fffbeb;
+    color: #92400e;
+  }
+}
+
+.banner {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 13px;
+
+  &--error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  &--warn {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tables
+// ---------------------------------------------------------------------------
+
+// Wide tables scroll inside their own container rather than the page body.
+.table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+th,
+td {
+  padding: 9px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #eef2f6;
+  white-space: nowrap;
+}
+
+thead th {
+  background: #f6f8fa;
+  color: #59687e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+tbody th {
+  font-weight: 600;
+  color: var(--ink-tx);
+}
+
+tbody tr:last-child td,
+tbody tr:last-child th {
+  border-bottom: none;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dim {
+  color: #8595a9;
+  font-weight: 400;
+}
+
+// Over-commitment is the one figure here that is actionable on its own.
+.over {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.who {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #0e1520;
+  font-size: 9px;
+  font-weight: 700;
+  flex: none;
+}
+
+// ---------------------------------------------------------------------------
+// Controls
+// ---------------------------------------------------------------------------
+
+.select {
+  padding: 8px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+  font-size: 13px;
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  color: var(--ink-tx);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// Empty
+// ---------------------------------------------------------------------------
+
+.empty {
+  padding: 44px 24px;
+  border: 1px dashed var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  text-align: center;
+}
+
+.empty__lead {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.empty__sub {
+  margin: 6px 0 0;
+  color: #5d6b7e;
+  font-size: 13px;
+}

@@ -1,0 +1,301 @@
+<div class="an">
+  <header class="an__head">
+    <div>
+      <h1 class="an__title">Delivery Analytics</h1>
+      <p class="an__sub">
+        Squads side by side, progress week by week, and where the people are committed.
+      </p>
+    </div>
+
+    <div class="an__actions">
+      <label class="an__weeks">
+        <span class="visually-hidden">Weeks shown</span>
+        <select class="select" (change)="setWeeks($any($event.target).value)">
+          <option value="8" [selected]="weeks() === 8">Last 8 weeks</option>
+          <option value="12" [selected]="weeks() === 12">Last 12 weeks</option>
+          <option value="26" [selected]="weeks() === 26">Last 26 weeks</option>
+          <option value="52" [selected]="weeks() === 52">Last 52 weeks</option>
+        </select>
+      </label>
+
+      <button type="button" class="btn" (click)="toggleTables()">
+        {{ showTables() ? 'Hide tables' : 'Show tables' }}
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="an__muted">Loading analytics…</p>
+  } @else if (isEmpty()) {
+    <div class="empty">
+      <p class="empty__lead">No squads to compare yet.</p>
+      <p class="empty__sub">Add boards, or import your delivery tracker, and this fills in.</p>
+    </div>
+  } @else if (data(); as d) {
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Progress over time                                                -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Progress week by week</h2>
+          <p class="panel__sub">
+            Average completion across the portfolio, replayed from recorded progress
+            changes.
+          </p>
+        </div>
+      </header>
+
+      <!-- The page says what the line is drawn from. A flat line through one measurement
+           is not a trend, and pretending otherwise is the failure mode here. -->
+      <p class="note" [class.note--thin]="!d.coverage.hasRealHistory">
+        {{ d.coverage.note }}
+      </p>
+
+      <app-line-chart
+        [series]="portfolioTrend()"
+        [labels]="weekLabels()"
+        caption="Portfolio average completion by week"
+      />
+    </section>
+
+    <section class="panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Squads compared over time</h2>
+          <p class="panel__sub">
+            One line per squad. A gap means no board was tracked that week — never zero.
+          </p>
+        </div>
+      </header>
+
+      <app-line-chart
+        [series]="squadTrend()"
+        [labels]="weekLabels()"
+        caption="Average completion by squad, by week"
+      />
+
+      @if (showTables()) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Squad</th>
+                @for (label of weekLabels(); track label) {
+                  <th scope="col">{{ label }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of squadTrend(); track s.name) {
+                <tr>
+                  <th scope="row">{{ s.name }}</th>
+                  @for (v of s.values; track $index) {
+                    <td class="num">{{ v === null ? '—' : v + '%' }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Squad comparison                                                  -->
+    <!-- ---------------------------------------------------------------- -->
+    <div class="an__pair">
+      <section class="panel">
+        <h2 class="panel__title">Average completion by squad</h2>
+        <p class="panel__sub">Where each squad stands today.</p>
+        <app-bar-chart
+          [data]="progressBySquad()"
+          unit="%"
+          color="var(--accent-deep)"
+          surface="light"
+        />
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Boards per squad</h2>
+        <p class="panel__sub">How the portfolio is distributed.</p>
+        <app-bar-chart [data]="boardsBySquad()" unit="" color="#2563EB" surface="light" />
+      </section>
+    </div>
+
+    <section class="panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Delivery health by squad</h2>
+          <p class="panel__sub">
+            Every board a squad owns, by status. Delivered is hatched so it does not read
+            as On Track.
+          </p>
+        </div>
+      </header>
+
+      <app-stacked-bar-chart [rows]="healthBySquad()" />
+
+      @if (showTables()) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Squad</th>
+                <th scope="col">Boards</th>
+                <th scope="col">On Track</th>
+                <th scope="col">In Review</th>
+                <th scope="col">At Risk</th>
+                <th scope="col">Blocked</th>
+                <th scope="col">Delivered</th>
+                <th scope="col">Notable risks</th>
+                <th scope="col">Avg progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of d.squads; track s.squadName) {
+                <tr>
+                  <th scope="row">{{ s.squadName }}</th>
+                  <td class="num">{{ s.boardCount }}</td>
+                  <td class="num">{{ s.onTrack }}</td>
+                  <td class="num">{{ s.inReview }}</td>
+                  <td class="num">{{ s.atRisk }}</td>
+                  <td class="num">{{ s.blocked }}</td>
+                  <td class="num">{{ s.delivered }}</td>
+                  <td class="num">{{ s.notableRiskCount }}</td>
+                  <td class="num">{{ s.averageProgressPercent }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Capacity by squad</h2>
+          <p class="panel__sub">
+            Distinct people on each squad, by the role they hold there.
+          </p>
+        </div>
+      </header>
+
+      <app-stacked-bar-chart [rows]="capacityBySquad()" />
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- People                                                            -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Member workload</h2>
+          <p class="panel__sub">
+            How each person is committed across squads, and the health of what they are on.
+          </p>
+        </div>
+      </header>
+
+      <!--
+        Stated plainly rather than buried: the app has no per-person delivery data, so
+        calling any of this "performance" would put a number on someone that nothing
+        measured.
+      -->
+      <p class="note">
+        These are measures of <strong>load and involvement, not output</strong>. The board
+        records who is on which squad at what allocation; it records nothing about what an
+        individual delivered, so the progress column below is the squad's figure, not
+        theirs.
+      </p>
+
+      @if (overCommitted().length > 0) {
+        <p class="banner banner--warn" role="status">
+          <strong>{{ overCommitted().length }}</strong>
+          {{ overCommitted().length === 1 ? 'person is' : 'people are' }} allocated over 100%
+          across squads:
+          {{ overCommitted()[0].fullName
+          }}{{ overCommitted().length > 1 ? ' and ' + (overCommitted().length - 1) + ' more' : '' }}.
+        </p>
+      }
+
+      @if (anyAllocationRecorded()) {
+        <app-bar-chart
+          [data]="allocationByMember()"
+          unit="%"
+          color="#7C3AED"
+          [max]="maxAllocation()"
+          surface="light"
+        />
+      } @else {
+        <p class="an__muted">
+          No allocation percentages recorded yet — add them on a board's squad members to
+          see commitment here.
+        </p>
+      }
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Person</th>
+              <th scope="col">Roles held</th>
+              <th scope="col">Squads</th>
+              <th scope="col">Allocation</th>
+              <th scope="col">Avg progress of their boards</th>
+              <th scope="col">At risk</th>
+              <th scope="col">Blocked</th>
+              <th scope="col">Recorded edits</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of members(); track m.personId) {
+              <tr>
+                <th scope="row">
+                  <span class="who">
+                    <span class="face" [style.background]="m.color">{{ m.initials }}</span>
+                    {{ m.fullName }}
+                  </span>
+                </th>
+                <td>{{ m.roles.join(', ') }}</td>
+                <td>
+                  {{ m.squadCount }}
+                  <span class="dim">({{ m.squads.join(', ') }})</span>
+                </td>
+                <td class="num">
+                  @if (m.totalAllocationPercent > 0) {
+                    <span [class.over]="m.totalAllocationPercent > 100">
+                      {{ m.totalAllocationPercent }}%
+                    </span>
+                    @if (!m.allocationKnown) {
+                      <span class="dim" title="Some assignments have no allocation recorded">
+                        (partial)
+                      </span>
+                    }
+                  } @else {
+                    <span class="dim">—</span>
+                  }
+                </td>
+                <td class="num">{{ m.averageBoardProgressPercent }}%</td>
+                <td class="num">{{ m.boardsAtRisk }}</td>
+                <td class="num">{{ m.boardsBlocked }}</td>
+                <td class="num">{{ m.recordedEdits }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (members().length === 0) {
+        <p class="an__muted">
+          Nobody is assigned to a squad yet. Add people to boards and this fills in.
+        </p>
+      }
+    </section>
+  }
+</div>
