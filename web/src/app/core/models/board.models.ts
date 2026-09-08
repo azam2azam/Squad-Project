@@ -58,6 +58,7 @@ export interface Metadata {
 /** Which optional integrations this deployment actually has wired up. */
 export interface Capabilities {
   jiraSyncEnabled: boolean;
+  smartsheetSyncEnabled: boolean;
   serverExportEnabled: boolean;
 }
 
@@ -137,6 +138,8 @@ export interface BoardDetail extends Omit<BoardSummary, 'memberCount' | 'composi
   targetDate: string | null;
   jiraProjectKey: string | null;
   jiraBoardId: string | null;
+  /** The Smartsheet sheet this board tracks. Null when it is not linked. */
+  smartsheetSheetId: string | null;
   createdBy: string;
   createdAt: string;
   members: SquadMember[];

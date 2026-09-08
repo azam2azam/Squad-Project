@@ -26,6 +26,8 @@ export interface UpdateBoardRequest extends CreateBoardRequest {
   jiraBoardId?: string | null;
   /** The programme this board belongs to. Null takes it out of every category. */
   categoryId?: string | null;
+  /** The Smartsheet sheet this board tracks. Null unlinks it. */
+  smartsheetSheetId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -78,6 +80,14 @@ export class BoardsService {
     return this.http.post<JiraSuggestion>(`${this.baseUrl}/boards/${id}/jira/sync`, {});
   }
 
+  /** Same contract as jiraSync: returns a suggestion, never writes to the board. */
+  smartsheetSync(id: string): Observable<SmartsheetSuggestion> {
+    return this.http.post<SmartsheetSuggestion>(
+      `${this.baseUrl}/boards/${id}/smartsheet/sync`,
+      {},
+    );
+  }
+
   /** Bulk restore from an exported file. Upserts by id, so re-importing is a no-op. */
   import(file: unknown): Observable<ImportResult> {
     return this.http.post<ImportResult>(`${this.baseUrl}/import`, file);
@@ -119,6 +129,30 @@ export interface JiraSuggestion {
   suggestedStatusColor: string;
   rationale: string;
   currentSprint: string | null;
+  currentProgressPercent: number;
+  currentStatus: number;
+}
+
+/**
+ * What a sheet suggests for a board.
+ *
+ * `progressFromColumn` distinguishes a percentage averaged from a real "% Complete"
+ * column from one inferred by counting finished rows — different levels of confidence,
+ * and the panel says which so a PO can judge it.
+ */
+export interface SmartsheetSuggestion {
+  available: boolean;
+  reason: string | null;
+  sheetName: string | null;
+  doneRows: number;
+  totalRows: number;
+  blockedRows: number;
+  suggestedProgressPercent: number;
+  progressFromColumn: boolean;
+  suggestedStatus: number;
+  suggestedStatusLabel: string;
+  suggestedStatusColor: string;
+  rationale: string;
   currentProgressPercent: number;
   currentStatus: number;
 }

@@ -102,7 +102,8 @@ public sealed record BoardDetailDto(
     // The programme this board sits under. Null is a real answer — uncategorised.
     Guid? CategoryId,
     string? CategoryName,
-    string? CategoryColor)
+    string? CategoryColor,
+    string? SmartsheetSheetId)
 {
     public static BoardDetailDto From(Board board) => new(
         board.Id,
@@ -132,7 +133,8 @@ public sealed record BoardDetailDto(
         board.Warnings,
         board.CategoryId,
         board.Category?.Name,
-        board.Category?.Color);
+        board.Category?.Color,
+        board.SmartsheetSheetId);
 }
 
 /// <summary>One avatar card on the slide.</summary>

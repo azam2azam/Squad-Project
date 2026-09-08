@@ -1,5 +1,6 @@
 using Application.Boards.Commands;
 using Application.Boards.Queries;
+using Application.Integrations;
 using Application.Common;
 using Application.Contracts;
 using Domain.Enums;
@@ -101,6 +102,17 @@ public sealed class BoardsController(ISender sender) : ControllerBase
     public async Task<ActionResult<JiraSuggestionDto>> JiraSync(
         Guid id, CancellationToken cancellationToken)
         => Ok(await sender.Send(new GetJiraSuggestionQuery(id), cancellationToken));
+
+    /// <summary>
+    /// The same contract for Smartsheet: reads the linked sheet and returns a suggestion,
+    /// never writing to the board.
+    /// </summary>
+    [HttpPost("{id:guid}/smartsheet/sync")]
+    [ProducesResponseType<SmartsheetSuggestionDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SmartsheetSuggestionDto>> SmartsheetSync(
+        Guid id, CancellationToken cancellationToken)
+        => Ok(await sender.Send(new GetSmartsheetSuggestionQuery(id), cancellationToken));
 
     [HttpPut("reorder")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

@@ -23,6 +23,7 @@ cards — ready to present or export.
 | **M8** | Clean install, Excel import/export, Jira linking | ✅ Done |
 | **M9** | Jira settings screen, in-app guide, user management, configurable roles | ✅ Done |
 | **M10** | Command-centre redesign, delivery analytics, board categories | ✅ Done |
+| **M11** | Smartsheet integration alongside Jira | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -301,6 +302,62 @@ change produces no audit entry and no realtime notification.
 
 Changing the interval takes effect without restarting the API; the worker re-reads the
 settings each minute.
+
+## Connecting to Smartsheet
+
+**Smartsheet** in the top nav (Admin only) works the same way as the Jira connection, with
+two differences that come from the provider rather than from taste.
+
+### 1. Get an access token
+
+In Smartsheet: **Account → Personal Settings → API Access → Generate new access token**.
+
+Use a **service account**, not your own login — when a person leaves, their token is
+revoked and every linked board stops updating. The account only needs read access to the
+sheets you want on the board. The integration never writes to Smartsheet.
+
+Unlike Jira there is no account email to supply: Smartsheet authenticates with the bearer
+token alone.
+
+### 2. Tell it which columns to read
+
+This is the real difference. A Jira issue has a universal shape — a status category the
+API defines. A sheet is a spreadsheet, so it has no built-in notion of "done", and the
+sync has to be told where to look:
+
+| Setting | Default | What it reads |
+|---|---|---|
+| **Progress column** | `% Complete` | Averaged across rows. Accepts `0–1` fractions and `0–100` whole numbers |
+| **Status column** | `Status` | Rows containing "blocked" count as blocked; "complete", "done" or "closed" count as finished |
+
+The defaults match Smartsheet's own project templates. Progress prefers the percentage
+column and only falls back to counting finished rows — the board says which was used, so a
+Product Owner can tell a measured number from an inferred one.
+
+### 3. Link each board
+
+Open a board and paste its **sheet id** (in Smartsheet: **File → Properties → Sheet ID**).
+Boards without one are ignored by every sync.
+
+### What a sync changes
+
+**Progress and status only.** Sprint is never touched: a sheet does not carry one, and
+blanking a Product Owner's value with information the integration never had would lose
+data rather than update it. Blocker notes, risk and the squad roster are left alone too,
+exactly as with Jira.
+
+Auto-apply is off by default. With it off Smartsheet only *suggests* in the board editor;
+with it on, a background job writes to linked boards on the interval you set. Both
+providers run on their own schedules and last-run times, so switching one off says nothing
+about the other.
+
+### Storage
+
+Identical to Jira: the token is encrypted with ASP.NET Core Data Protection under its own
+key purpose, never returned to a browser, and shown only as a mask plus the last four
+characters. A blank token field on a later save keeps the stored one. `Smartsheet__Enabled`
+and `Smartsheet__AccessToken` pin the connection from the environment and override the
+screen, which then goes read-only and says so.
 
 ## Configuration
 

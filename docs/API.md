@@ -180,6 +180,39 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 
 ---
 
+### Smartsheet integration (M11)
+
+The Smartsheet twin of the Jira routes, and deliberately the same shape.
+
+```
+GET    /api/v1/integrations/smartsheet
+PUT    /api/v1/integrations/smartsheet
+DELETE /api/v1/integrations/smartsheet
+POST   /api/v1/integrations/smartsheet/test
+POST   /api/v1/integrations/smartsheet/sync
+POST   /api/v1/boards/{id}/smartsheet/sync
+```
+
+**Admin-only.** The access token is write-only: `tokenHint` is `••••••••` plus the last four
+characters, and an empty `accessToken` on `PUT` keeps the stored one. The API URL must be
+https unless it is loopback, and defaults to `https://api.smartsheet.com/2.0`.
+
+Two differences from Jira, both from the provider rather than from taste:
+
+- Smartsheet authenticates with a **bearer token** and no account email.
+- A sheet has no universal shape, so `progressColumn` and `statusColumn` name the columns
+  to read (defaulting to `% Complete` and `Status`). Progress prefers the percentage column
+  and falls back to counting finished rows; the snapshot's `progressFromColumn` says which,
+  because those are different levels of confidence.
+
+A sync writes **progress and status only**. Sprint is never touched — a sheet does not carry
+one, and blanking the Product Owner's value would lose information the integration never
+had. `Board.smartsheetSheetId` is nullable; boards without one are ignored.
+
+`POST /boards/{id}/smartsheet/sync` returns a **suggestion** and never writes.
+`/metadata/capabilities` reports `smartsheetSyncEnabled` alongside `jiraSyncEnabled`, and
+the background worker runs each provider on its own switch, interval and last-run time.
+
 ### Categories (M10)
 
 Programmes above the boards — the level between the portfolio and a board's `Product`.

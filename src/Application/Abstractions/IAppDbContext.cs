@@ -17,6 +17,7 @@ public interface IAppDbContext
     DbSet<JiraSettings> JiraSettings { get; }
     DbSet<SquadRole> SquadRoles { get; }
     DbSet<BoardCategory> BoardCategories { get; }
+    DbSet<SmartsheetSettings> SmartsheetSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

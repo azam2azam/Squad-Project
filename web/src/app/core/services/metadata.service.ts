@@ -24,12 +24,14 @@ export class MetadataService {
   private readonly metadata = signal<Metadata | null>(null);
   private readonly capabilities = signal<Capabilities>({
     jiraSyncEnabled: false,
+    smartsheetSyncEnabled: false,
     serverExportEnabled: false,
   });
 
   readonly roles = computed<RoleOption[]>(() => this.metadata()?.roles ?? []);
   readonly statuses = computed<StatusOption[]>(() => this.metadata()?.statuses ?? []);
   readonly jiraSyncEnabled = computed(() => this.capabilities().jiraSyncEnabled);
+  readonly smartsheetSyncEnabled = computed(() => this.capabilities().smartsheetSyncEnabled);
   readonly serverExportEnabled = computed(() => this.capabilities().serverExportEnabled);
   readonly isLoaded = computed(() => this.metadata() !== null);
 

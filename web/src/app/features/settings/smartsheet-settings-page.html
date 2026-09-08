@@ -1,0 +1,313 @@
+<div class="jira-page">
+  <header class="jira-page__head">
+    <div>
+      <h1 class="jira-page__title">Smartsheet connection</h1>
+      <p class="jira-page__sub">
+        Link the board to your company's Smartsheet so progress and status can be pulled
+        from the sheets your squads already keep.
+      </p>
+    </div>
+
+    @if (current(); as view) {
+      <span class="pill" [class.pill--on]="view.configured">
+        {{ view.configured ? 'Connected' : 'Not configured' }}
+      </span>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="jira-page__muted">Loading…</p>
+  } @else {
+    @if (error()) {
+      <p class="banner banner--error" role="alert">{{ error() }}</p>
+    }
+
+    @if (locked()) {
+      <p class="banner banner--info">
+        These credentials are set by environment configuration on the server
+        (<code>Smartsheet__AccessToken</code>) and take precedence over anything saved
+        here. To manage the connection from this screen, clear those variables and restart
+        the API.
+      </p>
+    }
+
+    <details class="howto">
+      <summary class="howto__summary">Where do these values come from?</summary>
+      <ol class="howto__list">
+        <li>
+          <strong>Access token</strong> — in Smartsheet, open
+          <code>Account → Personal Settings → API Access</code> and generate a token. Use a
+          service account with access to the sheets you want on the board, not a person's
+          own login: when that person leaves, every linked board stops updating.
+        </li>
+        <li>
+          <strong>API URL</strong> — leave it as
+          <code>https://api.smartsheet.com/2.0</code> unless your organisation is on a
+          regional endpoint.
+        </li>
+        <li>
+          <strong>Column mapping</strong> — a sheet is a spreadsheet, so unlike a Jira issue
+          there is no universal notion of "done". Name the columns that carry progress and
+          status; the defaults match Smartsheet's own project templates.
+        </li>
+        <li>
+          <strong>Per board</strong> — open a board and paste its <strong>sheet id</strong>
+          (in Smartsheet: <code>File → Properties → Sheet ID</code>). Boards without one are
+          left alone.
+        </li>
+      </ol>
+      <p class="howto__note">
+        The connection is read-only. This app never writes to your Smartsheet.
+        <a routerLink="/help/jira-sync">The sync guide</a> explains the suggest-versus-apply
+        rule, which works the same way here.
+      </p>
+    </details>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Connection                                                          -->
+    <!-- ------------------------------------------------------------------ -->
+    <form class="card" (submit)="$event.preventDefault(); save()">
+      <h2 class="card__title">Connection</h2>
+
+      <div class="card__grid">
+        <label class="field field--wide">
+          <span class="field__label">API URL</span>
+          <input
+            class="field__input"
+            type="url"
+            inputmode="url"
+            placeholder="https://api.smartsheet.com/2.0"
+            [disabled]="locked()"
+            [ngModel]="baseUrl()"
+            (ngModelChange)="baseUrl.set($event)"
+            name="baseUrl"
+          />
+          @if (urlProblem(); as problem) {
+            <span class="field__error">{{ problem }}</span>
+          }
+        </label>
+
+        <label class="field field--wide">
+          <span class="field__label">
+            Access token
+            @if (hasStoredToken()) {
+              <span class="field__hint">— leave blank to keep the stored one</span>
+            }
+          </span>
+          <input
+            class="field__input"
+            type="password"
+            autocomplete="new-password"
+            [placeholder]="hasStoredToken() ? 'Stored — type a new token to replace it' : 'Paste the access token'"
+            [disabled]="locked()"
+            [ngModel]="accessToken()"
+            (ngModelChange)="accessToken.set($event)"
+            name="accessToken"
+          />
+          @if (current()?.tokenHint; as hint) {
+            <span class="field__hint">Stored token: <code>{{ hint }}</code></span>
+          }
+        </label>
+      </div>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [disabled]="locked()"
+          [checked]="enabled()"
+          (change)="enabled.set($any($event.target).checked)"
+        />
+        <span>
+          <strong>Enable the connection</strong>
+          <small>Off means no Smartsheet call is made at all.</small>
+        </span>
+      </label>
+
+      <div class="card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save connection' }}
+        </button>
+
+        @if (current()?.configured && !locked()) {
+          <button type="button" class="btn btn--danger" (click)="disconnect()" [disabled]="saving()">
+            Disconnect
+          </button>
+        }
+
+        @if (saved()) {
+          <span class="saved-note" role="status">Saved.</span>
+        }
+      </div>
+
+      @if (current(); as view) {
+        @if (view.updatedAt) {
+          <p class="card__meta">
+            Last changed by {{ view.updatedBy || 'unknown' }} on {{ formatDate(view.updatedAt) }}.
+          </p>
+        }
+      }
+    </form>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Column mapping                                                      -->
+    <!-- ------------------------------------------------------------------ -->
+    <section class="card">
+      <h2 class="card__title">Which columns to read</h2>
+      <p class="card__sub">
+        A sheet has no fixed shape, so the sync has to be told where to look. Progress is
+        averaged from the percentage column when it exists; otherwise it is counted from
+        the status column, and the board says which was used.
+      </p>
+
+      <div class="card__grid">
+        <label class="field">
+          <span class="field__label">Progress column</span>
+          <input
+            class="field__input"
+            type="text"
+            placeholder="% Complete"
+            [disabled]="locked()"
+            [ngModel]="progressColumn()"
+            (ngModelChange)="progressColumn.set($event)"
+            name="progressColumn"
+          />
+          <span class="field__hint">Accepts 0–1 fractions and 0–100 whole numbers.</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Status column</span>
+          <input
+            class="field__input"
+            type="text"
+            placeholder="Status"
+            [disabled]="locked()"
+            [ngModel]="statusColumn()"
+            (ngModelChange)="statusColumn.set($event)"
+            name="statusColumn"
+          />
+          <span class="field__hint">
+            Rows reading "blocked" count as blocked; "complete", "done" or "closed" count
+            as finished.
+          </span>
+        </label>
+      </div>
+
+      <div class="card__actions">
+        <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save columns' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Test                                                                -->
+    <!-- ------------------------------------------------------------------ -->
+    <section class="card">
+      <h2 class="card__title">Test the connection</h2>
+      <p class="card__sub">
+        Makes a real call, so "not configured" can be told apart from "configured but the
+        token is wrong". Give a sheet id to check the token's account can actually open it.
+      </p>
+
+      <div class="card__row">
+        <label class="field">
+          <span class="field__label">Sheet id (optional)</span>
+          <input
+            class="field__input"
+            type="text"
+            placeholder="4583173393803140"
+            [ngModel]="probeSheetId()"
+            (ngModelChange)="probeSheetId.set($event)"
+            name="probeSheetId"
+          />
+        </label>
+
+        <button type="button" class="btn" (click)="test()" [disabled]="testing()">
+          {{ testing() ? 'Testing…' : 'Test connection' }}
+        </button>
+      </div>
+
+      @if (testResult(); as result) {
+        <p
+          class="banner"
+          [class.banner--ok]="result.reachable"
+          [class.banner--warn]="!result.reachable"
+          role="status"
+        >
+          {{ result.message }}
+        </p>
+      }
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Automatic updates                                                   -->
+    <!-- ------------------------------------------------------------------ -->
+    <section class="card">
+      <h2 class="card__title">Automatic updates</h2>
+      <p class="card__sub">
+        With auto-apply off, Smartsheet only <em>suggests</em> — the board editor shows what
+        the sheet says and the Product Owner accepts it. With it on, a background job writes
+        progress and status to every linked board on the interval below. Sprint, blocker
+        notes, risks and the squad roster are never touched.
+      </p>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [disabled]="locked()"
+          [checked]="autoApply()"
+          (change)="autoApply.set($any($event.target).checked)"
+        />
+        <span>
+          <strong>Apply Smartsheet figures automatically</strong>
+          <small>Every change is written to the board's audit trail as "Smartsheet sync".</small>
+        </span>
+      </label>
+
+      <label class="field field--narrow">
+        <span class="field__label">Check every (minutes)</span>
+        <input
+          class="field__input"
+          type="number"
+          min="5"
+          max="1440"
+          step="5"
+          [disabled]="locked()"
+          [ngModel]="syncIntervalMinutes()"
+          (ngModelChange)="syncIntervalMinutes.set(+$event)"
+          name="syncIntervalMinutes"
+        />
+      </label>
+
+      <div class="card__actions">
+        <button type="button" class="btn btn--primary" [disabled]="!canSave()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save schedule' }}
+        </button>
+
+        <button type="button" class="btn" (click)="syncNow()" [disabled]="syncing()">
+          {{ syncing() ? 'Syncing…' : 'Sync now' }}
+        </button>
+      </div>
+
+      <p class="card__meta">
+        Last sync: {{ formatDate(current()?.lastSyncAt ?? null) }}.
+        @if (current()?.lastSyncResult; as result) {
+          <span>{{ result }}</span>
+        }
+      </p>
+
+      @if (syncResult(); as report) {
+        <div class="banner" [class.banner--ok]="report.ran" [class.banner--warn]="!report.ran">
+          <p class="banner__lead">{{ report.message }}</p>
+          @if (report.details.length) {
+            <ul class="banner__list">
+              @for (detail of report.details; track detail) {
+                <li>{{ detail }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -61,6 +61,9 @@ public class Board : Entity
     public string? JiraProjectKey { get; private set; }
     public string? JiraBoardId { get; private set; }
 
+    /// <summary>The Smartsheet sheet this board tracks. Numeric id, held as text.</summary>
+    public string? SmartsheetSheetId { get; private set; }
+
     public string CreatedBy { get; private set; } = "system";
 
     /// <summary>
@@ -191,6 +194,9 @@ public class Board : Entity
 
         Touch();
     }
+
+    /// <summary>Links or unlinks the Smartsheet sheet this board tracks.</summary>
+    public void LinkSmartsheet(string? sheetId) => SmartsheetSheetId = Trim(sheetId);
 
     /// <summary>Moves the board to a programme, or out of one when given null.</summary>
     public void AssignCategory(Guid? categoryId) => CategoryId = categoryId;

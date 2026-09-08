@@ -5,7 +5,7 @@ using MediatR;
 namespace Api.Workers;
 
 /// <summary>
-/// Runs the Jira sync on the interval the admin configured in Settings.
+/// Runs the Jira and Smartsheet syncs, each on the interval its own admin configured.
 ///
 /// It wakes once a minute and asks the database what the interval is, rather than
 /// capturing it at startup — changing the interval on the settings screen takes effect
@@ -15,9 +15,9 @@ namespace Api.Workers;
 /// default: Jira offers a suggestion in the board editor and a human accepts it. An admin
 /// has to opt in before a background process starts writing to boards on its own.
 /// </summary>
-public sealed class JiraSyncWorker(
+public sealed class IntegrationSyncWorker(
     IServiceScopeFactory scopeFactory,
-    ILogger<JiraSyncWorker> logger) : BackgroundService
+    ILogger<IntegrationSyncWorker> logger) : BackgroundService
 {
     private static readonly TimeSpan Tick = TimeSpan.FromMinutes(1);
 
@@ -56,31 +56,57 @@ public sealed class JiraSyncWorker(
 
     private async Task RunIfDueAsync(CancellationToken cancellationToken)
     {
-        // A new scope per tick: the DbContext and settings service are scoped, and a
+        // A new scope per tick: the DbContext and settings services are scoped, and a
         // long-lived one would hold stale tracked entities for the life of the process.
         using var scope = scopeFactory.CreateScope();
-        var settings = scope.ServiceProvider.GetRequiredService<IJiraSettingsService>();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
+        // Each provider keeps its own switch, interval and last-run time, so one being
+        // switched off or overdue says nothing about the other. They are run in sequence
+        // rather than together: a board could be linked to both, and two writers racing
+        // over the same row is not worth the saved second.
+        await RunJiraIfDueAsync(scope, sender, cancellationToken);
+        await RunSmartsheetIfDueAsync(scope, sender, cancellationToken);
+    }
+
+    private async Task RunJiraIfDueAsync(
+        IServiceScope scope, ISender sender, CancellationToken cancellationToken)
+    {
+        var settings = scope.ServiceProvider.GetRequiredService<IJiraSettingsService>();
         var connection = await settings.GetAsync(cancellationToken);
 
-        if (!connection.Enabled || !connection.AutoApply || connection.SyncIntervalMinutes <= 0)
+        if (!IsDue(connection.Enabled, connection.AutoApply,
+                connection.SyncIntervalMinutes, connection.LastSyncAt))
         {
             return;
         }
 
-        var due = connection.LastSyncAt is null
-                  || DateTimeOffset.UtcNow - connection.LastSyncAt
-                      >= TimeSpan.FromMinutes(connection.SyncIntervalMinutes);
-
-        if (!due)
-        {
-            return;
-        }
-
-        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
         var report = await sender.Send(new SyncBoardsFromJiraCommand(), cancellationToken);
-
         logger.LogInformation("Scheduled Jira sync: {Message}", report.Message);
+    }
+
+    private async Task RunSmartsheetIfDueAsync(
+        IServiceScope scope, ISender sender, CancellationToken cancellationToken)
+    {
+        var settings = scope.ServiceProvider.GetRequiredService<ISmartsheetSettingsService>();
+        var connection = await settings.GetAsync(cancellationToken);
+
+        if (!IsDue(connection.Enabled, connection.AutoApply,
+                connection.SyncIntervalMinutes, connection.LastSyncAt))
+        {
+            return;
+        }
+
+        var report = await sender.Send(new SyncBoardsFromSmartsheetCommand(), cancellationToken);
+        logger.LogInformation("Scheduled Smartsheet sync: {Message}", report.Message);
+    }
+
+    private static bool IsDue(bool enabled, bool autoApply, int intervalMinutes, DateTimeOffset? lastSyncAt)
+    {
+        if (!enabled || !autoApply || intervalMinutes <= 0) return false;
+
+        return lastSyncAt is null
+               || DateTimeOffset.UtcNow - lastSyncAt >= TimeSpan.FromMinutes(intervalMinutes);
     }
 
     /// <summary>

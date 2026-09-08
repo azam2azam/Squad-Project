@@ -14,7 +14,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { BoardsService } from '../../core/services/boards.service';
-import type { BoardAuditEntry, JiraSuggestion } from '../../core/services/boards.service';
+import type {
+  BoardAuditEntry,
+  JiraSuggestion,
+  SmartsheetSuggestion,
+} from '../../core/services/boards.service';
 import { AuthService } from '../../core/services/auth.service';
 import {
   CategoriesService,
@@ -66,6 +70,7 @@ export class BoardEditorPage {
   /** Viewers see the board read-only; the API refuses their writes regardless. */
   protected readonly canWrite = this.auth.canWrite;
   protected readonly jiraEnabled = this.metadata.jiraSyncEnabled;
+  protected readonly smartsheetEnabled = this.metadata.smartsheetSyncEnabled;
 
   /** Risk options. Static: these are a fixed vocabulary, not deployment config. */
   protected readonly riskLevels = [
@@ -84,6 +89,8 @@ export class BoardEditorPage {
   protected readonly auditOpen = signal(false);
   protected readonly jiraSuggestion = signal<JiraSuggestion | null>(null);
   protected readonly jiraBusy = signal(false);
+  protected readonly smartsheetSuggestion = signal<SmartsheetSuggestion | null>(null);
+  protected readonly smartsheetBusy = signal(false);
 
   /** True when a board they may not edit is open, so the UI can say why. */
   protected readonly readOnlyReason = computed(() => {
@@ -155,7 +162,8 @@ export class BoardEditorPage {
       draft.jiraBoardId !== (board.jiraBoardId ?? '') ||
       // Without this, moving a board between programmes leaves Save disabled and the
       // change silently discarded.
-      draft.categoryId !== (board.categoryId ?? '')
+      draft.categoryId !== (board.categoryId ?? '') ||
+      draft.smartsheetSheetId !== (board.smartsheetSheetId ?? '')
     );
   });
 
@@ -279,6 +287,7 @@ export class BoardEditorPage {
         jiraProjectKey: draft.jiraProjectKey.trim() || null,
         jiraBoardId: draft.jiraBoardId.trim() || null,
         categoryId: draft.categoryId || null,
+        smartsheetSheetId: draft.smartsheetSheetId.trim() || null,
       })
       .subscribe({
         next: (saved) => {
@@ -404,6 +413,53 @@ export class BoardEditorPage {
     this.jiraSuggestion.set(null);
   }
 
+  /** Pulls a Smartsheet suggestion. Nothing is written until the user accepts it. */
+  protected syncSmartsheet(): void {
+    const board = this.serverBoard();
+    if (!board || this.smartsheetBusy()) return;
+
+    this.smartsheetBusy.set(true);
+    this.smartsheetSuggestion.set(null);
+
+    this.boards.smartsheetSync(board.id).subscribe({
+      next: (suggestion) => {
+        this.smartsheetSuggestion.set(suggestion);
+        this.smartsheetBusy.set(false);
+      },
+      error: () => {
+        this.smartsheetBusy.set(false);
+        this.error.set('Could not reach Smartsheet.');
+      },
+    });
+  }
+
+  /**
+   * Applies the pulled numbers to the draft only, exactly as the Jira path does.
+   *
+   * Sprint is deliberately absent: a sheet carries no sprint, so overwriting the Product
+   * Owner's value with nothing would lose information the integration never had.
+   */
+  protected acceptSmartsheet(): void {
+    const suggestion = this.smartsheetSuggestion();
+    if (!suggestion?.available) return;
+
+    this.draft.update((d) =>
+      d
+        ? {
+            ...d,
+            progressPercent: suggestion.suggestedProgressPercent,
+            status: suggestion.suggestedStatus as BoardStatus,
+          }
+        : d,
+    );
+
+    this.smartsheetSuggestion.set(null);
+  }
+
+  protected dismissSmartsheet(): void {
+    this.smartsheetSuggestion.set(null);
+  }
+
   protected revert(): void {
     const board = this.serverBoard();
     if (board) {
@@ -436,6 +492,7 @@ interface DraftState {
   riskNote: string;
   jiraProjectKey: string;
   jiraBoardId: string;
+  smartsheetSheetId: string;
   /** Empty string means uncategorised, which is a real state. */
   categoryId: string;
 }
@@ -453,6 +510,7 @@ function toDraft(board: BoardDetail): DraftState {
     riskNote: board.riskNote ?? '',
     jiraProjectKey: board.jiraProjectKey ?? '',
     jiraBoardId: board.jiraBoardId ?? '',
+    smartsheetSheetId: board.smartsheetSheetId ?? '',
     categoryId: board.categoryId ?? '',
   };
 }

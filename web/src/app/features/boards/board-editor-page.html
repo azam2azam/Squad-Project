@@ -235,6 +235,107 @@
         </div>
       }
 
+      <!-- Linking a board to Smartsheet. Same pattern as the Jira link below: always
+           shown, with the sync button appearing only once the integration is on. -->
+      @if (canWrite()) {
+        <div class="card">
+          <div class="card__head">
+            <h2 class="card__title">Smartsheet link</h2>
+            @if (!smartsheetEnabled()) {
+              <span class="card__hint">Sync is off for this deployment</span>
+            }
+          </div>
+
+          <label class="field">
+            <span class="field__label">Sheet id</span>
+            <input
+              class="field__input"
+              type="text"
+              [value]="d.smartsheetSheetId"
+              (input)="update('smartsheetSheetId', $any($event.target).value)"
+              placeholder="4583173393803140"
+              maxlength="40"
+            />
+            <span class="field__hint">
+              In Smartsheet: <strong>File → Properties → Sheet ID</strong>.
+            </span>
+          </label>
+
+          @if (d.smartsheetSheetId && !smartsheetEnabled()) {
+            <p class="jira__note">
+              Saved with the board. An admin can connect Smartsheet under
+              <strong>Settings → Smartsheet</strong>, and this board is then ready to pull.
+            </p>
+          }
+        </div>
+      }
+
+      @if (smartsheetEnabled() && canWrite()) {
+        <div class="card card--jira">
+          <div class="card__head">
+            <h2 class="card__title">Smartsheet</h2>
+            <button
+              type="button"
+              class="link-btn"
+              (click)="syncSmartsheet()"
+              [disabled]="smartsheetBusy()"
+            >
+              {{ smartsheetBusy() ? 'Pulling…' : 'Sync from Smartsheet' }}
+            </button>
+          </div>
+
+          @if (smartsheetSuggestion(); as sheet) {
+            @if (sheet.available) {
+              <!-- Shown for acceptance, never applied automatically. -->
+              <p class="jira__rationale">{{ sheet.rationale }}</p>
+              <dl class="jira__grid">
+                <div>
+                  <dt>Progress</dt>
+                  <dd>
+                    {{ sheet.currentProgressPercent }}% →
+                    <b>{{ sheet.suggestedProgressPercent }}%</b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>
+                    <b [style.color]="sheet.suggestedStatusColor">
+                      {{ sheet.suggestedStatusLabel }}
+                    </b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Rows</dt>
+                  <dd>
+                    {{ sheet.doneRows }} / {{ sheet.totalRows }} done,
+                    {{ sheet.blockedRows }} blocked
+                  </dd>
+                </div>
+                @if (sheet.sheetName) {
+                  <div>
+                    <dt>Sheet</dt>
+                    <dd>{{ sheet.sheetName }}</dd>
+                  </div>
+                }
+              </dl>
+
+              <div class="jira__actions">
+                <button type="button" class="btn btn--primary" (click)="acceptSmartsheet()">
+                  Apply to draft
+                </button>
+                <button type="button" class="btn" (click)="dismissSmartsheet()">Dismiss</button>
+              </div>
+              <p class="jira__note">
+                Applying only fills the form — you still choose to save. Sprint is left as
+                you set it: a sheet does not carry one.
+              </p>
+            } @else {
+              <p class="jira__unavailable">{{ sheet.reason }}</p>
+            }
+          }
+        </div>
+      }
+
       <!-- Linking a board to Jira. Always shown so a board can be linked before the
            integration is switched on; the sync button only appears once it is. -->
       @if (canWrite()) {

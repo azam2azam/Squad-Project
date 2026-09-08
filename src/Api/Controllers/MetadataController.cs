@@ -16,7 +16,10 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/v1/metadata")]
 public sealed class MetadataController(
-    IJiraClient jiraClient, IExportRenderer exportRenderer, ISender sender)
+    IJiraClient jiraClient,
+    ISmartsheetClient smartsheetClient,
+    IExportRenderer exportRenderer,
+    ISender sender)
     : ControllerBase
 {
     [HttpGet]
@@ -40,6 +43,7 @@ public sealed class MetadataController(
         => Ok(new
         {
             jiraSyncEnabled = await jiraClient.IsEnabledAsync(cancellationToken),
+            smartsheetSyncEnabled = await smartsheetClient.IsEnabledAsync(cancellationToken),
             serverExportEnabled = exportRenderer.IsAvailable,
             // Excel is always available: it needs no external service, unlike the other two.
             excelEnabled = true

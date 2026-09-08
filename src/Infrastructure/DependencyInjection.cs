@@ -79,6 +79,14 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(20);
         });
 
+        // Smartsheet is registered the same way and for the same reason: the token is
+        // resolved per call, so saving the settings screen takes effect without a restart.
+        services.AddScoped<ISmartsheetSettingsService, SmartsheetSettingsService>();
+        services.AddHttpClient<ISmartsheetClient, SmartsheetClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
+
         // Server-side export needs a headless browser, which not every host has.
         // Off by default so a deployment opts in rather than discovering at runtime
         // that the first export tries to download Chromium.

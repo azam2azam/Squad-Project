@@ -108,6 +108,17 @@ export const routes: Routes = [
       import('./features/settings/jira-settings-page').then((m) => m.JiraSettingsPage),
   },
   {
+    // Same shape and same gate as the Jira connection: it holds a credential that acts
+    // on behalf of the whole organisation.
+    path: 'settings/smartsheet',
+    title: 'Smartsheet connection · Squad Status Board',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/settings/smartsheet-settings-page').then(
+        (m) => m.SmartsheetSettingsPage,
+      ),
+  },
+  {
     path: 'present/:id',
     title: 'Present · Squad Status Board',
     canActivate: [authGuard],
