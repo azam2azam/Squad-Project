@@ -56,6 +56,15 @@ export const routes: Routes = [
       import('./features/analytics/analytics-page').then((m) => m.AnalyticsPage),
   },
   {
+    // Categories regroup the whole portfolio, so only an admin may change them —
+    // matching the API, which enforces it in the handlers.
+    path: 'settings/categories',
+    title: 'Categories · Squad Status Board',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/categories/categories-page').then((m) => m.CategoriesPage),
+  },
+  {
     // Roles are org-wide reference data that change what every board renders, so only an
     // admin may edit them — matching the API, which enforces it in the handlers.
     path: 'settings/roles',

@@ -13,6 +13,7 @@ public sealed class GetBoardQueryHandler(IAppDbContext db)
     public async Task<BoardDetailDto> Handle(GetBoardQuery request, CancellationToken cancellationToken)
     {
         var board = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
             .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken)

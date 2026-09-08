@@ -47,6 +47,10 @@
         @if (isAdmin()) {
           <p class="rail__group">Settings</p>
 
+          <a routerLink="/settings/categories" routerLinkActive="is-active" class="rail__link">
+            <span class="rail__icon" aria-hidden="true">▣</span>
+            Categories
+          </a>
           <a routerLink="/settings/roles" routerLinkActive="is-active" class="rail__link">
             <span class="rail__icon" aria-hidden="true">◈</span>
             Roles

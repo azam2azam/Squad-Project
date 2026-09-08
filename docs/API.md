@@ -180,6 +180,36 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 
 ---
 
+### Categories (M10)
+
+Programmes above the boards — the level between the portfolio and a board's `Product`.
+
+```
+GET  /api/v1/categories        ?includeInactive=
+POST /api/v1/categories
+PUT  /api/v1/categories/{id}
+PUT  /api/v1/categories/{id}/active
+POST /api/v1/categories/assign
+```
+
+Reading is open to anyone signed in; writing is **Admin only**, enforced in the handlers.
+
+`Board.categoryId` is **nullable** — uncategorised is a real state, and every board created
+before categories existed is in it. Board DTOs carry `categoryId`, `categoryName` and
+`categoryColor`, so a card can render the chip without a second request.
+
+`POST .../assign` takes `{ boardIds: [...], categoryId }` and moves them in one call; a null
+`categoryId` takes them out of every programme. It exists because filing a portfolio one
+board at a time is not a workflow.
+
+Names are unique, and `color` must be `#RRGGBB`. Retiring is soft: the category leaves
+`GET /categories` but its boards keep the grouping. The foreign key is `ON DELETE SET NULL`,
+so removing a category never cascades into deleting the boards inside it.
+
+The Excel `Boards` sheet carries a **Category** column by name. On import a name that does
+not exist is created and reported in `warnings`, so a whole portfolio can be filed in one
+spreadsheet pass without a typo vanishing silently.
+
 ### Roles (M9)
 
 The values behind "Default role". Reading is open to anyone signed in — every picker needs

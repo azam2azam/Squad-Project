@@ -26,7 +26,7 @@ public sealed class ExcelWorkbookSerializer : IWorkbookSerializer
     [
         "Id", "Title", "Product", "Squad", "Sprint", "Status", "Progress %",
         "Risk", "Risk note", "Blocker note", "Target date",
-        "Jira project key", "Jira board id", "Order"
+        "Jira project key", "Jira board id", "Order", "Category"
     ];
 
     private static readonly string[] PeopleHeaders =
@@ -108,6 +108,9 @@ public sealed class ExcelWorkbookSerializer : IWorkbookSerializer
             sheet.Cell(row, 12).Value = board.JiraProjectKey ?? string.Empty;
             sheet.Cell(row, 13).Value = board.JiraBoardId ?? string.Empty;
             sheet.Cell(row, 14).Value = board.OrderIndex;
+            // Category travels by name, not id: a name is what somebody can actually type
+            // into a spreadsheet, and it is what the import matches on.
+            sheet.Cell(row, 15).Value = board.CategoryName ?? string.Empty;
             row++;
         }
 
@@ -322,7 +325,8 @@ public sealed class ExcelWorkbookSerializer : IWorkbookSerializer
                 membersByBoard.TryGetValue(id, out var members) ? members : [],
                 ParseEnumByLabel(Text(row, 8), RiskLevelMetadata.DisplayOrder,
                     RiskLevelMetadata.Label, RiskLevel.None, BoardsSheet, row.RowNumber(), "Risk"),
-                NullIfBlank(Text(row, 9))));
+                NullIfBlank(Text(row, 9)),
+                NullIfBlank(Text(row, 15))));
         }
 
         return boards;

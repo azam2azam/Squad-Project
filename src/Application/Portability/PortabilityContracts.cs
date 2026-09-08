@@ -41,7 +41,9 @@ public sealed record ExportedBoard(
     int OrderIndex,
     IReadOnlyList<ExportedMember> Members,
     RiskLevel RiskLevel = RiskLevel.None,
-    string? RiskNote = null);
+    string? RiskNote = null,
+    /// <summary>The programme name. Null or blank means uncategorised.</summary>
+    string? CategoryName = null);
 
 public sealed record ExportedMember(
     Guid PersonId,

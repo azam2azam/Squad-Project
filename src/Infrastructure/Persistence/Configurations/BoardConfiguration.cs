@@ -36,6 +36,13 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
         // Derived values are never persisted.
+        // Optional: a board may sit outside every programme, and retiring a category must
+        // never cascade into deleting the boards inside it.
+        builder.HasOne(b => b.Category)
+            .WithMany()
+            .HasForeignKey(b => b.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Ignore(b => b.Composition);
         builder.Ignore(b => b.Warnings);
 

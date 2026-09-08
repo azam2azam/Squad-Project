@@ -116,6 +116,10 @@ export interface BoardSummary {
   riskNote: string | null;
   warnings: string[];
   faces: BoardFace[];
+  /** The programme this board sits under. Null means uncategorised. */
+  categoryId: string | null;
+  categoryName: string | null;
+  categoryColor: string | null;
 }
 
 /** One avatar on a portfolio card. */
@@ -139,6 +143,10 @@ export interface BoardDetail extends Omit<BoardSummary, 'memberCount' | 'composi
   composition: Composition;
   /** Advisory only — never blocks a save. */
   warnings: string[];
+  /** The programme this board sits under. Null means uncategorised. */
+  categoryId: string | null;
+  categoryName: string | null;
+  categoryColor: string | null;
 }
 
 export interface Person {

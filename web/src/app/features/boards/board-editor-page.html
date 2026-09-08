@@ -201,6 +201,40 @@
         </div>
       }
 
+      <!-- The programme this board belongs to. A level above Product, which names the
+           module; a category collects many products under one programme. -->
+      @if (canWrite()) {
+        <div class="card">
+          <div class="card__head">
+            <h2 class="card__title">Category</h2>
+            @if (categories().length === 0) {
+              <span class="card__hint">None defined yet</span>
+            }
+          </div>
+
+          <label class="field">
+            <span class="field__label">Programme</span>
+            <select
+              class="field__input"
+              [disabled]="categories().length === 0"
+              (change)="update('categoryId', $any($event.target).value)"
+            >
+              <option value="" [selected]="d.categoryId === ''">Uncategorised</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id" [selected]="category.id === d.categoryId">
+                  {{ category.name }}
+                </option>
+              }
+            </select>
+            @if (categories().length === 0) {
+              <span class="field__hint">
+                An admin can add programmes under <strong>Settings → Categories</strong>.
+              </span>
+            }
+          </label>
+        </div>
+      }
+
       <!-- Linking a board to Jira. Always shown so a board can be linked before the
            integration is switched on; the sync button only appears once it is. -->
       @if (canWrite()) {

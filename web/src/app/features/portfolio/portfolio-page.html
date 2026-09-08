@@ -98,6 +98,21 @@
         />
       </label>
 
+      <!-- The top of the hierarchy, so it comes first among the filters. -->
+      <select
+        class="select"
+        aria-label="Filter by category"
+        (change)="onCategoryFilter($any($event.target).value)"
+      >
+        <option value="" [selected]="categoryFilter() === null">All categories</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id" [selected]="category.id === categoryFilter()">
+            {{ category.name }}
+          </option>
+        }
+        <option value="none" [selected]="categoryFilter() === 'none'">Uncategorised</option>
+      </select>
+
       <select
         class="select"
         aria-label="Filter by status"
@@ -194,6 +209,12 @@
         <article class="card">
           <header class="card__head">
             <p class="card__eyebrow">
+              <!-- Category first: it is the level above the product tag beside it. -->
+              @if (board.categoryName) {
+                <span class="cat-chip" [style.background]="board.categoryColor ?? '#8595A9'">
+                  {{ board.categoryName }}
+                </span>
+              }
               {{ board.squadName }}
               @if (board.product) {
                 <span class="tag">{{ board.product }}</span>

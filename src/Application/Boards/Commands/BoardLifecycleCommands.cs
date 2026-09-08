@@ -25,6 +25,7 @@ public sealed class DuplicateBoardCommandHandler(
         authorizer.EnsureCanCreate();
 
         var source = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
             .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken)

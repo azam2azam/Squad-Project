@@ -43,6 +43,13 @@ public sealed class ImportDataCommandHandler(
         var boardsUpdated = 0;
         var membersLinked = 0;
 
+        // Categories are matched by name and created on demand. That is what makes
+        // categorising a whole portfolio a single spreadsheet edit rather than opening
+        // every board — and each one created is reported, so a typo shows up as a new
+        // category in the result instead of vanishing silently.
+        var categories = await db.BoardCategories
+            .ToDictionaryAsync(c => c.Name.ToLowerInvariant(), c => c, cancellationToken);
+
         foreach (var incoming in file.Boards)
         {
             var board = await db.Boards
@@ -70,6 +77,8 @@ public sealed class ImportDataCommandHandler(
                 incoming.JiraProjectKey, incoming.JiraBoardId,
                 incoming.RiskLevel, incoming.RiskNote);
             board.SetOrder(incoming.OrderIndex);
+            board.AssignCategory(
+                ResolveCategory(incoming.CategoryName, categories, warnings));
 
             membersLinked += await SyncMembersAsync(board, incoming, peopleById, warnings, cancellationToken);
         }
@@ -122,6 +131,31 @@ public sealed class ImportDataCommandHandler(
         }
 
         return (existing, created, updated);
+    }
+
+    /// <summary>
+    /// Finds a category by name, creating one when the spreadsheet names a programme that
+    /// does not exist yet. Blank clears the board's category, which is how a board is
+    /// taken out of a programme from the spreadsheet.
+    /// </summary>
+    private Guid? ResolveCategory(
+        string? name, Dictionary<string, BoardCategory> categories, List<string> warnings)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+
+        var trimmed = name.Trim();
+        var key = trimmed.ToLowerInvariant();
+
+        if (categories.TryGetValue(key, out var existing)) return existing.Id;
+
+        // Colour is a placeholder an admin can change on the Categories screen; refusing
+        // the import over a missing colour would be worse than picking a neutral one.
+        var created = new BoardCategory(trimmed, null, "#8595A9", categories.Count);
+        db.BoardCategories.Add(created);
+        categories[key] = created;
+
+        warnings.Add($"Created a new category \"{trimmed}\" from the Category column.");
+        return created.Id;
     }
 
     /// <summary>

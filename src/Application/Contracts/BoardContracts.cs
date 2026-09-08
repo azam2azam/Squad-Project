@@ -27,7 +27,10 @@ public sealed record BoardSummaryDto(
     string? BlockerNote,
     string? RiskNote,
     IReadOnlyList<string> Warnings,
-    IReadOnlyList<BoardFaceDto> Faces)
+    IReadOnlyList<BoardFaceDto> Faces,
+    Guid? CategoryId,
+    string? CategoryName,
+    string? CategoryColor)
 {
     /// <summary>How many avatars a card shows before collapsing the rest into "+n".</summary>
     private const int FacesShown = 5;
@@ -60,7 +63,10 @@ public sealed record BoardSummaryDto(
                 m.Person.Initials,
                 m.Person.FullName,
                 m.Person.AvatarColorOverride ?? RoleMetadata.Color(m.Role)))
-            .ToList());
+            .ToList(),
+        board.CategoryId,
+        board.Category?.Name,
+        board.Category?.Color);
 }
 
 /// <summary>One avatar on a portfolio card.</summary>
@@ -92,7 +98,11 @@ public sealed record BoardDetailDto(
     int OrderIndex,
     IReadOnlyList<SquadMemberDto> Members,
     CompositionDto Composition,
-    IReadOnlyList<string> Warnings)
+    IReadOnlyList<string> Warnings,
+    // The programme this board sits under. Null is a real answer — uncategorised.
+    Guid? CategoryId,
+    string? CategoryName,
+    string? CategoryColor)
 {
     public static BoardDetailDto From(Board board) => new(
         board.Id,
@@ -119,7 +129,10 @@ public sealed record BoardDetailDto(
         board.OrderIndex,
         board.Members.OrderBy(m => m.OrderIndex).Select(SquadMemberDto.From).ToList(),
         CompositionDto.From(board),
-        board.Warnings);
+        board.Warnings,
+        board.CategoryId,
+        board.Category?.Name,
+        board.Category?.Color);
 }
 
 /// <summary>One avatar card on the slide.</summary>
@@ -222,7 +235,7 @@ public sealed record MetadataDto(
 {
     /// <summary>
     /// Roles come from the caller, because they are configurable and the pickers must show
-    /// only the active ones — the in-process catalogue deliberately keeps retired roles so
+    /// only the active ones â the in-process catalogue deliberately keeps retired roles so
     /// people still holding them keep rendering.
     /// </summary>
     public static MetadataDto Build(IReadOnlyList<RoleOptionDto> roles) => new(

@@ -22,7 +22,8 @@ public sealed record UpdateBoardMetaCommand(
     double? Velocity = null,
     DateOnly? TargetDate = null,
     string? JiraProjectKey = null,
-    string? JiraBoardId = null) : IRequest<BoardDetailDto>;
+    string? JiraBoardId = null,
+    Guid? CategoryId = null) : IRequest<BoardDetailDto>;
 
 public sealed class UpdateBoardMetaCommandValidator : AbstractValidator<UpdateBoardMetaCommand>
 {
@@ -51,6 +52,7 @@ public sealed class UpdateBoardMetaCommandHandler(
         await authorizer.EnsureCanEditAsync(request.Id, cancellationToken);
 
         var board = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
             .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken)
@@ -65,6 +67,9 @@ public sealed class UpdateBoardMetaCommandHandler(
             request.Status, request.ProgressPercent, request.BlockerNote,
             request.Velocity, request.TargetDate, request.JiraProjectKey, request.JiraBoardId,
             request.RiskLevel, request.RiskNote);
+
+        // Category is set alongside the rest so one save moves a board between programmes.
+        board.AssignCategory(request.CategoryId);
 
         // Status and progress are the two fields reviewers ask "who changed this?" about.
         if (previousStatus != board.Status)

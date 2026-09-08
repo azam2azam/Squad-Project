@@ -1,0 +1,173 @@
+<div class="cat-page">
+  <header class="cat-page__head">
+    <div>
+      <h1 class="cat-page__title">Categories</h1>
+      <p class="cat-page__sub">
+        Programmes above the boards — VIDA 4, AI, and so on. A level up from a board's
+        <strong>Product</strong>, which names the module it covers.
+        {{ categorisedBoards() }} board{{ categorisedBoards() === 1 ? '' : 's' }} grouped.
+      </p>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="startAdd()">Add category</button>
+  </header>
+
+  <div class="cat-page__filters">
+    <label class="toggle">
+      <input
+        type="checkbox"
+        [checked]="includeInactive()"
+        (change)="toggleInactive($any($event.target).checked)"
+      />
+      Show retired
+    </label>
+  </div>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="banner banner--ok" role="status">{{ notice() }}</p>
+  }
+
+  @if (adding() || editingId()) {
+    <form class="editor-card" (submit)="$event.preventDefault(); save()">
+      <h2 class="editor-card__title">
+        {{ editingId() ? 'Edit category' : 'Add category' }}
+      </h2>
+
+      <div class="editor-card__grid">
+        <label class="field">
+          <span class="field__label">Name</span>
+          <input
+            class="field__input"
+            type="text"
+            required
+            [value]="draft().name"
+            (input)="updateDraft('name', $any($event.target).value)"
+            placeholder="VIDA 4"
+          />
+        </label>
+
+        <label class="field field--wide">
+          <span class="field__label">
+            Description <span class="field__hint">— optional</span>
+          </span>
+          <input
+            class="field__input"
+            type="text"
+            [value]="draft().description"
+            (input)="updateDraft('description', $any($event.target).value)"
+            placeholder="Core HIS programme"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Colour</span>
+          <div class="colour">
+            <input
+              class="colour__picker"
+              type="color"
+              [value]="draft().color"
+              (input)="updateDraft('color', $any($event.target).value)"
+              aria-label="Category colour"
+            />
+            <input
+              class="field__input colour__hex"
+              type="text"
+              [value]="draft().color"
+              (input)="updateDraft('color', $any($event.target).value)"
+            />
+          </div>
+          @if (colorProblem(); as problem) {
+            <span class="field__error">{{ problem }}</span>
+          }
+        </label>
+      </div>
+
+      <div class="preview">
+        <span class="preview__label">Preview</span>
+        <span class="chip" [style.background]="draft().color">
+          {{ draft().name || 'Category' }}
+        </span>
+      </div>
+
+      <div class="editor-card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
+          {{ editingId() ? 'Save changes' : 'Add category' }}
+        </button>
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="cat-page__muted">Loading…</p>
+  } @else if (items().length === 0) {
+    <div class="empty">
+      <p class="empty__lead">No categories yet.</p>
+      <p class="empty__sub">
+        Add one, then group boards into it from a board's editor or the Category column in
+        an Excel import.
+      </p>
+      <button type="button" class="btn btn--primary" (click)="startAdd()">Add category</button>
+    </div>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Description</th>
+            <th scope="col">Boards</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (category of items(); track category.id) {
+            <tr [class.is-retired]="!category.isActive">
+              <td>
+                <span class="chip" [style.background]="category.color">{{ category.name }}</span>
+                @if (!category.isActive) {
+                  <span class="tag tag--off">retired</span>
+                }
+              </td>
+              <td class="dim">{{ category.description ?? '—' }}</td>
+              <td class="num">{{ category.boardCount }}</td>
+              <td class="actions">
+                <button type="button" class="link-btn" (click)="startEdit(category)">Edit</button>
+
+                @if (category.isActive) {
+                  <button
+                    type="button"
+                    class="link-btn link-btn--danger"
+                    [disabled]="busyId() === category.id"
+                    (click)="setActive(category, false)"
+                  >
+                    Retire
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="link-btn"
+                    [disabled]="busyId() === category.id"
+                    (click)="setActive(category, true)"
+                  >
+                    Restore
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="cat-page__note">
+      To group boards, set <strong>Category</strong> on a board, or fill the
+      <strong>Category</strong> column in an Excel export and import it back — a name that
+      does not exist yet is created, so a whole portfolio can be categorised in one pass.
+      Retiring a category leaves its boards grouped; it only leaves the pickers.
+    </p>
+  }
+</div>

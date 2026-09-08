@@ -13,6 +13,7 @@ public sealed class ExportDataQueryHandler(IAppDbContext db)
     public async Task<BoardExportFile> Handle(ExportDataQuery request, CancellationToken cancellationToken)
     {
         var boards = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .OrderBy(b => b.OrderIndex)
             .ToListAsync(cancellationToken);
@@ -38,7 +39,8 @@ public sealed class ExportDataQueryHandler(IAppDbContext db)
                         m.PersonId, m.Role, m.Detail, m.AllocationPercent, m.OrderIndex))
                     .ToList(),
                 b.RiskLevel,
-                b.RiskNote))
+                b.RiskNote,
+                b.Category?.Name))
                 .ToList());
     }
 }

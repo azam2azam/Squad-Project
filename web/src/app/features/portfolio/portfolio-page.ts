@@ -42,6 +42,7 @@ export class PortfolioPage {
 
   protected readonly items = signal<BoardSummary[]>([]);
   protected readonly summary = signal<PortfolioSummary | null>(null);
+  protected readonly categoryFilter = signal<string | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly creating = signal(false);
@@ -76,6 +77,23 @@ export class PortfolioPage {
   protected readonly sprints = computed(() =>
     [...new Set(this.allBoards().map((b) => b.sprint).filter((s): s is string => !!s))].sort(),
   );
+
+  /** Programmes present in the portfolio, for the filter. */
+  protected readonly categories = computed(() => {
+    const seen = new Map<string, { id: string; name: string; color: string }>();
+
+    for (const b of this.allBoards()) {
+      if (b.categoryId && b.categoryName && !seen.has(b.categoryId)) {
+        seen.set(b.categoryId, {
+          id: b.categoryId,
+          name: b.categoryName,
+          color: b.categoryColor ?? '#8595A9',
+        });
+      }
+    }
+
+    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+  });
 
   protected readonly squads = computed(() =>
     [...new Set(this.allBoards().map((b) => b.squadName).filter(Boolean))].sort(),
@@ -113,7 +131,8 @@ export class PortfolioPage {
       this.statusFilter() !== null ||
       this.productFilter() !== null ||
       this.sprintFilter() !== null ||
-      this.squadFilter() !== null,
+      this.squadFilter() !== null ||
+      this.categoryFilter() !== null,
   );
 
   constructor() {
@@ -155,11 +174,15 @@ export class PortfolioPage {
     const product = this.productFilter();
     const sprint = this.sprintFilter();
     const squad = this.squadFilter();
+    const category = this.categoryFilter();
 
     return (
       (product === null || board.product === product) &&
       (sprint === null || board.sprint === sprint) &&
-      (squad === null || board.squadName === squad)
+      (squad === null || board.squadName === squad) &&
+      // "none" is a real choice: it finds the boards nobody has filed yet.
+      (category === null ||
+        (category === 'none' ? board.categoryId === null : board.categoryId === category))
     );
   }
 
@@ -196,6 +219,11 @@ export class PortfolioPage {
     this.reload();
   }
 
+  protected onCategoryFilter(value: string): void {
+    this.categoryFilter.set(value === '' ? null : value);
+    this.reload();
+  }
+
   protected toggleMoreFilters(): void {
     this.showMoreFilters.update((v) => !v);
   }
@@ -206,6 +234,7 @@ export class PortfolioPage {
     this.productFilter.set(null);
     this.sprintFilter.set(null);
     this.squadFilter.set(null);
+    this.categoryFilter.set(null);
     this.reload();
   }
 

@@ -24,6 +24,8 @@ export interface UpdateBoardRequest extends CreateBoardRequest {
   targetDate?: string | null;
   jiraProjectKey?: string | null;
   jiraBoardId?: string | null;
+  /** The programme this board belongs to. Null takes it out of every category. */
+  categoryId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -23,6 +23,7 @@ public sealed class ListBoardsQueryHandler(IAppDbContext db)
         var paging = new PageQuery { Page = request.Page, PageSize = request.PageSize };
 
         var query = db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
             .AsQueryable();

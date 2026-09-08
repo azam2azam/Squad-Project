@@ -65,6 +65,7 @@ public sealed class AddMemberCommandHandler(
         await authorizer.EnsureCanEditAsync(request.BoardId, cancellationToken);
 
         var board = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .ThenInclude(m => m.Person)
             .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
@@ -172,6 +173,7 @@ public sealed class RemoveMemberCommandHandler(
         await authorizer.EnsureCanEditAsync(boardId, cancellationToken);
 
         var board = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .FirstOrDefaultAsync(b => b.Id == boardId, cancellationToken)
             ?? throw new KeyNotFoundException($"Board {boardId} was not found.");
@@ -213,6 +215,7 @@ public sealed class ReorderMembersCommandHandler(
         await authorizer.EnsureCanEditAsync(request.BoardId, cancellationToken);
 
         var board = await db.Boards
+            .Include(b => b.Category)
             .Include(b => b.Members)
             .FirstOrDefaultAsync(b => b.Id == request.BoardId, cancellationToken)
             ?? throw new KeyNotFoundException($"Board {request.BoardId} was not found.");

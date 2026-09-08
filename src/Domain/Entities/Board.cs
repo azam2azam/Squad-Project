@@ -35,6 +35,15 @@ public class Board : Entity
     /// <summary>Product tag shown in the slide eyebrow, e.g. "VIDA HIS".</summary>
     public string Product { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The programme this board sits under  14 VIDA 4, AI, and so on. Optional and nullable:
+    /// boards that predate categories report as uncategorised rather than being forced
+    /// into a bucket nobody chose.
+    /// </summary>
+    public Guid? CategoryId { get; private set; }
+
+    public BoardCategory? Category { get; private set; }
+
     public string SquadName { get; private set; } = string.Empty;
     public string? Sprint { get; private set; }
     public BoardStatus Status { get; private set; }
@@ -182,6 +191,9 @@ public class Board : Entity
 
         Touch();
     }
+
+    /// <summary>Moves the board to a programme, or out of one when given null.</summary>
+    public void AssignCategory(Guid? categoryId) => CategoryId = categoryId;
 
     public void SetOrder(int orderIndex)
     {

@@ -16,6 +16,10 @@ import { map } from 'rxjs';
 import { BoardsService } from '../../core/services/boards.service';
 import type { BoardAuditEntry, JiraSuggestion } from '../../core/services/boards.service';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  CategoriesService,
+  type BoardCategory,
+} from '../../core/services/categories.service';
 import { MetadataService } from '../../core/services/metadata.service';
 import { SlideCanvas } from '../../shared/slide/slide-canvas';
 import { SquadEditor } from './squad-editor';
@@ -45,6 +49,10 @@ export class BoardEditorPage {
   private readonly realtime = inject(BoardRealtimeService);
   private readonly exporter = inject(SlideExportService);
   private readonly auth = inject(AuthService);
+  private readonly categoriesService = inject(CategoriesService);
+
+  /** Active programmes only: a retired one should not be offered as a new home. */
+  protected readonly categories = signal<BoardCategory[]>([]);
 
   protected readonly statuses = this.metadata.statuses;
   protected readonly realtimeStatus = this.realtime.status;
@@ -144,7 +152,10 @@ export class BoardEditorPage {
       draft.riskLevel !== board.riskLevel ||
       draft.riskNote !== (board.riskNote ?? '') ||
       draft.jiraProjectKey !== (board.jiraProjectKey ?? '') ||
-      draft.jiraBoardId !== (board.jiraBoardId ?? '')
+      draft.jiraBoardId !== (board.jiraBoardId ?? '') ||
+      // Without this, moving a board between programmes leaves Save disabled and the
+      // change silently discarded.
+      draft.categoryId !== (board.categoryId ?? '')
     );
   });
 
@@ -177,6 +188,13 @@ export class BoardEditorPage {
       this.load(id);
       void this.realtime.join(id);
     }
+
+    // The picker is a convenience, so a failure to load it must not block editing the
+    // board — the select simply shows "Uncategorised" and says none are defined.
+    void this.categoriesService
+      .list()
+      .then((categories) => this.categories.set(categories))
+      .catch(() => this.categories.set([]));
 
     // Another viewer changed this board. Refetch the server state, but never clobber
     // edits in progress — an unsaved draft belongs to this user, not the broadcast.
@@ -260,6 +278,7 @@ export class BoardEditorPage {
         riskNote: draft.riskNote.trim() || null,
         jiraProjectKey: draft.jiraProjectKey.trim() || null,
         jiraBoardId: draft.jiraBoardId.trim() || null,
+        categoryId: draft.categoryId || null,
       })
       .subscribe({
         next: (saved) => {
@@ -417,6 +436,8 @@ interface DraftState {
   riskNote: string;
   jiraProjectKey: string;
   jiraBoardId: string;
+  /** Empty string means uncategorised, which is a real state. */
+  categoryId: string;
 }
 
 function toDraft(board: BoardDetail): DraftState {
@@ -432,6 +453,7 @@ function toDraft(board: BoardDetail): DraftState {
     riskNote: board.riskNote ?? '',
     jiraProjectKey: board.jiraProjectKey ?? '',
     jiraBoardId: board.jiraBoardId ?? '',
+    categoryId: board.categoryId ?? '',
   };
 }
 

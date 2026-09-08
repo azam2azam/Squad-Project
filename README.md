@@ -22,6 +22,7 @@ cards — ready to present or export.
 | **M7** | Delivery dashboard, portfolio charts, risk tracking | ✅ Done |
 | **M8** | Clean install, Excel import/export, Jira linking | ✅ Done |
 | **M9** | Jira settings screen, in-app guide, user management, configurable roles | ✅ Done |
+| **M10** | Command-centre redesign, delivery analytics, board categories | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -109,6 +110,48 @@ generic failure, because that is the only way to fix the file.
 
 Removing a row from `Members` takes that person off the squad. Removing a **board** row
 does not delete the board; delete it in the app so the audit trail is kept.
+
+## Categories
+
+**Categories** in the top nav (Admin only) groups boards into programmes — VIDA 4, AI,
+and so on.
+
+This is a level **above** a board's `Product`. Product names the module a board covers
+(Discharge, Invoice, OPD UI); a category collects many of those under one programme:
+
+```
+Category   VIDA 4
+  Board      Discharge Revamp        (Product: Discharge)
+  Board      Admission Revamp        (Product: Admission)
+Category   AI
+  Board      Clinical Assistant      (Product: AI Assistant)
+```
+
+A board's category is **optional**. Boards created before categories existed keep working
+and report as *Uncategorised* rather than being forced into a bucket nobody chose — and
+the portfolio filter has an "Uncategorised" option so you can find them.
+
+### Filing boards
+
+Three ways, in ascending order of bulk:
+
+| | How |
+|---|---|
+| One board | Set **Category** in the board editor |
+| Many boards | `POST /api/v1/categories/assign` with a list of board ids |
+| A whole portfolio | Fill the **Category** column in an Excel export and import it back |
+
+The Excel column carries the category **name**, and a name that does not exist yet is
+created on import — so an entire portfolio can be filed in one spreadsheet pass. Each
+category created that way is reported in the import result, so a typo shows up as a new
+category rather than disappearing silently.
+
+### Retiring
+
+Retiring is soft: the category leaves the pickers, but boards already in it keep their
+grouping. Retiring a programme must never silently reshuffle the portfolio. Deleting a
+category outright is not offered; if one were removed at the database level, its boards
+fall back to uncategorised rather than being deleted with it.
 
 ## Roles
 

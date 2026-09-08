@@ -537,3 +537,18 @@
 
   @include focus-ring(var(--accent-deep));
 }
+
+// The programme a board belongs to — the level above the product tag beside it, so it
+// gets a filled chip rather than the product's quiet grey.
+.cat-chip {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
