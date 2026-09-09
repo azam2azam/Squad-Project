@@ -24,6 +24,7 @@ cards — ready to present or export.
 | **M9** | Jira settings screen, in-app guide, user management, configurable roles | ✅ Done |
 | **M10** | Command-centre redesign, delivery analytics, board categories | ✅ Done |
 | **M11** | Smartsheet integration alongside Jira | ✅ Done |
+| **M12** | Staff scheduling: capacity, availability, work items, person profiles | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -229,6 +230,71 @@ These live in the handlers, not the UI, so they hold however they are called:
 Accounts are **deactivated, never deleted**. Boards and audit entries record who did what,
 and deleting an account would leave that history pointing at nobody. Deactivated accounts
 are hidden from the list until you tick *Show deactivated*.
+
+## Staff scheduling
+
+**Schedule** in the top nav shows everyone down the side and weeks across. Each cell is
+**free capacity** — what that person still has available — because the question the page
+exists to answer is "who can take this on".
+
+### The capacity model
+
+Simple enough to explain in a sentence, because a number nobody can explain is a number
+nobody trusts:
+
+```
+available = 100 − whatever availability records take away
+committed = the allocations on assignments running that week
+free      = available − committed        (negative means over-committed)
+```
+
+Red means committed beyond capacity. Amber means fully away. The footer totals free
+**people-weeks** across the team.
+
+### Assignments become a schedule
+
+A squad membership now carries an **allocation, a start and an end**. All three are
+optional and open-ended is the norm — most people are on a squad until further notice, and
+inventing an end date would put a commitment in the schedule nobody agreed to. An
+assignment with no dates counts in every week; one with no allocation counts as **zero**,
+and the page says how many are in that state so you know the total is understated rather
+than wrong.
+
+### Availability
+
+Only **exceptions** are recorded: leave, public holidays, training, part-time. Anything not
+listed is a normal full week. `CapacityPercent` is what *remains*, not what is lost — 0 is
+fully away, 50 is half days — so it reads the same direction as an allocation. Where
+periods overlap, the most restrictive one wins.
+
+### Work items
+
+Tasks on a board, optionally assigned. App-native rather than mirrored from Jira, because
+most of what delays a revamp in your tracker is not a Jira issue at all — BRD sign-off, UAT
+windows, ARB reviews, data migration — and everyone on the roster can be assigned one
+whether or not they hold a Jira licence.
+
+An unassigned task is a real state, and the one a lead scans for when filling capacity.
+Completion stamps a date when the status becomes Done and **clears it if the task
+reopens**, so "what did they finish last month" stays true.
+
+### Person profile
+
+Click any name. Shows their capacity this week, every assignment with its period, their
+availability, open and completed work, and their recorded board changes.
+
+The activity feed matches on the **display name** the audit trail recorded, because that is
+what it has stored since before there was a roster to point at. Two people sharing a name
+would merge, and a rename breaks the link — so the page prints how the match was made
+rather than presenting a partial history as complete.
+
+### Permissions
+
+| Action | Who |
+|---|---|
+| View the schedule and profiles | Anyone signed in — knowing who has capacity is not privileged |
+| Add and edit work items | Whoever can edit that board |
+| Record availability | Admin, same gate as the roster |
 
 ## Connecting to your company's Jira
 

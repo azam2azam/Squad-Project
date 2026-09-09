@@ -1,0 +1,368 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.sched {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px 26px 60px;
+}
+
+.sched__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sched__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.sched__sub {
+  margin: 5px 0 0;
+  max-width: 74ch;
+  color: #4e5b6e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.sched__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sched__muted {
+  color: #5d6b7e;
+  font-size: 13px;
+}
+
+.sched__legend {
+  margin: 14px 0 0;
+  max-width: 78ch;
+  color: #5d6b7e;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4e5b6e;
+}
+
+.select {
+  padding: 8px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+  font-size: 13px;
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// Notes and banners
+// ---------------------------------------------------------------------------
+
+.note {
+  margin: 0 0 14px;
+  padding: 10px 13px;
+  border-left: 3px solid var(--accent-deep);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #e6faf6;
+  color: #14514a;
+  font-size: 12.5px;
+  line-height: 1.55;
+
+  // A total built from half-recorded data is a caveat, not a reassurance.
+  &--thin {
+    border-left-color: #d97706;
+    background: #fffbeb;
+    color: #92400e;
+  }
+}
+
+.banner {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 13px;
+
+  &--error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  &--warn {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Grid
+// ---------------------------------------------------------------------------
+
+// A wide grid scrolls inside its own container rather than the page body.
+.table-wrap {
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.grid th,
+.grid td {
+  border-bottom: 1px solid #eef2f6;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.grid thead th {
+  background: #f6f8fa;
+  color: #59687e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid tbody tr:last-child td,
+.grid tbody tr:last-child th {
+  border-bottom: none;
+}
+
+// The name column stays put while the weeks scroll sideways.
+.grid__who {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+  min-width: 190px;
+  box-shadow: 1px 0 0 #eef2f6;
+}
+
+.grid thead .grid__who {
+  background: #f6f8fa;
+}
+
+.grid__week {
+  text-align: center;
+  min-width: 74px;
+}
+
+.grid__week.is-current {
+  color: var(--accent-deep);
+}
+
+.grid__now {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  color: var(--accent-deep);
+}
+
+.grid__tasks {
+  white-space: nowrap;
+  min-width: 130px;
+}
+
+.grid tfoot td,
+.grid tfoot th {
+  border-top: 1px solid var(--card-line);
+  border-bottom: none;
+  background: #f8fafc;
+  font-weight: 700;
+  color: #4e5b6e;
+}
+
+// ---------------------------------------------------------------------------
+// People
+// ---------------------------------------------------------------------------
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover .who__name {
+    text-decoration: underline;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.who__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.who__name {
+  font-weight: 600;
+  color: var(--ink-tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.who__role {
+  font-size: 10.5px;
+  color: #8595a9;
+}
+
+.face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #0e1520;
+  font-size: 10px;
+  font-weight: 700;
+  flex: none;
+}
+
+// ---------------------------------------------------------------------------
+// Cells
+// ---------------------------------------------------------------------------
+
+.cell {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell__value {
+  display: block;
+  font-weight: 600;
+  color: #4e5b6e;
+}
+
+.cell__bar {
+  display: block;
+  height: 4px;
+  margin-top: 3px;
+  border-radius: 999px;
+  background: #eef2f6;
+  overflow: hidden;
+}
+
+.cell__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-deep);
+}
+
+.cell__away {
+  display: block;
+  margin-top: 2px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+
+// Over-commitment is the one value on this page that is actionable on sight.
+.cell--over {
+  background: #fef2f2;
+
+  .cell__value {
+    color: #b91c1c;
+    font-weight: 700;
+  }
+
+  .cell__fill {
+    background: #dc2626;
+    width: 100% !important;
+  }
+}
+
+.cell--away {
+  background: #fffbeb;
+
+  .cell__value {
+    color: #92400e;
+  }
+}
+
+.cell--total {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+// ---------------------------------------------------------------------------
+// Pills
+// ---------------------------------------------------------------------------
+
+.pill {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: #eef2f6;
+  color: #4e5b6e;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &--late {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty
+// ---------------------------------------------------------------------------
+
+.empty {
+  padding: 44px 24px;
+  border: 1px dashed var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  text-align: center;
+}
+
+.empty__lead {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.empty__sub {
+  margin: 6px 0 0;
+  color: #5d6b7e;
+  font-size: 13px;
+}

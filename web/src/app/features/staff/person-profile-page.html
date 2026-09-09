@@ -1,0 +1,365 @@
+<div class="person">
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="person__muted">Loading…</p>
+  } @else if (profile(); as p) {
+    <header class="person__head">
+      <div class="person__who">
+        <span class="face" [style.background]="p.color">{{ p.initials }}</span>
+        <div>
+          <h1 class="person__name">{{ p.fullName }}</h1>
+          <p class="person__meta">
+            {{ p.roleLabel }}
+            @if (p.email) {
+              · {{ p.email }}
+            }
+            @if (!p.isActive) {
+              <span class="tag tag--off">deactivated</span>
+            }
+          </p>
+        </div>
+      </div>
+
+      <a class="btn" routerLink="/staff">← Team schedule</a>
+    </header>
+
+    @if (notice()) {
+      <p class="banner banner--ok" role="status">{{ notice() }}</p>
+    }
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- This week                                                         -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <h2 class="panel__title">This week</h2>
+
+      <div class="capacity">
+        <div class="capacity__figure">
+          <p class="capacity__label">Available</p>
+          <p class="capacity__value">{{ p.capacity.availablePercent }}%</p>
+        </div>
+        <div class="capacity__figure">
+          <p class="capacity__label">Committed</p>
+          <p class="capacity__value">{{ p.capacity.committedPercent }}%</p>
+        </div>
+        <div class="capacity__figure">
+          <p class="capacity__label">Free</p>
+          <p
+            class="capacity__value"
+            [class.capacity__value--over]="p.capacity.overCommitted"
+          >
+            {{ p.capacity.freePercent }}%
+          </p>
+        </div>
+      </div>
+
+      @if (p.capacity.overCommitted) {
+        <p class="banner banner--warn">
+          Committed beyond available capacity this week. Reduce an allocation, or move a
+          date.
+        </p>
+      }
+
+      @if (p.capacity.awayReasons.length) {
+        <p class="person__muted">Away this week: {{ p.capacity.awayReasons.join(', ') }}.</p>
+      }
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Assignments                                                       -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <h2 class="panel__title">Assignments</h2>
+      <p class="panel__sub">
+        The squads and boards they are on, with the share of their week each one takes.
+      </p>
+
+      @if (p.assignments.length === 0) {
+        <p class="person__muted">Not assigned to any board yet.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Board</th>
+                <th scope="col">Squad</th>
+                <th scope="col">Role</th>
+                <th scope="col">Allocation</th>
+                <th scope="col">Period</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of p.assignments; track a.boardId) {
+                <tr>
+                  <th scope="row">
+                    <a [routerLink]="['/boards', a.boardId]">{{ a.boardTitle }}</a>
+                  </th>
+                  <td>{{ a.squadName }}</td>
+                  <td>
+                    <span class="dot" [style.background]="a.roleColor"></span>
+                    {{ a.roleLabel }}
+                  </td>
+                  <td class="num">
+                    @if (a.allocationPercent !== null) {
+                      {{ a.allocationPercent }}%
+                    } @else {
+                      <span class="dim" title="Counts as zero in the schedule">not set</span>
+                    }
+                  </td>
+                  <td>{{ assignmentPeriod(a.startsOn, a.endsOn) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Availability                                                      -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <header class="panel__head">
+        <div>
+          <h2 class="panel__title">Availability</h2>
+          <p class="panel__sub">
+            Only the exceptions are recorded — leave, holidays, training, part-time. Anything
+            not listed is a normal full week.
+          </p>
+        </div>
+
+        @if (isAdmin()) {
+          <button type="button" class="btn btn--primary" (click)="startAvailability()">
+            Record time off
+          </button>
+        }
+      </header>
+
+      @if (showAvailabilityForm()) {
+        <form class="editor" (submit)="$event.preventDefault(); saveAvailability()">
+          <div class="editor__grid">
+            <label class="field">
+              <span class="field__label">From</span>
+              <input
+                class="field__input"
+                type="date"
+                [value]="draft().fromDate"
+                (input)="updateDraft('fromDate', $any($event.target).value)"
+              />
+            </label>
+
+            <label class="field">
+              <span class="field__label">To</span>
+              <input
+                class="field__input"
+                type="date"
+                [value]="draft().toDate"
+                (input)="updateDraft('toDate', $any($event.target).value)"
+              />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Kind</span>
+              <select
+                class="field__input"
+                (change)="updateDraft('kind', +$any($event.target).value)"
+              >
+                @for (kind of kinds(); track kind.value) {
+                  <option [value]="kind.value" [selected]="kind.value === draft().kind">
+                    {{ kind.label }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">
+                Capacity remaining
+                <span class="field__hint">— 0 is fully away</span>
+              </span>
+              <input
+                class="field__input"
+                type="number"
+                min="0"
+                max="100"
+                step="10"
+                [value]="draft().capacityPercent"
+                (input)="updateDraft('capacityPercent', +$any($event.target).value)"
+              />
+            </label>
+
+            <label class="field field--wide">
+              <span class="field__label">Note <span class="field__hint">— optional</span></span>
+              <input
+                class="field__input"
+                type="text"
+                [value]="draft().note"
+                (input)="updateDraft('note', $any($event.target).value)"
+                placeholder="Annual leave"
+              />
+            </label>
+          </div>
+
+          <div class="editor__actions">
+            <button type="submit" class="btn btn--primary" [disabled]="!canSaveDraft() || busy()">
+              {{ busy() ? 'Saving…' : 'Save' }}
+            </button>
+            <button type="button" class="btn" (click)="cancelAvailability()">Cancel</button>
+          </div>
+        </form>
+      }
+
+      @if (p.availability.length === 0) {
+        <p class="person__muted">No time off recorded — a full week, every week.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Period</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Capacity left</th>
+                <th scope="col">Note</th>
+                @if (isAdmin()) {
+                  <th scope="col"><span class="visually-hidden">Actions</span></th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of p.availability; track a.id) {
+                <tr [class.is-current]="a.isCurrent">
+                  <th scope="row">
+                    {{ formatRange(a.fromDate, a.toDate) }}
+                    @if (a.isCurrent) {
+                      <span class="tag">now</span>
+                    }
+                  </th>
+                  <td>
+                    <span class="dot" [style.background]="a.kindColor"></span>
+                    {{ a.kindLabel }}
+                  </td>
+                  <td class="num">{{ a.capacityPercent }}%</td>
+                  <td class="dim">{{ a.note ?? '—' }}</td>
+                  @if (isAdmin()) {
+                    <td class="actions">
+                      <button type="button" class="link-btn" (click)="editAvailability(a.id)">
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        class="link-btn link-btn--danger"
+                        [disabled]="busy()"
+                        (click)="removeAvailability(a.id)"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Work                                                              -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <h2 class="panel__title">Work</h2>
+
+      <div class="stats">
+        <div class="stat"><p class="stat__label">Open</p><p class="stat__value">{{ p.work.open }}</p></div>
+        <div class="stat"><p class="stat__label">Blocked</p><p class="stat__value">{{ p.work.blocked }}</p></div>
+        <div class="stat">
+          <p class="stat__label">Overdue</p>
+          <p class="stat__value" [class.stat__value--bad]="p.work.overdue > 0">{{ p.work.overdue }}</p>
+        </div>
+        <div class="stat"><p class="stat__label">Done</p><p class="stat__value">{{ p.work.done }}</p></div>
+        <div class="stat">
+          <p class="stat__label">Done, last 30 days</p>
+          <p class="stat__value">{{ p.work.completedLast30Days }}</p>
+        </div>
+      </div>
+
+      @if (p.workItems.length === 0) {
+        <p class="person__muted">
+          No work items yet. Add them on a board — they appear here once assigned.
+        </p>
+      } @else {
+        <h3 class="panel__sub-head">Open ({{ openWork().length }})</h3>
+        @if (openWork().length === 0) {
+          <p class="person__muted">Nothing open.</p>
+        } @else {
+          <ul class="work">
+            @for (w of openWork(); track w.id) {
+              <li class="work__item" [class.work__item--late]="w.isOverdue">
+                <span class="work__status" [style.background]="w.statusColor"></span>
+                <span class="work__body">
+                  <span class="work__title">{{ w.title }}</span>
+                  <span class="work__meta">
+                    <a [routerLink]="['/boards', w.boardId]">{{ w.boardTitle }}</a>
+                    · {{ w.statusLabel }}
+                    @if (w.plannedEnd) {
+                      · due {{ formatDate(w.plannedEnd) }}
+                    }
+                    @if (w.isOverdue) {
+                      <span class="tag tag--off">overdue</span>
+                    }
+                  </span>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (doneWork().length > 0) {
+          <h3 class="panel__sub-head">Completed ({{ doneWork().length }})</h3>
+          <ul class="work">
+            @for (w of doneWork(); track w.id) {
+              <li class="work__item work__item--done">
+                <span class="work__status" [style.background]="w.statusColor"></span>
+                <span class="work__body">
+                  <span class="work__title">{{ w.title }}</span>
+                  <span class="work__meta">
+                    <a [routerLink]="['/boards', w.boardId]">{{ w.boardTitle }}</a>
+                    @if (w.completedOn) {
+                      · completed {{ formatDate(w.completedOn) }}
+                    }
+                  </span>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Activity                                                          -->
+    <!-- ---------------------------------------------------------------- -->
+    <section class="panel">
+      <h2 class="panel__title">Board activity</h2>
+      <!-- How the match was made, rather than a list that might silently be partial. -->
+      <p class="panel__sub">{{ p.activityNote }}</p>
+
+      @if (p.activity.length > 0) {
+        <ul class="feed">
+          @for (entry of p.activity; track entry.at + entry.summary) {
+            <li class="feed__item">
+              <span class="feed__when">{{ formatWhen(entry.at) }}</span>
+              <span class="feed__what">
+                {{ entry.summary }}
+                <a [routerLink]="['/boards', entry.boardId]">{{ entry.boardTitle }}</a>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>

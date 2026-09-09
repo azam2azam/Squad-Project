@@ -180,6 +180,44 @@ Liveness and database connectivity. Returns `200 Healthy` or `503 Unhealthy`.
 
 ---
 
+### Staff scheduling (M12)
+
+```
+GET    /api/v1/staff/schedule        ?from=&weeks=
+GET    /api/v1/staff/{personId}
+GET    /api/v1/staff/options
+PUT    /api/v1/staff/assignments/{memberId}
+POST   /api/v1/staff/availability
+DELETE /api/v1/staff/availability/{id}
+
+GET    /api/v1/work-items            ?boardId=&personId=&includeDone=
+POST   /api/v1/work-items
+PUT    /api/v1/work-items/{id}
+DELETE /api/v1/work-items/{id}
+```
+
+Reads are open to anyone signed in — knowing who has capacity is not privileged. Writes
+follow the thing being changed: **work items take the board's edit rights**, **availability
+takes the roster's admin gate**, both enforced in the handlers.
+
+The capacity model, per person per week:
+
+```
+available = 100 − the most restrictive overlapping availability record
+committed = Σ allocations on assignments live that week
+free      = available − committed        (negative = over-committed)
+```
+
+`SquadMember` gained `StartsOn`/`EndsOn`, both nullable. **No dates means the assignment
+runs in every week**; **no allocation counts as zero**, and `ScheduleCoverage` reports how
+many are in each state so a caller knows the total is understated rather than wrong.
+
+`PersonAvailability.CapacityPercent` is what *remains* (0 = fully away), matching the
+direction an allocation runs. `WorkItem.PersonId` is nullable — unassigned is a real state.
+Completion stamps `CompletedOn` on Done and clears it if the item reopens. `WorkItem`
+carries a query filter matching `Board`'s soft delete, so items on a deleted board vanish
+from every person's list.
+
 ### Smartsheet integration (M11)
 
 The Smartsheet twin of the Jira routes, and deliberately the same shape.

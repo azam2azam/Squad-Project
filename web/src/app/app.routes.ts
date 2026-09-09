@@ -56,6 +56,22 @@ export const routes: Routes = [
       import('./features/analytics/analytics-page').then((m) => m.AnalyticsPage),
   },
   {
+    // Knowing who has capacity is not privileged information — anyone planning work
+    // needs it, so this is authGuard rather than admin.
+    path: 'staff',
+    title: 'Team schedule · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/staff/staff-schedule-page').then((m) => m.StaffSchedulePage),
+  },
+  {
+    path: 'staff/:id',
+    title: 'Person · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/staff/person-profile-page').then((m) => m.PersonProfilePage),
+  },
+  {
     // Categories regroup the whole portfolio, so only an admin may change them —
     // matching the API, which enforces it in the handlers.
     path: 'settings/categories',

@@ -18,6 +18,8 @@ public interface IAppDbContext
     DbSet<SquadRole> SquadRoles { get; }
     DbSet<BoardCategory> BoardCategories { get; }
     DbSet<SmartsheetSettings> SmartsheetSettings { get; }
+    DbSet<PersonAvailability> PersonAvailability { get; }
+    DbSet<WorkItem> WorkItems { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

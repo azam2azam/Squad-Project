@@ -1,0 +1,139 @@
+<div class="sched">
+  <header class="sched__head">
+    <div>
+      <h1 class="sched__title">Team schedule</h1>
+      <p class="sched__sub">
+        Who is committed where, week by week, and what is left. The number in each cell is
+        <strong>free capacity</strong> — what that person still has available.
+      </p>
+    </div>
+
+    <div class="sched__actions">
+      <label class="toggle">
+        <input
+          type="checkbox"
+          [checked]="hideFullyFree()"
+          (change)="toggleHideFree($any($event.target).checked)"
+        />
+        Only people with commitments
+      </label>
+
+      <select class="select" aria-label="Weeks shown" (change)="setWeeks($any($event.target).value)">
+        <option value="4" [selected]="weeks() === 4">4 weeks</option>
+        <option value="8" [selected]="weeks() === 8">8 weeks</option>
+        <option value="12" [selected]="weeks() === 12">12 weeks</option>
+        <option value="26" [selected]="weeks() === 26">26 weeks</option>
+      </select>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="sched__muted">Loading the schedule…</p>
+  } @else if (data(); as d) {
+    @if (d.people.length === 0) {
+      <div class="empty">
+        <p class="empty__lead">Nobody on the roster yet.</p>
+        <p class="empty__sub">Add people under Roster, then assign them to boards.</p>
+      </div>
+    } @else {
+      <!-- The page states what its numbers are built from rather than presenting a
+           confident total over half-recorded data. -->
+      @if (d.coverage.assignmentsWithoutAllocation > 0 || d.coverage.assignmentsWithoutDates > 0) {
+        <p class="note note--thin">{{ d.coverage.note }}</p>
+      } @else {
+        <p class="note">{{ d.coverage.note }}</p>
+      }
+
+      @if (overCommitted().length > 0) {
+        <p class="banner banner--warn" role="status">
+          <strong>{{ overCommitted().length }}</strong>
+          {{ overCommitted().length === 1 ? 'person is' : 'people are' }} committed beyond
+          their available capacity in at least one week:
+          {{ overCommitted()[0].fullName
+          }}{{ overCommitted().length > 1 ? ' and ' + (overCommitted().length - 1) + ' more' : '' }}.
+        </p>
+      }
+
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th scope="col" class="grid__who">Person</th>
+              @for (week of d.weeks; track week.start) {
+                <th scope="col" class="grid__week" [class.is-current]="week.isCurrent">
+                  {{ week.label }}
+                  @if (week.isCurrent) {
+                    <span class="grid__now">now</span>
+                  }
+                </th>
+              }
+              <th scope="col" class="grid__tasks">Tasks</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (person of people(); track person.personId) {
+              <tr>
+                <th scope="row" class="grid__who">
+                  <a class="who" [routerLink]="['/staff', person.personId]">
+                    <span class="face" [style.background]="person.color">{{ person.initials }}</span>
+                    <span class="who__text">
+                      <span class="who__name">{{ person.fullName }}</span>
+                      <span class="who__role">{{ person.roleLabel }}</span>
+                    </span>
+                  </a>
+                </th>
+
+                @for (cell of person.weeks; track $index) {
+                  <td
+                    class="cell"
+                    [class.cell--over]="cell.overCommitted"
+                    [class.cell--away]="cell.availablePercent === 0 && !cell.overCommitted"
+                    [title]="cellTitle(cell.boards, cell.awayReasons)"
+                  >
+                    <span class="cell__value">
+                      {{ cell.overCommitted ? cell.freePercent : cell.freePercent + '%' }}
+                    </span>
+                    <span class="cell__bar">
+                      <span class="cell__fill" [style.width.%]="barWidth(cell.freePercent)"></span>
+                    </span>
+                    @if (cell.awayReasons.length) {
+                      <span class="cell__away">{{ cell.awayReasons[0] }}</span>
+                    }
+                  </td>
+                }
+
+                <td class="grid__tasks">
+                  <span class="pill">{{ person.openWorkItems }} open</span>
+                  @if (person.overdueWorkItems > 0) {
+                    <span class="pill pill--late">{{ person.overdueWorkItems }} late</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+
+          <tfoot>
+            <tr>
+              <th scope="row" class="grid__who">Free people-weeks</th>
+              @for (total of totals(); track $index) {
+                <td class="cell cell--total">{{ total }}</td>
+              }
+              <td class="grid__tasks"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <p class="sched__legend">
+        A cell shows what the person has left that week. <strong>Red</strong> means committed
+        beyond capacity; <strong>amber</strong> means fully away. Click a name for their
+        assignments, leave and tasks.
+      </p>
+    }
+  }
+</div>

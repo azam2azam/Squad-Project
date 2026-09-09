@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SquadRole> SquadRoles => Set<SquadRole>();
     public DbSet<BoardCategory> BoardCategories => Set<BoardCategory>();
     public DbSet<SmartsheetSettings> SmartsheetSettings => Set<SmartsheetSettings>();
+    public DbSet<PersonAvailability> PersonAvailability => Set<PersonAvailability>();
+    public DbSet<WorkItem> WorkItems => Set<WorkItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

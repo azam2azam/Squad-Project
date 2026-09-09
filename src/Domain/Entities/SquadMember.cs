@@ -40,12 +40,39 @@ public class SquadMember : Entity
 
     public int OrderIndex { get; private set; }
 
+    /// <summary>
+    /// When this assignment runs. Both ends are optional and open-ended is the norm:
+    /// most people are simply on a squad until further notice, and forcing a made-up end
+    /// date would put a commitment in the schedule that nobody agreed to.
+    /// </summary>
+    public DateOnly? StartsOn { get; private set; }
+    public DateOnly? EndsOn { get; private set; }
+
     public void Update(Role role, string? detail, int? allocationPercent)
     {
         Role = role;
         Detail = string.IsNullOrWhiteSpace(detail) ? null : detail.Trim();
         SetAllocation(allocationPercent);
     }
+
+    public void Schedule(DateOnly? startsOn, DateOnly? endsOn)
+    {
+        if (startsOn is { } start && endsOn is { } end && end < start)
+        {
+            throw new DomainException("An assignment cannot end before it starts.");
+        }
+
+        StartsOn = startsOn;
+        EndsOn = endsOn;
+    }
+
+    /// <summary>
+    /// Whether the assignment is live across a window. An open end means "still running",
+    /// so it counts against every week from its start onwards.
+    /// </summary>
+    public bool OverlapsWindow(DateOnly windowStart, DateOnly windowEnd) =>
+        (StartsOn is null || StartsOn <= windowEnd)
+        && (EndsOn is null || EndsOn >= windowStart);
 
     public void SetOrder(int orderIndex) => OrderIndex = orderIndex;
 
