@@ -103,7 +103,9 @@ public sealed record BoardDetailDto(
     Guid? CategoryId,
     string? CategoryName,
     string? CategoryColor,
-    string? SmartsheetSheetId)
+    string? SmartsheetSheetId,
+    // The short handle people type in a Telegram update. Null until one is assigned.
+    string? Code)
 {
     public static BoardDetailDto From(Board board) => new(
         board.Id,
@@ -134,7 +136,8 @@ public sealed record BoardDetailDto(
         board.CategoryId,
         board.Category?.Name,
         board.Category?.Color,
-        board.SmartsheetSheetId);
+        board.SmartsheetSheetId,
+        board.Code);
 }
 
 /// <summary>One avatar card on the slide.</summary>

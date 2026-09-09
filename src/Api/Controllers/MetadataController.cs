@@ -18,6 +18,7 @@ namespace Api.Controllers;
 public sealed class MetadataController(
     IJiraClient jiraClient,
     ISmartsheetClient smartsheetClient,
+    ITelegramClient telegramClient,
     IExportRenderer exportRenderer,
     ISender sender)
     : ControllerBase
@@ -44,6 +45,7 @@ public sealed class MetadataController(
         {
             jiraSyncEnabled = await jiraClient.IsEnabledAsync(cancellationToken),
             smartsheetSyncEnabled = await smartsheetClient.IsEnabledAsync(cancellationToken),
+            telegramEnabled = await telegramClient.IsEnabledAsync(cancellationToken),
             serverExportEnabled = exportRenderer.IsAvailable,
             // Excel is always available: it needs no external service, unlike the other two.
             excelEnabled = true

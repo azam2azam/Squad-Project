@@ -22,6 +22,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SmartsheetSettings> SmartsheetSettings => Set<SmartsheetSettings>();
     public DbSet<PersonAvailability> PersonAvailability => Set<PersonAvailability>();
     public DbSet<WorkItem> WorkItems => Set<WorkItem>();
+    public DbSet<TelegramSettings> TelegramSettings => Set<TelegramSettings>();
+    public DbSet<TelegramLink> TelegramLinks => Set<TelegramLink>();
+    public DbSet<TelegramEnrolment> TelegramEnrolments => Set<TelegramEnrolment>();
+    public DbSet<TelegramMessage> TelegramMessages => Set<TelegramMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

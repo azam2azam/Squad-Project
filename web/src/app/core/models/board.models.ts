@@ -59,6 +59,7 @@ export interface Metadata {
 export interface Capabilities {
   jiraSyncEnabled: boolean;
   smartsheetSyncEnabled: boolean;
+  telegramEnabled: boolean;
   serverExportEnabled: boolean;
 }
 
@@ -140,6 +141,8 @@ export interface BoardDetail extends Omit<BoardSummary, 'memberCount' | 'composi
   jiraBoardId: string | null;
   /** The Smartsheet sheet this board tracks. Null when it is not linked. */
   smartsheetSheetId: string | null;
+  /** Short handle people type in a Telegram update. Null until one is assigned. */
+  code: string | null;
   createdBy: string;
   createdAt: string;
   members: SquadMember[];

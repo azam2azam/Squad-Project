@@ -373,6 +373,41 @@ respects that switch. Changes land in each board's audit trail.
 When `Jira__ApiToken` is set in configuration it overrides anything saved here, and `GET`
 reports `overriddenByConfiguration: true`.
 
+## Telegram (M14)
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/integrations/telegram` | The connection, bot token masked |
+| `PUT` | `/integrations/telegram` | Save it — blank `botToken` keeps the stored one |
+| `DELETE` | `/integrations/telegram` | Forget it, token included |
+| `POST` | `/integrations/telegram/test` | `getMe` — proves the token and reports the @name |
+| `POST` | `/integrations/telegram/poll` | Read whatever is waiting, now |
+| `POST` | `/integrations/telegram/simulate` | Run a message through the real pipeline; `dryRun` defaults to true |
+| `POST` | `/integrations/telegram/enrolments` | Issue a one-time code (`userId` omitted = yourself) |
+| `GET` | `/integrations/telegram/links` | Who is connected, and as whom |
+| `DELETE` | `/integrations/telegram/links/{id}` | Cut off one Telegram account |
+| `GET` | `/integrations/telegram/messages` | The inbound log, refusals included |
+| `POST` | `/integrations/telegram/board-codes` | Give every board without a code one |
+| `GET` | `/integrations/telegram/template` | The message template, so nothing prints a different one |
+
+Admin-only except `POST .../enrolments` for your own account and `GET .../template`, which
+is anonymous — it is a fixed string, and the login page has no reason to need a token to
+show it.
+
+The transport is **long polling**, not a webhook: the server needs outbound access to
+`api.telegram.org` and no inbound address at all. `TelegramWorker` holds a 25-second poll
+open, so an update lands in seconds rather than at the top of an interval.
+
+Inbound messages are logged before they are processed and acknowledged after, and
+`TelegramMessages.UpdateId` is unique — Telegram redelivers anything unacknowledged, so a
+crash mid-pass replays the message and that index is what stops it applying twice.
+
+Unlike the other two integrations this one **writes on receipt**: the sender is a person
+reporting their own status, not a machine inferring one. Authorisation is the sender's own,
+asked of `Board.CanBeEditedBy`, and every change is audited with `Source = "Telegram"` while
+`ChangedBy` stays the person's plain display name — the person profile matches activity on
+that name exactly, so decorating it would lose them their history.
+
 ## Conventions
 
 - **Pagination** — list endpoints take `?page=` and `?pageSize=` (default 50, max 200)

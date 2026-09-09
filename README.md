@@ -26,6 +26,7 @@ cards — ready to present or export.
 | **M11** | Smartsheet integration alongside Jira | ✅ Done |
 | **M12** | Staff scheduling: capacity, availability, work items, person profiles | ✅ Done |
 | **M13** | In-app user manual covering the whole product | ✅ Done |
+| **M14** | Telegram: boards updated by message, from linked accounts only | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -302,6 +303,60 @@ rather than presenting a partial history as complete.
 | View the schedule and profiles | Anyone signed in — knowing who has capacity is not privileged |
 | Add and edit work items | Whoever can edit that board |
 | Record availability | Admin, same gate as the roster |
+
+## Updating boards from Telegram
+
+The other two integrations pull; this one is pushed to. Somebody sends the bot a short
+message and their board changes — the point being to catch an update at the moment it is
+known, rather than the evening somebody finally sits down to type it in.
+
+```
+#update DISCHARGE
+status: At Risk
+progress: 65
+blocker: waiting on MOH sign-off
+note: UAT starts Monday
+```
+
+Only the lines present change. The parser is deliberately forgiving — `status: blocked`,
+`Status = Blocked`, `status - stuck` and `status: red` all land the same, and progress
+accepts `65`, `65%` or `0.65` — because a strict format is how status updates stop arriving:
+somebody mistypes at 7pm, gets an error, and goes back to not updating the board.
+
+### Setting it up
+
+1. Message **@BotFather** in Telegram, send `/newbot`, and copy the token it gives you.
+2. Paste it into **Telegram** in the nav (`/settings/telegram`), tick **Listen for
+   messages**, and press **Test connection** — it reports back the bot's @name.
+3. Press **Assign codes to boards without one**. A code is the short handle people type
+   instead of a title: `DISCHARGE`, not "Discharge Revamp - Gaps for MOH and S3 Rollout".
+4. Issue each person an enrolment code. They message the bot `/start THATCODE` once.
+
+The server needs outbound access to `api.telegram.org` and nothing else — it long-polls
+rather than taking a webhook, so no public address and no inbound firewall rule.
+
+### Who is allowed to change anything
+
+A bot's name is public and anyone can message it, so the message itself proves nothing. The
+sender must hold a **link** between their Telegram account and an application account,
+established by redeeming a one-time code that expires in thirty minutes and works once.
+
+A linked sender can then do exactly what their role already allows: a Viewer changes
+nothing, a Product Owner only their own boards. That is not re-implemented here — the same
+`Board.CanBeEditedBy` the API uses is asked directly. An admin can revoke any link from the
+settings screen without touching that person's login.
+
+### It applies rather than suggests
+
+Unlike Jira and Smartsheet, a Telegram update is written to the board immediately. The
+difference is who is talking: those two are a machine inferring a status from issue counts,
+which deserves a human check; this is a person deliberately reporting their own status —
+the same thing they would have typed into the editor. Every change lands in the board's
+history marked **via Telegram** and attributed to them, and the settings screen keeps the
+full message log, refusals included.
+
+Token handling matches the other two: encrypted at rest through Data Protection, never
+returned to a browser, `Telegram__BotToken` in the environment overrides the database.
 
 ## Connecting to your company's Jira
 

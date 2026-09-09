@@ -1,3 +1,4 @@
+using Domain.Common;
 using Application.Abstractions;
 using Application.Contracts;
 using Domain.Entities;
@@ -24,7 +25,8 @@ public sealed record UpdateBoardMetaCommand(
     string? JiraProjectKey = null,
     string? JiraBoardId = null,
     Guid? CategoryId = null,
-    string? SmartsheetSheetId = null) : IRequest<BoardDetailDto>;
+    string? SmartsheetSheetId = null,
+    string? Code = null) : IRequest<BoardDetailDto>;
 
 public sealed class UpdateBoardMetaCommandValidator : AbstractValidator<UpdateBoardMetaCommand>
 {
@@ -72,6 +74,21 @@ public sealed class UpdateBoardMetaCommandHandler(
         // Category is set alongside the rest so one save moves a board between programmes.
         board.AssignCategory(request.CategoryId);
         board.LinkSmartsheet(request.SmartsheetSheetId);
+
+        // Uniqueness is checked here rather than left to the database, so a clash comes
+        // back as "DIS is already taken" instead of a constraint violation.
+        if (!string.Equals(board.Code, request.Code, StringComparison.OrdinalIgnoreCase))
+        {
+            var code = string.IsNullOrWhiteSpace(request.Code) ? null : request.Code.Trim().ToUpperInvariant();
+
+            if (code is not null
+                && await db.Boards.AnyAsync(b => b.Id != board.Id && b.Code == code, cancellationToken))
+            {
+                throw new DomainException($"The code {code} is already used by another board.");
+            }
+
+            board.AssignCode(code);
+        }
 
         // Status and progress are the two fields reviewers ask "who changed this?" about.
         if (previousStatus != board.Status)

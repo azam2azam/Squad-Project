@@ -64,6 +64,13 @@ public class Board : Entity
     /// <summary>The Smartsheet sheet this board tracks. Numeric id, held as text.</summary>
     public string? SmartsheetSheetId { get; private set; }
 
+    /// <summary>
+    /// Short, unique, human-typed handle for this board — what somebody puts in a Telegram
+    /// message so the update lands on the right board. Nullable: boards that predate codes
+    /// keep working, and the resolver falls back to matching on the title.
+    /// </summary>
+    public string? Code { get; private set; }
+
     public string CreatedBy { get; private set; } = "system";
 
     /// <summary>
@@ -197,6 +204,70 @@ public class Board : Entity
 
     /// <summary>Links or unlinks the Smartsheet sheet this board tracks.</summary>
     public void LinkSmartsheet(string? sheetId) => SmartsheetSheetId = Trim(sheetId);
+
+    /// <summary>
+    /// Sets the short code people type instead of the full title — on a phone, "DIS" beats
+    /// "Discharge Revamp - Gaps for MOH and S3 Rollout". Null removes it; uniqueness is the
+    /// caller's job, since only the database can see the other boards.
+    /// </summary>
+    public void AssignCode(string? code)
+    {
+        var trimmed = Trim(code);
+
+        if (trimmed is null)
+        {
+            Code = null;
+            Touch();
+            return;
+        }
+
+        var upper = trimmed.ToUpperInvariant();
+
+        if (upper.Length is < 2 or > 12)
+        {
+            throw new DomainException("A board code must be between 2 and 12 characters.");
+        }
+
+        if (!upper.All(c => char.IsAsciiLetterOrDigit(c) || c == '-'))
+        {
+            throw new DomainException("A board code may only contain letters, digits and hyphens.");
+        }
+
+        Code = upper;
+        Touch();
+    }
+
+    /// <summary>
+    /// A first guess at a code from the title: the first word, whole.
+    ///
+    /// "Discharge Revamp - Gaps for MOH and S3 Rollout" suggests DISCHARGE, not DISCREVAGAPS.
+    /// Squashing several words together produces something nobody can read back or type from
+    /// memory, and this code exists to be typed on a phone. Collisions are the caller's
+    /// problem to number, which is rarer than it sounds — first words differ.
+    /// </summary>
+    public static string SuggestCode(string title)
+    {
+        var words = (title ?? string.Empty)
+            .Split([' ', '-', '_', '/', ':', '(', ')'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => new string(w.Where(char.IsAsciiLetterOrDigit).ToArray()))
+            .Where(w => w.Length > 0)
+            .ToList();
+
+        if (words.Count == 0) return "BOARD";
+
+        var candidate = words[0].ToUpperInvariant();
+
+        // A one- or two-letter first word ("AI", "e-Claims") is too thin to identify a
+        // board, so the next word joins it.
+        if (candidate.Length < 3 && words.Count > 1)
+        {
+            candidate += words[1].ToUpperInvariant();
+        }
+
+        candidate = candidate[..Math.Min(12, candidate.Length)];
+
+        return candidate.Length < 2 ? "BOARD" : candidate;
+    }
 
     /// <summary>Moves the board to a programme, or out of one when given null.</summary>
     public void AssignCategory(Guid? categoryId) => CategoryId = categoryId;

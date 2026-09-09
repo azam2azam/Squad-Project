@@ -72,6 +72,7 @@ export class BoardEditorPage {
   protected readonly canWrite = this.auth.canWrite;
   protected readonly jiraEnabled = this.metadata.jiraSyncEnabled;
   protected readonly smartsheetEnabled = this.metadata.smartsheetSyncEnabled;
+  protected readonly telegramEnabled = this.metadata.telegramEnabled;
 
   /** Risk options. Static: these are a fixed vocabulary, not deployment config. */
   protected readonly riskLevels = [
@@ -164,7 +165,8 @@ export class BoardEditorPage {
       // Without this, moving a board between programmes leaves Save disabled and the
       // change silently discarded.
       draft.categoryId !== (board.categoryId ?? '') ||
-      draft.smartsheetSheetId !== (board.smartsheetSheetId ?? '')
+      draft.smartsheetSheetId !== (board.smartsheetSheetId ?? '') ||
+      draft.code !== (board.code ?? '')
     );
   });
 
@@ -289,6 +291,7 @@ export class BoardEditorPage {
         jiraBoardId: draft.jiraBoardId.trim() || null,
         categoryId: draft.categoryId || null,
         smartsheetSheetId: draft.smartsheetSheetId.trim() || null,
+        code: draft.code.trim() || null,
       })
       .subscribe({
         next: (saved) => {
@@ -494,6 +497,8 @@ interface DraftState {
   jiraProjectKey: string;
   jiraBoardId: string;
   smartsheetSheetId: string;
+  /** Empty means no code, which is allowed — the resolver then matches on the title. */
+  code: string;
   /** Empty string means uncategorised, which is a real state. */
   categoryId: string;
 }
@@ -512,6 +517,7 @@ function toDraft(board: BoardDetail): DraftState {
     jiraProjectKey: board.jiraProjectKey ?? '',
     jiraBoardId: board.jiraBoardId ?? '',
     smartsheetSheetId: board.smartsheetSheetId ?? '',
+    code: board.code ?? '',
     categoryId: board.categoryId ?? '',
   };
 }

@@ -40,6 +40,7 @@
     <a [routerLink]="[]" fragment="present">Presenting and exporting</a>
     <a [routerLink]="[]" fragment="excel">Excel and JSON</a>
     <a [routerLink]="[]" fragment="integrations">Jira and Smartsheet</a>
+    <a [routerLink]="[]" fragment="telegram">Updating from Telegram</a>
     <a [routerLink]="[]" fragment="accounts">Accounts and passwords</a>
     <a [routerLink]="[]" fragment="trouble">When something looks wrong</a>
   </nav>
@@ -587,6 +588,113 @@
       rules, the scheduled run and what to do when it does not work. Smartsheet works the
       same way, with a sheet id in place of a project key and two column names to tell it
       which columns hold progress and status.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="telegram">
+    <h2 class="section__title">Updating from Telegram</h2>
+    <p class="lede">
+      Send the bot a short message and your board updates itself. It is meant for the
+      moment you actually know something — walking out of a meeting, on the way home —
+      rather than the evening you finally sit down to update the board.
+    </p>
+
+    <div class="guide__state" role="status">
+      <span class="dot" [class.dot--on]="telegramEnabled()" [class.dot--off]="!telegramEnabled()"></span>
+      <span>
+        Telegram is {{ telegramEnabled() ? 'connected' : 'not connected' }}.
+        @if (!telegramEnabled()) {
+          @if (isAdmin()) {
+            <a routerLink="/settings/telegram">Set it up</a>.
+          } @else {
+            An administrator sets this up.
+          }
+        }
+      </span>
+    </div>
+
+    <h3 class="section__sub">Connecting your account, once</h3>
+    <p>
+      A bot's name is public, so a message on its own proves nothing about who sent it.
+      Get an enrolment code — your own from
+      <a routerLink="/settings/telegram">the Telegram screen</a>, or from an administrator —
+      then message the bot <code>/start YOURCODE</code>. That ties your Telegram account to
+      your application account for good.
+    </p>
+    <p>
+      From then on the bot lets you do exactly what you can already do in the app. A Viewer
+      still cannot change anything; a Product Owner can still only change their own boards.
+      Codes expire after thirty minutes and work once.
+    </p>
+
+    <h3 class="section__sub">The message</h3>
+    <pre class="sample">#update DISCHARGE
+status: At Risk
+progress: 65
+sprint: Sprint 12
+blocker: waiting on MOH sign-off
+risk: Medium
+note: UAT starts Monday</pre>
+
+    <ul class="bullets">
+      <li>
+        <b>The first line names the board</b> by its code. Codes are on the board editor,
+        and <code>/boards</code> lists the ones you can update.
+      </li>
+      <li>
+        <b>Only the lines you include change.</b> Leave out progress and the progress stays
+        as it was.
+      </li>
+      <li>
+        <b>It is forgiving about wording</b> — <code>status: blocked</code>,
+        <code>Status = Blocked</code>, <code>status - stuck</code> and
+        <code>status: red</code> all mean the same thing, and progress takes 65, 65% or
+        0.65.
+      </li>
+      <li>
+        <b>A free <code>note:</code></b> becomes the blocker note when you are blocking the
+        board, and the risk note when you are raising a risk.
+      </li>
+      <li>
+        <b>It answers you</b> with exactly what it changed, and says what it ignored.
+      </li>
+    </ul>
+
+    <p>Other things the bot understands:</p>
+    <dl class="fields">
+      <div class="field">
+        <dt>/boards</dt>
+        <dd>The boards you can update, with their codes and current status.</dd>
+      </div>
+      <div class="field">
+        <dt>/status CODE</dt>
+        <dd>What that board says right now.</dd>
+      </div>
+      <div class="field">
+        <dt>/help</dt>
+        <dd>The template again.</dd>
+      </div>
+      <div class="field">
+        <dt>/whoami</dt>
+        <dd>Which account you are posting as.</dd>
+      </div>
+    </dl>
+
+    <div class="note">
+      <p class="note__label">This one applies, it does not suggest</p>
+      <p>
+        Unlike Jira and Smartsheet, a Telegram update is written to the board straight away.
+        The difference is who is talking: those two are a machine inferring a status from
+        issue counts, which deserves a human check, whereas this is you deliberately
+        reporting your own — the same thing you would have typed into the editor. Every
+        change is in the board's history, marked <b>via Telegram</b> and attributed to you.
+      </p>
+    </div>
+
+    <p>
+      An administrator can see every message the bot has been sent and what became of it,
+      refusals included — which is where "my update never arrived" gets answered.
     </p>
   </section>
 

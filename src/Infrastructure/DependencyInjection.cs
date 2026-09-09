@@ -87,6 +87,15 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(20);
         });
 
+        // Telegram is inbound rather than polled for figures, so its client holds a long
+        // poll open — the timeout has to outlast the longest poll the worker asks for, or
+        // every quiet minute would look like a failure.
+        services.AddScoped<ITelegramSettingsService, TelegramSettingsService>();
+        services.AddHttpClient<ITelegramClient, TelegramClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
+
         // Server-side export needs a headless browser, which not every host has.
         // Off by default so a deployment opts in rather than discovering at runtime
         // that the first export tries to download Chromium.

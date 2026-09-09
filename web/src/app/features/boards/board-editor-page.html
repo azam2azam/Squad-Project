@@ -250,6 +250,36 @@
         </div>
       }
 
+      <!-- The short handle people type in a Telegram update. Shown whether or not Telegram
+           is connected: it is a property of the board, and it reads well on the portfolio
+           either way. -->
+      @if (canWrite()) {
+        <div class="card">
+          <div class="card__head">
+            <h2 class="card__title">Board code</h2>
+            @if (!telegramEnabled()) {
+              <span class="card__hint">Telegram is off for this deployment</span>
+            }
+          </div>
+
+          <label class="field">
+            <span class="field__label">Code</span>
+            <input
+              class="field__input"
+              type="text"
+              [value]="d.code"
+              (input)="update('code', $any($event.target).value)"
+              placeholder="DIS"
+              maxlength="12"
+            />
+            <span class="field__hint">
+              Short and unique — what somebody types instead of the full title, e.g.
+              <strong>#update DIS</strong> in Telegram. Letters, digits and hyphens.
+            </span>
+          </label>
+        </div>
+      }
+
       <!-- Linking a board to Smartsheet. Same pattern as the Jira link below: always
            shown, with the sync button appearing only once the integration is on. -->
       @if (canWrite()) {

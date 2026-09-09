@@ -1,0 +1,429 @@
+<div class="page">
+  <header class="page__head">
+    <p class="page__eyebrow">Integration</p>
+    <h1 class="page__title">Telegram</h1>
+    <p class="page__sub">
+      People send a short message to a bot and their board updates itself. Nothing here
+      reads your chats: the bot only sees messages addressed to it, and only from people
+      whose Telegram account has been linked to an account in this application.
+    </p>
+  </header>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    @if (locked()) {
+      <p class="banner banner--warn">
+        The bot token is pinned by environment configuration, so it cannot be changed here.
+      </p>
+    }
+
+    <!-- ================================================================ -->
+    <section class="card">
+      <h2 class="card__title">1 · Connect the bot</h2>
+      <p class="card__sub">
+        Create a bot in Telegram by messaging <b>&#64;BotFather</b> and sending
+        <code>/newbot</code>. It replies with a token that looks like
+        <code>123456789:AAE…</code> — paste that below. The token <em>is</em> the bot: anyone
+        holding it can read everything sent to it, so treat it like a password.
+      </p>
+
+      <div class="grid">
+        <label class="field">
+          <span class="field__label">Bot token</span>
+          <input
+            class="field__input"
+            type="password"
+            autocomplete="off"
+            [placeholder]="hasStoredToken() ? 'Stored — leave blank to keep it' : '123456789:AAE…'"
+            [disabled]="locked()"
+            [ngModel]="botToken()"
+            (ngModelChange)="botToken.set($event)"
+            name="botToken"
+          />
+          @if (hasStoredToken()) {
+            <span class="field__hint">Stored: {{ current()!.tokenHint }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span class="field__label">API address</span>
+          <input
+            class="field__input"
+            type="url"
+            [disabled]="locked()"
+            [ngModel]="baseUrl()"
+            (ngModelChange)="baseUrl.set($event)"
+            name="baseUrl"
+          />
+          @if (urlProblem()) {
+            <span class="field__error">{{ urlProblem() }}</span>
+          } @else {
+            <span class="field__hint">Leave as is unless you route through a proxy.</span>
+          }
+        </label>
+      </div>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [disabled]="locked()"
+          [ngModel]="enabled()"
+          (ngModelChange)="enabled.set($event)"
+          name="enabled"
+        />
+        <span>
+          <b>Listen for messages</b>
+          <span class="check__hint">
+            Off means the bot exists but is ignored — nothing is read and nothing can change.
+          </span>
+        </span>
+      </label>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [ngModel]="replyToUnknownSenders()"
+          (ngModelChange)="replyToUnknownSenders.set($event)"
+          name="replyUnknown"
+        />
+        <span>
+          <b>Answer people it doesn't recognise</b>
+          <span class="check__hint">
+            Tells an unlinked sender how to enrol. Turn it off if the bot sits in a busy
+            group chat where you would rather it stayed silent.
+          </span>
+        </span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">
+          Only accept messages from these chat ids
+          <span class="field__optional">(optional)</span>
+        </span>
+        <input
+          class="field__input"
+          type="text"
+          placeholder="e.g. -1001234567890, 987654321"
+          [ngModel]="allowedChatIds()"
+          (ngModelChange)="allowedChatIds.set($event)"
+          name="allowedChats"
+        />
+        <span class="field__hint">
+          Blank means any chat — still safe, because the sender must be linked. Fill it in
+          when updates should only ever happen in one group everybody can see.
+        </span>
+      </label>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          (click)="save()"
+          [disabled]="saving() || !!urlProblem()"
+        >
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+
+        <button type="button" class="btn" (click)="test()" [disabled]="testing()">
+          {{ testing() ? 'Checking…' : 'Test connection' }}
+        </button>
+
+        <button type="button" class="btn" (click)="pollNow()" [disabled]="polling()">
+          {{ polling() ? 'Reading…' : 'Read messages now' }}
+        </button>
+
+        @if (current()?.configured && !locked()) {
+          <button type="button" class="btn btn--danger" (click)="disconnect()">Disconnect</button>
+        }
+
+        @if (saved()) {
+          <span class="saved">Saved.</span>
+        }
+      </div>
+
+      @if (testResult(); as result) {
+        <p class="banner" [class.banner--ok]="result.connected" [class.banner--error]="!result.connected">
+          {{ result.message }}
+        </p>
+      }
+
+      @if (pollResult(); as poll) {
+        <p class="banner banner--ok">{{ poll }}</p>
+      }
+
+      @if (current(); as settings) {
+        <dl class="meta">
+          @if (botHandle()) {
+            <div><dt>Bot</dt><dd>{{ botHandle() }}</dd></div>
+          }
+          @if (settings.lastPollAt) {
+            <div><dt>Last read</dt><dd>{{ settings.lastPollAt | date: 'd MMM, HH:mm' }}</dd></div>
+          }
+          @if (settings.lastPollResult) {
+            <div><dt>Result</dt><dd>{{ settings.lastPollResult }}</dd></div>
+          }
+          @if (settings.updatedBy) {
+            <div><dt>Updated by</dt><dd>{{ settings.updatedBy }}</dd></div>
+          }
+        </dl>
+      }
+    </section>
+
+    <!-- ================================================================ -->
+    <section class="card">
+      <h2 class="card__title">2 · Give the boards codes</h2>
+      <p class="card__sub">
+        A code is the short handle somebody types instead of a full title — <code>DIS</code>
+        rather than "Discharge Revamp - Gaps for MOH and S3 Rollout". Boards without one can
+        still be matched by title, but only when the title is unambiguous.
+      </p>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="assignBoardCodes()" [disabled]="coding()">
+          {{ coding() ? 'Assigning…' : 'Assign codes to boards without one' }}
+        </button>
+      </div>
+
+      @if (boardCodes(); as codes) {
+        <p class="muted">
+          {{ newlyAssigned().length }} assigned, {{ codes.length - newlyAssigned().length }}
+          already had one. Change any of them on the board itself.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Code</th>
+                <th scope="col">Board</th>
+                <th scope="col">&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (code of codes; track code.id) {
+                <tr>
+                  <th scope="row"><code>{{ code.code }}</code></th>
+                  <td>{{ code.title }}</td>
+                  <td class="dim">{{ code.assigned ? 'new' : '' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ================================================================ -->
+    <section class="card">
+      <h2 class="card__title">3 · Connect people</h2>
+      <p class="card__sub">
+        A bot's name is public and anyone can message it, so a message alone proves nothing.
+        Each person redeems a one-time code, which ties their Telegram account to their
+        application account — and from then on they can do through the bot exactly what
+        they can do in the app, no more.
+      </p>
+
+      <div class="grid">
+        <label class="field">
+          <span class="field__label">Issue a code for</span>
+          <select
+            class="field__input"
+            [ngModel]="enrolFor()"
+            (ngModelChange)="enrolFor.set($event)"
+            name="enrolFor"
+          >
+            <option value="" [selected]="enrolFor() === ''">Myself</option>
+            @for (person of people(); track person.id) {
+              <option [value]="person.id" [selected]="enrolFor() === person.id">
+                {{ person.displayName }} · {{ person.roleLabel }}
+              </option>
+            }
+          </select>
+        </label>
+
+        <div class="field field--end">
+          <button type="button" class="btn btn--primary" (click)="createEnrolment()" [disabled]="enrolling()">
+            {{ enrolling() ? 'Creating…' : 'Create enrolment code' }}
+          </button>
+        </div>
+      </div>
+
+      @if (enrolment(); as code) {
+        <div class="code-out">
+          <p class="code-out__code">{{ code.code }}</p>
+          <p class="code-out__text">
+            For <b>{{ code.userDisplayName }}</b>. {{ code.instructions }}
+          </p>
+          <p class="code-out__text muted">
+            Valid until {{ code.expiresAt | date: 'HH:mm' }} — one use only. Creating a new
+            code cancels any previous one for that person.
+          </p>
+        </div>
+      }
+
+      <h3 class="card__sub-head">Linked accounts</h3>
+
+      @if (links().length === 0) {
+        <p class="muted">Nobody is linked yet.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Telegram</th>
+                <th scope="col">Posts as</th>
+                <th scope="col">Access</th>
+                <th scope="col">Last seen</th>
+                <th scope="col">&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (link of links(); track link.id) {
+                <tr [class.is-off]="!link.isActive">
+                  <th scope="row">
+                    {{ link.displayName }}
+                    @if (link.telegramUsername) {
+                      <span class="dim">&#64;{{ link.telegramUsername }}</span>
+                    }
+                  </th>
+                  <td>{{ link.userDisplayName }}</td>
+                  <td>{{ link.userRole }}</td>
+                  <td class="dim">
+                    {{ link.lastSeenAt ? (link.lastSeenAt | date: 'd MMM, HH:mm') : 'never' }}
+                  </td>
+                  <td>
+                    @if (link.isActive) {
+                      <button type="button" class="link-btn link-btn--danger" (click)="revoke(link)">
+                        Revoke
+                      </button>
+                    } @else {
+                      <span class="dim">revoked</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ================================================================ -->
+    <section class="card">
+      <h2 class="card__title">4 · The message people send</h2>
+      <p class="card__sub">
+        Only the lines somebody includes are changed; everything else on the board is left
+        alone. The bot understands <code>/help</code>, <code>/boards</code>,
+        <code>/status CODE</code> and <code>/whoami</code> as well.
+      </p>
+
+      <pre class="template">{{ template() }}</pre>
+
+      <h3 class="card__sub-head">Try one</h3>
+      <p class="card__sub">
+        Runs through the real pipeline as <em>you</em> — same parsing, same permissions —
+        without Telegram being involved. Dry run reports what it would do and changes
+        nothing.
+      </p>
+
+      <label class="field">
+        <span class="visually-hidden">Message to try</span>
+        <textarea
+          class="field__input field__input--area"
+          rows="4"
+          [ngModel]="sampleText()"
+          (ngModelChange)="sampleText.set($event)"
+          name="sampleText"
+        ></textarea>
+      </label>
+
+      <label class="check">
+        <input
+          type="checkbox"
+          [ngModel]="dryRun()"
+          (ngModelChange)="dryRun.set($event)"
+          name="dryRun"
+        />
+        <span>
+          <b>Dry run</b>
+          <span class="check__hint">Unticked, this really updates the board.</span>
+        </span>
+      </label>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="simulate()" [disabled]="simulating()">
+          {{ simulating() ? 'Running…' : dryRun() ? 'Try it' : 'Send for real' }}
+        </button>
+      </div>
+
+      @if (simulation(); as result) {
+        <div class="reply">
+          <p class="reply__label">
+            {{ result.outcomeLabel }}
+            @if (result.dryRun) {
+              <span class="tag">dry run</span>
+            }
+          </p>
+          <pre class="reply__text">{{ result.reply }}</pre>
+          <p class="muted">{{ result.detail }}</p>
+        </div>
+      }
+    </section>
+
+    <!-- ================================================================ -->
+    <section class="card">
+      <h2 class="card__title">5 · What the bot has been sent</h2>
+      <p class="card__sub">
+        Every message and what became of it, refusals included — this is where "my update
+        never arrived" gets answered.
+      </p>
+
+      @if (messages().length === 0) {
+        <p class="muted">Nothing yet.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">From</th>
+                <th scope="col">Message</th>
+                <th scope="col">Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (message of messages(); track message.id) {
+                <tr>
+                  <td class="dim nowrap">{{ message.receivedAt | date: 'd MMM, HH:mm' }}</td>
+                  <th scope="row">{{ message.senderName }}</th>
+                  <td class="msg">{{ message.text }}</td>
+                  <td>
+                    <span class="pill" [class.pill--bad]="!message.succeeded">
+                      {{ message.outcomeLabel }}
+                    </span>
+                    @if (message.boardTitle) {
+                      <span class="dim"> · {{ message.boardTitle }}</span>
+                    }
+                    @if (message.detail) {
+                      <span class="detail">{{ message.detail }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <p class="muted">
+      The full explanation of how this works is in the
+      <a routerLink="/help">user manual</a>.
+    </p>
+  }
+</div>

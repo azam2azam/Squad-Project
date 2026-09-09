@@ -28,6 +28,8 @@ export interface UpdateBoardRequest extends CreateBoardRequest {
   categoryId?: string | null;
   /** The Smartsheet sheet this board tracks. Null unlinks it. */
   smartsheetSheetId?: string | null;
+  /** The short handle people type in a Telegram update. Null removes it. */
+  code?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

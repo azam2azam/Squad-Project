@@ -68,3 +68,18 @@
     break-inside: avoid;
   }
 }
+
+// The sample message is quoted verbatim, so it is set as code rather than prose.
+.sample {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  color: #334155;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}

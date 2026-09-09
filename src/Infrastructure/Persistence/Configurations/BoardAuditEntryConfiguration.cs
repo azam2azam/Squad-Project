@@ -15,6 +15,7 @@ public sealed class BoardAuditEntryConfiguration : IEntityTypeConfiguration<Boar
         builder.Property(e => e.OldValue).HasMaxLength(1000);
         builder.Property(e => e.NewValue).HasMaxLength(1000);
         builder.Property(e => e.ChangedBy).IsRequired().HasMaxLength(200);
+        builder.Property(e => e.Source).HasMaxLength(50);
 
         builder.Ignore(e => e.Summary);
 

@@ -30,6 +30,7 @@ export class UserGuidePage {
   protected readonly canWrite = this.auth.canWrite;
   protected readonly jiraEnabled = this.metadata.jiraSyncEnabled;
   protected readonly smartsheetEnabled = this.metadata.smartsheetSyncEnabled;
+  protected readonly telegramEnabled = this.metadata.telegramEnabled;
 
   protected readonly roleLabel = computed(() => {
     const role = this.auth.user()?.roleName;
@@ -99,6 +100,12 @@ export class UserGuidePage {
     {
       name: 'Programme',
       detail: 'Which category this board belongs to. Uncategorised is a real, allowed state.',
+    },
+    {
+      name: 'Board code',
+      detail:
+        'The short handle somebody types instead of the title when updating from Telegram ' +
+        '— DISCHARGE rather than the full sentence. Optional, and unique across boards.',
     },
     {
       name: 'Jira / Smartsheet',

@@ -20,6 +20,10 @@ public interface IAppDbContext
     DbSet<SmartsheetSettings> SmartsheetSettings { get; }
     DbSet<PersonAvailability> PersonAvailability { get; }
     DbSet<WorkItem> WorkItems { get; }
+    DbSet<TelegramSettings> TelegramSettings { get; }
+    DbSet<TelegramLink> TelegramLinks { get; }
+    DbSet<TelegramEnrolment> TelegramEnrolments { get; }
+    DbSet<TelegramMessage> TelegramMessages { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

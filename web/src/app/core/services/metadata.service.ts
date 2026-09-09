@@ -25,6 +25,7 @@ export class MetadataService {
   private readonly capabilities = signal<Capabilities>({
     jiraSyncEnabled: false,
     smartsheetSyncEnabled: false,
+    telegramEnabled: false,
     serverExportEnabled: false,
   });
 
@@ -32,6 +33,7 @@ export class MetadataService {
   readonly statuses = computed<StatusOption[]>(() => this.metadata()?.statuses ?? []);
   readonly jiraSyncEnabled = computed(() => this.capabilities().jiraSyncEnabled);
   readonly smartsheetSyncEnabled = computed(() => this.capabilities().smartsheetSyncEnabled);
+  readonly telegramEnabled = computed(() => this.capabilities().telegramEnabled);
   readonly serverExportEnabled = computed(() => this.capabilities().serverExportEnabled);
   readonly isLoaded = computed(() => this.metadata() !== null);
 

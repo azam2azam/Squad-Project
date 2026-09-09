@@ -65,6 +65,7 @@ builder.Services.AddCors(options => options.AddPolicy(WebCorsPolicy, policy =>
 // Polls Jira and Smartsheet on their admin-configured intervals. Inert until an admin
 // turns auto-apply on, so it costs nothing in a deployment that uses neither.
 builder.Services.AddHostedService<Api.Workers.IntegrationSyncWorker>();
+builder.Services.AddHostedService<Api.Workers.TelegramWorker>();
 
 var app = builder.Build();
 

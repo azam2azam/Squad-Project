@@ -143,6 +143,16 @@ export const routes: Routes = [
       ),
   },
   {
+    // Same gate again, and for a sharper reason: this credential is a bot people can send
+    // instructions to, and the screen also decides whose Telegram account may write to a
+    // board.
+    path: 'settings/telegram',
+    title: 'Telegram · Squad Status Board',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/settings/telegram-settings-page').then((m) => m.TelegramSettingsPage),
+  },
+  {
     path: 'present/:id',
     title: 'Present · Squad Status Board',
     canActivate: [authGuard],

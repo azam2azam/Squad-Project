@@ -46,6 +46,14 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
         builder.Ignore(b => b.Composition);
         builder.Ignore(b => b.Warnings);
 
+        builder.Property(b => b.Code).HasMaxLength(12);
+
+        // Unique among live boards only: a filtered index, because a soft-deleted board
+        // holding "DIS" hostage forever would be a puzzling thing to debug.
+        builder.HasIndex(b => b.Code)
+            .IsUnique()
+            .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
+
         builder.HasIndex(b => b.OrderIndex);
         builder.HasIndex(b => b.IsDeleted);
         // The dashboard risk register filters on this.
