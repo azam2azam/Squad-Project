@@ -25,6 +25,7 @@ cards — ready to present or export.
 | **M10** | Command-centre redesign, delivery analytics, board categories | ✅ Done |
 | **M11** | Smartsheet integration alongside Jira | ✅ Done |
 | **M12** | Staff scheduling: capacity, availability, work items, person profiles | ✅ Done |
+| **M13** | In-app user manual covering the whole product | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -527,6 +528,11 @@ appear in `Domain`.
 - [Setup](docs/SETUP.md)
 - [Deployment](docs/DEPLOYMENT.md)
 
-End users don't need any of the above: the Jira sync guide ships **inside the app** at
-`/help/jira-sync` (**Guide** in the top nav, open to everyone signed in), and is linked from
-the Jira settings screen and from the suggestion panel on a board.
+End users don't need any of the above. The manual ships **inside the app** at `/help`
+(**User manual** in the nav, open to everyone signed in, including Viewers) and covers the
+whole product: boards, roster, tasks, the capacity model, programmes, reporting, presenting,
+the Excel and JSON round trip, the integrations, accounts, and what to check when something
+looks wrong. It prints cleanly, so it doubles as a handover document.
+
+The Jira sync guide is one chapter of it, at `/help/jira-sync` — reached from the manual,
+from the Jira settings screen, and from the suggestion panel on a board.

@@ -23,17 +23,22 @@
     </div>
   </header>
 
+  <!--
+    fragment on an empty routerLink, never a bare href="#id": the document has
+    <base href="/">, against which a fragment-only href resolves to "/#id" — which is the
+    redirect to the dashboard, not a jump down this page.
+  -->
   <nav class="guide__toc" aria-label="On this page">
-    <a href="#idea">The short version</a>
-    <a href="#modes">Two modes</a>
-    <a href="#setup">Admin setup</a>
-    <a href="#link">Linking a board</a>
-    <a href="#daily">Using a suggestion</a>
-    <a href="#mapping">How figures are read</a>
-    <a href="#schedule">The scheduled run</a>
-    <a href="#audit">What changed, and who by</a>
-    <a href="#security">The API token</a>
-    <a href="#trouble">When it doesn't work</a>
+    <a [routerLink]="[]" fragment="idea">The short version</a>
+    <a [routerLink]="[]" fragment="modes">Two modes</a>
+    <a [routerLink]="[]" fragment="setup">Admin setup</a>
+    <a [routerLink]="[]" fragment="link">Linking a board</a>
+    <a [routerLink]="[]" fragment="daily">Using a suggestion</a>
+    <a [routerLink]="[]" fragment="mapping">How figures are read</a>
+    <a [routerLink]="[]" fragment="schedule">The scheduled run</a>
+    <a [routerLink]="[]" fragment="audit">What changed, and who by</a>
+    <a [routerLink]="[]" fragment="security">The API token</a>
+    <a [routerLink]="[]" fragment="trouble">When it doesn't work</a>
   </nav>
 
   <!-- ================================================================= -->
@@ -538,7 +543,10 @@
   </section>
 
   <footer class="guide__foot">
-    <p>The connection is read-only: this app never writes to your Jira.</p>
+    <p>
+      The connection is read-only: this app never writes to your Jira.
+      <a routerLink="/help">Back to the user manual</a>
+    </p>
     @if (isAdmin()) {
       <a class="btn" routerLink="/settings/jira">Open Jira settings</a>
     }

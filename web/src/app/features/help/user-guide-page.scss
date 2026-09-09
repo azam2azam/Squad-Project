@@ -1,0 +1,70 @@
+// Page-specific additions. Everything structural comes from guide.scss, which this
+// component loads first so the two help pages read as one document.
+
+.mark {
+  font-weight: 600;
+  color: #0a6e64;
+
+  &--no {
+    color: #8595a9;
+    font-weight: 400;
+  }
+}
+
+.dim {
+  color: #8595a9;
+}
+
+// The capacity model, set apart because it is the one thing on the page people will be
+// asked to justify in a meeting.
+.formula {
+  margin: 0 0 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--card-line);
+  border-left: 3px solid var(--accent-deep);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #f8fafc;
+
+  p {
+    margin: 0 0 6px;
+    max-width: none;
+    font-size: 14px;
+    line-height: 1.6;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  span {
+    color: #8595a9;
+    font-size: 13px;
+  }
+}
+
+// A manual is a thing people print and bring to a handover. The rail is not part of the
+// document, and a table of contents made of links is dead weight on paper.
+@media print {
+  .guide {
+    max-width: none;
+    padding: 0;
+  }
+
+  .guide__toc,
+  .guide__state,
+  .btn {
+    display: none;
+  }
+
+  .section {
+    break-inside: avoid;
+    margin-bottom: 26px;
+  }
+
+  .note,
+  .formula,
+  .split__card,
+  .table-wrap {
+    break-inside: avoid;
+  }
+}

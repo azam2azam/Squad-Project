@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { DOCUMENT, Component, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -22,6 +22,7 @@ export class App {
   private readonly metadata = inject(MetadataService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly roleCount = this.metadata.roles;
   protected readonly user = this.auth.user;
@@ -46,5 +47,18 @@ export class App {
 
   protected signOut(): void {
     void this.auth.logout();
+  }
+
+  /**
+   * The skip link cannot be a plain `href="#main"`: with `<base href="/">` a fragment-only
+   * href resolves to `/#main`, which routes to the dashboard instead of skipping the nav.
+   * Moving focus is the point anyway — scrolling alone leaves the next Tab back in the rail.
+   */
+  protected skipToMain(event: Event): void {
+    event.preventDefault();
+
+    const main = this.document.getElementById('main');
+    main?.focus();
+    main?.scrollIntoView();
   }
 }

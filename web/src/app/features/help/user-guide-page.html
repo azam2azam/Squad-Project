@@ -1,0 +1,684 @@
+<div class="guide">
+  <header class="guide__head">
+    <p class="guide__eyebrow">User manual</p>
+    <h1 class="guide__title">Squad Status Board, end to end</h1>
+    <p class="guide__sub">
+      Everything the application does, in the order you are likely to need it: keeping a
+      board current, running the squad, planning who is free, and getting it all onto a
+      screen in front of the leadership team.
+    </p>
+
+    <div class="guide__state" role="status">
+      <span class="dot" [class.dot--on]="canWrite()" [class.dot--off]="!canWrite()"></span>
+      <span>
+        You are signed in as <b>{{ roleLabel() }}</b>.
+        @if (isAdmin()) {
+          Every screen described here is open to you.
+        } @else if (canWrite()) {
+          Sections marked <span class="chip chip--admin">Admin</span> need an administrator.
+        } @else {
+          You have read-only access: you can view, present and export, but not edit.
+        }
+      </span>
+    </div>
+  </header>
+
+  <!--
+    fragment on an empty routerLink, never a bare href="#id": the document has
+    <base href="/">, against which a fragment-only href resolves to "/#id" — which is the
+    redirect to the dashboard, not a jump down this page.
+  -->
+  <nav class="guide__toc" aria-label="On this page">
+    <a [routerLink]="[]" fragment="start">Getting started</a>
+    <a [routerLink]="[]" fragment="roles">Who can do what</a>
+    <a [routerLink]="[]" fragment="boards">Boards</a>
+    <a [routerLink]="[]" fragment="squad">Squad and roster</a>
+    <a [routerLink]="[]" fragment="tasks">Tasks</a>
+    <a [routerLink]="[]" fragment="schedule">Schedule and capacity</a>
+    <a [routerLink]="[]" fragment="programmes">Programmes</a>
+    <a [routerLink]="[]" fragment="reporting">Dashboard and analytics</a>
+    <a [routerLink]="[]" fragment="present">Presenting and exporting</a>
+    <a [routerLink]="[]" fragment="excel">Excel and JSON</a>
+    <a [routerLink]="[]" fragment="integrations">Jira and Smartsheet</a>
+    <a [routerLink]="[]" fragment="accounts">Accounts and passwords</a>
+    <a [routerLink]="[]" fragment="trouble">When something looks wrong</a>
+  </nav>
+
+  <!-- ================================================================= -->
+  <section class="section" id="start">
+    <h2 class="section__title">Getting started</h2>
+    <p class="lede">
+      A <b>board</b> is one piece of work — a revamp, an enhancement, a migration — owned by
+      a <b>squad</b>. The application keeps those boards current and turns each one into a
+      slide you can show without preparing anything.
+    </p>
+
+    <p>
+      Everything is reached from the dark rail on the left. Only destinations you can
+      actually open are listed there, so the rail is shorter for a Viewer than for an
+      administrator.
+    </p>
+
+    <dl class="fields">
+      <div class="field">
+        <dt>Dashboard</dt>
+        <dd>
+          The portfolio in one screen: how many boards are in each status, average progress
+          by squad, where the people are, and the risk register.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Portfolio</dt>
+        <dd>
+          Every board as a card. Search, filter, import and export live here, and this is
+          where you add a board.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>People</dt>
+        <dd>The roster — everyone who can be put on a squad. <span class="chip chip--admin">Admin</span></dd>
+      </div>
+      <div class="field">
+        <dt>Schedule</dt>
+        <dd>Who is committed where, who is away, and who has room for more.</dd>
+      </div>
+      <div class="field">
+        <dt>Analytics</dt>
+        <dd>Squads compared, and progress week by week.</dd>
+      </div>
+      <div class="field">
+        <dt>Presentation</dt>
+        <dd>Full-screen slides for the review meeting.</dd>
+      </div>
+      <div class="field">
+        <dt>Settings</dt>
+        <dd>
+          Programmes, roles, users and the two integrations.
+          <span class="chip chip--admin">Admin</span>
+        </dd>
+      </div>
+    </dl>
+
+    <div class="note">
+      <p class="note__label">First thing to do</p>
+      <p>
+        Change your password under your name at the foot of the rail, or go straight to
+        <a routerLink="/settings/password">Change password</a>. Passwords must be at least
+        twelve characters.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="roles">
+    <h2 class="section__title">Who can do what</h2>
+    <p class="lede">
+      Three roles. The server enforces them — hiding a button is a courtesy, not the
+      control, so there is nothing to gain by going around the screen.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="visually-hidden">What each role may do</caption>
+        <thead>
+          <tr>
+            <th scope="col">Action</th>
+            <th scope="col">Viewer</th>
+            <th scope="col">Product Owner</th>
+            <th scope="col">Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of permissions; track row.action) {
+            <tr>
+              <th scope="row">{{ row.action }}</th>
+              <td class="mark" [class.mark--no]="!row.viewer">
+                {{ row.viewer ? 'Yes' : 'No' }}
+              </td>
+              <td class="mark" [class.mark--no]="!row.po">{{ row.po ? 'Yes' : 'No' }}</td>
+              <td class="mark" [class.mark--no]="!row.admin">{{ row.admin ? 'Yes' : 'No' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      A Viewer is a real, useful account — reading the portfolio, presenting it and exporting
+      it are exactly what most of the audience needs, and it is the safest thing to hand to
+      somebody outside the team.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="boards">
+    <h2 class="section__title">Boards</h2>
+    <p class="lede">
+      Open <b>Portfolio</b> and press <b>+ Add Squad</b> to create a board, or click any card
+      to open the one you want. The editor is a form on the left driving the live slide on
+      the right — what you see there is exactly what the meeting will see.
+    </p>
+
+    <h3 class="section__sub">The fields</h3>
+    <dl class="fields">
+      @for (field of boardFields; track field.name) {
+        <div class="field">
+          <dt>{{ field.name }}</dt>
+          <dd>{{ field.detail }}</dd>
+        </div>
+      }
+    </dl>
+
+    <h3 class="section__sub">Saving, and what happens if two of you are editing</h3>
+    <p>
+      Typing changes the slide immediately but writes nothing. <b>Save</b> commits; <b>Revert</b>
+      throws your edits away and returns to the stored version. If somebody else saves the
+      board while you have it open, the page quietly refetches — <em>unless you have unsaved
+      edits</em>, which are never overwritten by somebody else's save. A <b>Live</b> badge
+      above the slide means that connection is working.
+    </p>
+
+    <h3 class="section__sub">Worth a look</h3>
+    <p>
+      The amber panel is advisory, never blocking. It appears when a board says something a
+      reviewer will immediately question — Blocked with no blocker note, a Medium-or-worse
+      risk with no risk note, a squad with no Product Owner. You can save through all of it.
+    </p>
+
+    <h3 class="section__sub">Change history</h3>
+    <p>
+      Every board keeps a change log: what changed, from what to what, when and by whom.
+      Open it from <b>History</b> in the editor. It is also what the week-by-week analytics
+      chart is reconstructed from.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="squad">
+    <h2 class="section__title">Squad and roster</h2>
+    <p class="lede">
+      People exist once, on the roster, and are then placed onto boards. That is what makes
+      "who is on three squads at once" a question the application can answer.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <span class="steps__n">1</span>
+        <div>
+          <b>Add somebody to a board</b>
+          <p>
+            In the board editor, start typing in <b>Add squad member</b>. Matching people
+            appear as you type — pick one. A name nobody matches is created on the roster as
+            you add them, so it is reusable next time rather than retyped.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">2</span>
+        <div>
+          <b>Give them a role</b>
+          <p>
+            Tech Lead, Developer, QA and so on. The role sets the colour of their card on the
+            slide and feeds the squad-composition bar. <b>Detail</b> is the optional line
+            underneath — a stack, a focus, "Angular · FHIR R4".
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">3</span>
+        <div>
+          <b>Say how much of their week it takes</b>
+          <p>
+            On the <a routerLink="/staff">Schedule</a>, give the assignment an allocation and,
+            if it really ends, a start and end date. Without an allocation the assignment
+            counts as zero in the capacity maths — see below.
+          </p>
+        </div>
+      </li>
+    </ol>
+
+    <p>
+      <b>People</b> in the rail is the roster itself: everyone's default role, default detail
+      and whether they are still active. Retiring somebody there leaves their history on
+      every board they worked on. <span class="chip chip--admin">Admin</span>
+    </p>
+
+    <div class="note">
+      <p class="note__label">Need a role that isn't listed?</p>
+      <p>
+        Roles are configurable. An administrator adds one under
+        <a routerLink="/settings/roles">Settings → Roles</a> with its own colour, and it then
+        appears everywhere a role is picked. The seven built-in roles cannot be deleted, only
+        renamed and recoloured.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="tasks">
+    <h2 class="section__title">Tasks</h2>
+    <p class="lede">
+      <b>Tasks on this board</b> sits under the squad in the board editor. These are the
+      things the work is actually waiting on — BRD sign-off, a UAT window, an ARB review, a
+      data migration — not only what happens to be in Jira.
+    </p>
+
+    <p>
+      A task has a title, an optional assignee, a status, optional start and due dates,
+      optional effort in hours, and an optional detail line. The assignee list is
+      <em>that board's own squad</em>: add somebody to the squad first, then they can be
+      given work.
+    </p>
+
+    <ul class="bullets">
+      <li>
+        <b>Unassigned is a real state</b>, not a gap to fill in. It is counted separately and
+        it is the state a lead scans for when looking for something to hand out.
+      </li>
+      <li>
+        <b>Status and assignee change straight from the row</b> — the two edits people make
+        constantly. Everything else goes through <b>✎</b>.
+      </li>
+      <li>
+        <b>Done stamps a completion date</b>, and reopening a task clears it again, so "what
+        did they finish last month" stays true.
+      </li>
+      <li>
+        <b>Past due and not done shows as Overdue</b> on the row, on the schedule and on the
+        person's profile.
+      </li>
+      <li>Completed tasks are hidden by default; the count under the list reveals them.</li>
+    </ul>
+
+    <p>
+      Viewers see the task list without the controls — reading who owes what is exactly a
+      viewer's job.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="schedule">
+    <h2 class="section__title">Schedule and capacity</h2>
+    <p class="lede">
+      <a routerLink="/staff">Schedule</a> puts everyone down the side and weeks across the
+      top. Each cell is <b>free capacity</b> — what that person still has available — because
+      the question the page exists to answer is "who can take this on".
+    </p>
+
+    <h3 class="section__sub">The number in the cell</h3>
+    <p>Simple enough to explain in a sentence, because a number nobody can explain is a number nobody trusts:</p>
+
+    <div class="formula">
+      <p><b>available</b> = 100 − whatever time off takes away that week</p>
+      <p><b>committed</b> = the allocations on assignments running that week</p>
+      <p><b>free</b> = available − committed &nbsp;<span>(negative means over-committed)</span></p>
+    </div>
+
+    <ul class="bullets">
+      <li><b>Red</b> — committed beyond capacity.</li>
+      <li><b>Amber</b> — fully away that week.</li>
+      <li>The footer totals free <b>people-weeks</b> across the team.</li>
+    </ul>
+
+    <p>
+      Two deliberate choices keep the total honest rather than flattering. An assignment with
+      <b>no allocation counts as zero</b>, not as a guessed share — and the page says how
+      many are in that state, so you know a total is understated rather than wrong. An
+      assignment with <b>no dates runs in every week</b>, because "until further notice" is
+      what most of them mean.
+    </p>
+
+    <h3 class="section__sub">Time off</h3>
+    <p>
+      Only exceptions are recorded — leave, public holidays, training, part-time. Anything
+      not listed is a normal full week. Record it from a person's profile with <b>Record time
+      off</b>. <span class="chip chip--admin">Admin</span>
+    </p>
+    <p>
+      The percentage you enter is <b>what remains</b>, not what is lost: 0 is fully away, 50
+      is half days. Where two periods overlap, the most restrictive one wins.
+    </p>
+
+    <h3 class="section__sub">A person's profile</h3>
+    <p>
+      Click any name. You get their capacity this week, every assignment with its period and
+      share, their recorded time off, their open and completed work, and the board changes
+      they have made.
+    </p>
+    <p>
+      The activity feed matches on the <b>display name</b> the change log recorded, which is
+      what it has stored since before there was a roster to point at. Two people sharing a
+      name would merge, and a rename breaks the link — so the page prints how the match was
+      made rather than presenting a partial history as if it were complete.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="programmes">
+    <h2 class="section__title">
+      Programmes <span class="chip chip--admin">Admin</span>
+    </h2>
+    <p class="lede">
+      A programme is the layer above a board: VIDA 4, AI, and whatever comes next. Boards
+      belong to one programme or to none.
+    </p>
+
+    <ul class="bullets">
+      <li>
+        Create and colour them under
+        <a routerLink="/settings/categories">Settings → Categories</a>.
+      </li>
+      <li>
+        Move boards in bulk from there, or one at a time with the <b>Programme</b> picker in
+        the board editor.
+      </li>
+      <li>
+        Filter the portfolio by programme from the header, and every KPI recalculates for
+        what is shown.
+      </li>
+      <li>
+        Retiring a programme never deletes a board. Its boards simply become uncategorised —
+        which is a real, allowed state, not an error to clear.
+      </li>
+    </ul>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="reporting">
+    <h2 class="section__title">Dashboard and analytics</h2>
+
+    <h3 class="section__sub">Dashboard</h3>
+    <p>
+      The one screen to open before a meeting: counts by status, average progress by squad
+      (lowest first — the squads to ask about), where the people are by role, the risk
+      register, and what needs attention.
+    </p>
+
+    <h3 class="section__sub">Analytics</h3>
+    <p>Comparison rather than status. Seven views, all reading the same underlying data:</p>
+    <ul class="bullets">
+      <li><b>Progress week by week</b> — the portfolio trend.</li>
+      <li><b>Squads compared over time</b> — the same weeks, one line per squad.</li>
+      <li><b>Average completion by squad</b> and <b>boards per squad</b>.</li>
+      <li><b>Delivery health by squad</b> — the status mix inside each squad.</li>
+      <li><b>Capacity by squad</b> and <b>member workload</b> — how much sits on each person.</li>
+    </ul>
+
+    <div class="note">
+      <p class="note__label">About the week-by-week lines</p>
+      <p>
+        History is reconstructed from the change log, so a chart can only go back as far as
+        the record does. The page states how much real history it found instead of drawing a
+        confident line through weeks it knows nothing about, and the line breaks at a gap
+        rather than bridging it.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="present">
+    <h2 class="section__title">Presenting and exporting</h2>
+    <p class="lede">
+      Nothing has to be prepared for the meeting. The slides are the boards.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <span class="steps__n">1</span>
+        <div>
+          <b>Presentation Mode</b>
+          <p>
+            From the portfolio header, or <b>Present</b> in the board editor to open on that
+            board. Filters carry over, so you can present one programme or one squad.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">2</span>
+        <div>
+          <b>Drive it from the keyboard</b>
+          <p>
+            <b>→</b>, <b>space</b> or <b>Page Down</b> for the next slide; <b>←</b> or
+            <b>Page Up</b> to go back; <b>Home</b> and <b>End</b> for the ends; <b>Esc</b> to
+            leave.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="steps__n">3</span>
+        <div>
+          <b>Take it away as a file</b>
+          <p>
+            <b>PNG</b> in the board editor captures exactly what is on screen. <b>Export PDF</b>
+            on the portfolio renders the whole set server-side — available only where the
+            host has a renderer installed, so it is hidden when it would not work.
+          </p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="excel">
+    <h2 class="section__title">
+      Excel and JSON <span class="chip chip--admin">Admin</span>
+    </h2>
+    <p class="lede">
+      Both live in the portfolio header. Export first, always: it gives you the exact shape
+      the importer expects, and a backup of what you had before you changed it.
+    </p>
+
+    <h3 class="section__sub">The workbook</h3>
+    <p>
+      Three sheets plus a readme. <b>Boards</b> is the one people edit; <b>People</b> and
+      <b>Members</b> carry the roster and who is on which squad.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="visually-hidden">Columns on the Boards sheet</caption>
+        <thead>
+          <tr>
+            <th scope="col">Column</th>
+            <th scope="col">What goes in it</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (column of excelColumns; track column.name) {
+            <tr>
+              <th scope="row">{{ column.name }}</th>
+              <td>{{ column.note }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section__sub">Importing</h3>
+    <ul class="bullets">
+      <li>
+        A row with an <b>Id</b> updates that board. A row without one creates a new board.
+      </li>
+      <li>
+        An import <b>replaces the portfolio with the file</b>. If your file has no
+        <b>Members</b> rows, squad membership goes with it — so export first and edit that
+        export, rather than building a file from scratch.
+      </li>
+      <li>
+        A <b>Category</b> nobody has used yet is created during the import and reported back
+        to you in the summary, so a typo shows up as a new programme rather than disappearing
+        silently.
+      </li>
+      <li>
+        Anything the importer could not make sense of comes back as a warning listing the
+        row, rather than failing the whole file.
+      </li>
+    </ul>
+
+    <p>
+      <b>Export JSON</b> and <b>Import JSON</b> under "Also:" are the complete, lossless
+      pair — ids, roster, membership and all. Use JSON when you are taking a backup before
+      something risky; use Excel when a human has to read or edit it.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="integrations">
+    <h2 class="section__title">Jira and Smartsheet</h2>
+    <p class="lede">
+      A board can read its figures from a Jira project or a Smartsheet sheet instead of being
+      typed in by hand.
+    </p>
+
+    <div class="guide__state" role="status">
+      <span class="dot" [class.dot--on]="jiraEnabled()" [class.dot--off]="!jiraEnabled()"></span>
+      <span>
+        Jira is {{ jiraEnabled() ? 'connected' : 'not connected' }}.
+        <span class="dot" [class.dot--on]="smartsheetEnabled()" [class.dot--off]="!smartsheetEnabled()"></span>
+        Smartsheet is {{ smartsheetEnabled() ? 'connected' : 'not connected' }}.
+        @if (!jiraEnabled() || !smartsheetEnabled()) {
+          @if (isAdmin()) {
+            Set one up under <a routerLink="/settings/jira">Jira</a> or
+            <a routerLink="/settings/smartsheet">Smartsheet</a>.
+          } @else {
+            An administrator sets these up.
+          }
+        }
+      </span>
+    </div>
+
+    <p>
+      The important design decision is the same for both: by default the application
+      <b>shows you what the source says and waits</b>. Press <b>Sync</b> on a board, read the
+      pulled figures beside the current ones, then <b>Apply to draft</b> and <b>Save</b> — two
+      deliberate steps. An administrator can turn on automatic application instead, in which
+      case a background job writes to every linked board on a schedule.
+    </p>
+
+    <div class="split">
+      <article class="split__card">
+        <p class="split__title">What sync will change</p>
+        <ul class="bullets">
+          <li>Sprint <span class="dim">(Jira only — a sheet has no sprint)</span></li>
+          <li>Progress</li>
+          <li>Status</li>
+        </ul>
+      </article>
+      <article class="split__card split__card--writes">
+        <p class="split__title">What it will never touch</p>
+        <ul class="bullets">
+          <li>Blocker note</li>
+          <li>Risk level and note</li>
+          <li>Squad members and roles</li>
+          <li>Title, product, programme</li>
+        </ul>
+      </article>
+    </div>
+
+    <p>
+      Both connections are <b>read-only</b>: the application never creates, edits, transitions
+      or comments on anything in Jira or Smartsheet. Credentials are encrypted before they
+      are stored and are never sent back to a browser — a saved token shows only its last
+      four characters.
+    </p>
+
+    <p>
+      <a routerLink="/help/jira-sync">The full Jira guide</a> covers setup, the exact status
+      rules, the scheduled run and what to do when it does not work. Smartsheet works the
+      same way, with a sheet id in place of a project key and two column names to tell it
+      which columns hold progress and status.
+    </p>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="accounts">
+    <h2 class="section__title">Accounts and passwords</h2>
+
+    <p>
+      Anyone can change their own password from <a routerLink="/settings/password">Change
+      password</a>. Minimum twelve characters.
+    </p>
+
+    <p>
+      Administrators manage accounts under <a routerLink="/settings/users">Settings → Users</a>:
+      create people, change a role, reset a password, deactivate somebody who has left.
+      <span class="chip chip--admin">Admin</span>
+    </p>
+
+    <ul class="bullets">
+      <li>
+        Changing a role, resetting a password or deactivating an account <b>signs that person
+        out everywhere</b> immediately.
+      </li>
+      <li>
+        You cannot deactivate or demote yourself, and the last active administrator cannot be
+        removed — locking everybody out of the application is not a mistake worth allowing.
+      </li>
+      <li>
+        An account is separate from a roster entry. Somebody can be on a squad without ever
+        signing in, which is usually right for contributors who only need to appear on a
+        slide.
+      </li>
+    </ul>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="trouble">
+    <h2 class="section__title">When something looks wrong</h2>
+
+    <dl class="fields">
+      <div class="field">
+        <dt>The role dropdown is empty</dt>
+        <dd>
+          Reference data did not load — usually the API is not running or your session
+          expired. Reload the page; if the rail shows <b>API unavailable</b>, tell whoever
+          runs the server.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Somebody's free capacity looks too high</dt>
+        <dd>
+          Their assignments probably have no allocation, so they count as zero. The note under
+          the schedule says how many are in that state. Set the allocations and the number
+          becomes real.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>A person shows no activity</dt>
+        <dd>
+          The feed matches on display name. If they were renamed, or their roster name differs
+          from the name on their account, the link breaks. The page says so rather than
+          implying they did nothing.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>A squad appears twice</dt>
+        <dd>
+          Squads group on the text of the <b>Squad</b> field, so "Pradeep &amp; Shehan" and
+          "Pradeep and Shehan" are two squads. Correct the spelling on the board and they
+          merge again.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Sync did nothing</dt>
+        <dd>
+          Check the board has a project key or sheet id, and that the connection is set up at
+          all — the status line at the top of this page says. The
+          <a routerLink="/help/jira-sync">Jira guide</a> has the full checklist.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>An import undid something</dt>
+        <dd>
+          Import replaces the portfolio with the file. Re-import the JSON export you took
+          beforehand — which is why the advice above is to always export first.
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <div class="guide__foot">
+    <p>Squad Status Board · Product Innovation &amp; Revamp Team</p>
+    <a class="btn" routerLink="/portfolio">Back to the portfolio</a>
+  </div>
+</div>

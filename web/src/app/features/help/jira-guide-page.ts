@@ -20,7 +20,7 @@ import { MetadataService } from '../../core/services/metadata.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink],
   templateUrl: './jira-guide-page.html',
-  styleUrl: './jira-guide-page.scss',
+  styleUrl: './guide.scss',
 })
 export class JiraGuidePage {
   private readonly auth = inject(AuthService);

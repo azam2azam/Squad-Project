@@ -1,5 +1,5 @@
 @if (!chromeless()) {
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to content</a>
 
   <!--
     Dark rail against a light working area. Only destinations that exist are listed —
@@ -45,9 +45,14 @@
           Presentation
         </a>
 
-        <a routerLink="/help/jira-sync" routerLinkActive="is-active" class="rail__link">
+        <!--
+          The manual is the entry point; the Jira guide is one chapter of it, linked from
+          inside, so the rail carries one "where do I look this up" destination rather
+          than a growing list of them.
+        -->
+        <a routerLink="/help" routerLinkActive="is-active" class="rail__link">
           <span class="rail__icon" aria-hidden="true">?</span>
-          Guide
+          User manual
         </a>
 
         @if (isAdmin()) {
@@ -99,6 +104,6 @@
   </aside>
 }
 
-<main id="main" class="shell-main" [class.shell-main--bare]="chromeless()">
+<main id="main" tabindex="-1" class="shell-main" [class.shell-main--bare]="chromeless()">
   <router-outlet />
 </main>

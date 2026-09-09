@@ -106,6 +106,14 @@ export const routes: Routes = [
       import('./features/users/change-password-page').then((m) => m.ChangePasswordPage),
   },
   {
+    // The manual for the whole product. Open to everyone, including Viewers — a reader
+    // who cannot edit still needs to know what they are looking at.
+    path: 'help',
+    title: 'User manual · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/help/user-guide-page').then((m) => m.UserGuidePage),
+  },
+  {
     // Open to everyone signed in, unlike the settings screen: the people who act on a
     // Jira suggestion are Product Owners, and the admin-only parts are marked rather
     // than hidden so a PO can see what to ask for.
