@@ -1,0 +1,322 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.tasks__sub {
+  margin: 0 0 11px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.tasks__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+
+.pill {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: #eef2f6;
+  color: #4e5b6e;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &--bad {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &--warn {
+    background: #fef3c7;
+    color: #92400e;
+  }
+}
+
+.tasks__error {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #8a2b2b;
+}
+
+.tasks__empty {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #64748b;
+  text-align: center;
+  padding: 14px;
+  border: 1px dashed var(--card-line);
+  border-radius: 10px;
+}
+
+// ---------------------------------------------------------------------------
+// Add / edit form — the inset panel the squad editor uses, same vocabulary
+// ---------------------------------------------------------------------------
+
+.form {
+  background: #f6f8fa;
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  padding: 13px;
+  margin-bottom: 12px;
+}
+
+.form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.form__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 11px;
+}
+
+.field {
+  margin-bottom: 11px;
+  min-width: 0;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.field__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.field__optional {
+  color: var(--tx-dim);
+  font-weight: 400;
+}
+
+.field__input {
+  width: 100%;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink-tx);
+  border: 1px solid var(--card-line);
+  border-radius: 9px;
+  padding: 9px 11px;
+  background: #fbfcfd;
+  transition: border-color var(--transition-fast);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    background: #fff;
+  }
+}
+
+.field__note {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: #64748b;
+
+  &--bad {
+    color: #8a2b2b;
+  }
+}
+
+.add-btn {
+  width: 100%;
+  background: var(--accent-deep);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 13.5px;
+  margin-bottom: 12px;
+
+  &:hover:not(:disabled) {
+    background: #0b7d72;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--inline {
+    width: auto;
+    padding: 9px 16px;
+    margin-bottom: 0;
+  }
+}
+
+.link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0a6e64;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// ---------------------------------------------------------------------------
+// The list
+// ---------------------------------------------------------------------------
+
+.tasks__list {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  background: #fff;
+
+  &--late {
+    border-color: #fca5a5;
+    background: #fffafa;
+  }
+
+  &--done .task__title {
+    color: #64748b;
+  }
+}
+
+// Status is a stripe beside the label, never the label's own colour.
+.task__stripe {
+  width: 4px;
+  align-self: stretch;
+  min-height: 30px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.task__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-tx);
+  overflow-wrap: anywhere;
+}
+
+.task__meta {
+  font-size: 11px;
+  color: #64748b;
+
+  a {
+    color: #0a6e64;
+    font-weight: 600;
+  }
+}
+
+.task__unassigned {
+  font-weight: 600;
+  color: #92400e;
+}
+
+.task__detail {
+  font-size: 11.5px;
+  color: #59687e;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  &--bad {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+.task__controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.task__select {
+  border: 1px solid var(--card-line);
+  border-radius: 7px;
+  padding: 4px 6px;
+  font-size: 11.5px;
+  background: #fff;
+  color: var(--ink-tx);
+  max-width: 116px;
+  @include focus-ring(var(--accent-deep));
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.task__edit,
+.task__rm {
+  border: none;
+  background: none;
+  color: var(--tx-dim);
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 6px;
+  flex: none;
+  @include focus-ring(var(--accent-deep));
+}
+
+.task__edit {
+  font-size: 13px;
+
+  &:hover {
+    background: #e2f5f2;
+    color: #0a6e64;
+  }
+}
+
+.task__rm {
+  font-size: 18px;
+
+  &:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}

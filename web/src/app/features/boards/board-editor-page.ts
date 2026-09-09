@@ -27,6 +27,7 @@ import {
 import { MetadataService } from '../../core/services/metadata.service';
 import { SlideCanvas } from '../../shared/slide/slide-canvas';
 import { SquadEditor } from './squad-editor';
+import { WorkItemsEditor } from './work-items-editor';
 import { BoardRealtimeService } from '../../core/services/board-realtime.service';
 import { SlideExportService } from '../../core/services/slide-export.service';
 import type { BoardDetail, BoardStatus } from '../../core/models/board.models';
@@ -41,7 +42,7 @@ type MobileTab = 'build' | 'slide';
 @Component({
   selector: 'app-board-editor-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, FormsModule, RouterLink, SlideCanvas, SquadEditor],
+  imports: [DatePipe, FormsModule, RouterLink, SlideCanvas, SquadEditor, WorkItemsEditor],
   templateUrl: './board-editor-page.html',
   styleUrl: './board-editor-page.scss',
 })

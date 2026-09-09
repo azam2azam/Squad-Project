@@ -56,13 +56,16 @@
 
         <label class="field">
           <span class="field__label">Default role</span>
-          <select
-            class="field__input"
-            [value]="draft().defaultRole"
-            (change)="setDraftRole($any($event.target).value)"
-          >
+          <!--
+            Marked on the options: [value] on the select is applied before @for has
+            created any option, so editing somebody showed the first role rather than
+            theirs.
+          -->
+          <select class="field__input" (change)="setDraftRole($any($event.target).value)">
             @for (role of roles(); track role.value) {
-              <option [value]="role.value">{{ role.label }}</option>
+              <option [value]="role.value" [selected]="role.value === draft().defaultRole">
+                {{ role.label }}
+              </option>
             }
           </select>
         </label>

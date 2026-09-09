@@ -104,13 +104,16 @@
       <div class="card">
         <label class="field">
           <span class="field__label">Status</span>
-          <select
-            class="field__input"
-            [value]="d.status"
-            (change)="onStatusChange($any($event.target).value)"
-          >
+          <!--
+            Marked on the options, like the Programme picker below: [value] on the select
+            is applied before @for has created any option, so the box showed "On Track"
+            whatever the board's status actually was.
+          -->
+          <select class="field__input" (change)="onStatusChange($any($event.target).value)">
             @for (status of statuses(); track status.value) {
-              <option [value]="status.value">{{ status.label }}</option>
+              <option [value]="status.value" [selected]="status.value === d.status">
+                {{ status.label }}
+              </option>
             }
           </select>
         </label>
@@ -151,13 +154,11 @@
       <div class="card">
         <label class="field">
           <span class="field__label">Risk level</span>
-          <select
-            class="field__input"
-            [value]="d.riskLevel"
-            (change)="onRiskChange($any($event.target).value)"
-          >
+          <select class="field__input" (change)="onRiskChange($any($event.target).value)">
             @for (risk of riskLevels; track risk.value) {
-              <option [value]="risk.value">{{ risk.label }}</option>
+              <option [value]="risk.value" [selected]="risk.value === d.riskLevel">
+                {{ risk.label }}
+              </option>
             }
           </select>
         </label>
@@ -200,6 +201,20 @@
           />
         </div>
       }
+
+      <!-- Tasks are shown to viewers too: reading who owes what is exactly a
+           viewer's job. Only the controls are withheld. -->
+      <div class="card card--members">
+        <div class="card__head">
+          <h2 class="card__title">Tasks on this board</h2>
+          <span class="card__hint">Feeds the team schedule</span>
+        </div>
+        <app-work-items-editor
+          [boardId]="preview()!.id"
+          [members]="preview()!.members"
+          [canWrite]="canWrite()"
+        />
+      </div>
 
       <!-- The programme this board belongs to. A level above Product, which names the
            module; a category collects many products under one programme. -->

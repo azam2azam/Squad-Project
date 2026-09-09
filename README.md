@@ -278,6 +278,12 @@ An unassigned task is a real state, and the one a lead scans for when filling ca
 Completion stamps a date when the status becomes Done and **clears it if the task
 reopens**, so "what did they finish last month" stays true.
 
+You add them where the work is: **Tasks on this board**, in the board editor under the
+squad. The assignee list is that board's own squad, because assigning work to somebody who
+is not on the board is how a roster stops meaning anything. Status and assignee change
+straight from the list — the two edits people make constantly. Viewers see the list and
+not the controls.
+
 ### Person profile
 
 Click any name. Shows their capacity this week, every assignment with its period, their

@@ -115,9 +115,16 @@
 
       <label class="roster__role-select">
         <span class="visually-hidden">Role for {{ member.fullName }}</span>
-        <select [value]="member.role" (change)="changeRole(member, $any($event.target).value)">
+        <!--
+          Selection is marked on the options rather than with [value] on the select: the
+          select's value is set before @for has created any options, so every row showed
+          the first role regardless of the member's actual one.
+        -->
+        <select (change)="changeRole(member, $any($event.target).value)">
           @for (role of roles(); track role.value) {
-            <option [value]="role.value">{{ role.label }}</option>
+            <option [value]="role.value" [selected]="member.role === role.value">
+              {{ role.label }}
+            </option>
           }
         </select>
       </label>

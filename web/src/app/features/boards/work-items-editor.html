@@ -1,0 +1,276 @@
+<div class="tasks">
+  <p class="tasks__sub">
+    Tasks recorded here are what the team schedule counts as committed work and what each
+    person's profile lists as theirs. Leave a task unassigned until somebody picks it up —
+    that is a state worth seeing, not a gap to fill.
+  </p>
+
+  <div class="tasks__stats" role="group" aria-label="Task counts">
+    <span class="pill">{{ openCount() }} open</span>
+    <span class="pill">{{ doneCount() }} done</span>
+    @if (overdueCount() > 0) {
+      <span class="pill pill--bad">{{ overdueCount() }} overdue</span>
+    }
+    @if (unassignedCount() > 0) {
+      <span class="pill pill--warn">{{ unassignedCount() }} unassigned</span>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="tasks__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (canWrite()) {
+    @if (!formOpen()) {
+      <button type="button" class="add-btn" (click)="startNew()">+ Add a task</button>
+    } @else {
+      <div class="form">
+        <div class="field">
+          <label class="field__label" for="taskTitle">Task</label>
+          <input
+            id="taskTitle"
+            class="field__input"
+            type="text"
+            maxlength="300"
+            placeholder="Sign off the BRD with clinical"
+            [value]="draft().title"
+            (input)="patch('title', $any($event.target).value)"
+          />
+        </div>
+
+        <div class="form__row">
+          <div class="field">
+            <label class="field__label" for="taskOwner">Assignee</label>
+            <!--
+              Selection is marked on the options, not with [value] on the select: the
+              select's value is set before @for has created any options, so it silently
+              falls back to the first one.
+            -->
+            <select
+              id="taskOwner"
+              class="field__input"
+              (change)="patch('personId', $any($event.target).value)"
+            >
+              <option value="" [selected]="draft().personId === ''">Unassigned</option>
+              @for (member of members(); track member.id) {
+                <option [value]="member.personId" [selected]="draft().personId === member.personId">
+                  {{ member.fullName }} · {{ member.roleLabel }}
+                </option>
+              }
+            </select>
+            @if (members().length === 0) {
+              <p class="field__note">Add somebody to the squad above to assign this task.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="taskStatus">Status</label>
+            <select
+              id="taskStatus"
+              class="field__input"
+              (change)="patch('status', +$any($event.target).value)"
+            >
+              @for (status of statuses(); track status.value) {
+                <option [value]="status.value" [selected]="draft().status === status.value">
+                  {{ status.label }}
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form__row">
+          <div class="field">
+            <label class="field__label" for="taskStart">
+              Starts <span class="field__optional">(optional)</span>
+            </label>
+            <input
+              id="taskStart"
+              class="field__input"
+              type="date"
+              [value]="draft().plannedStart"
+              (input)="patch('plannedStart', $any($event.target).value)"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="taskEnd">
+              Due <span class="field__optional">(optional)</span>
+            </label>
+            <input
+              id="taskEnd"
+              class="field__input"
+              type="date"
+              [value]="draft().plannedEnd"
+              (input)="patch('plannedEnd', $any($event.target).value)"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="taskEffort">
+              Effort <span class="field__optional">(hours)</span>
+            </label>
+            <input
+              id="taskEffort"
+              class="field__input"
+              type="number"
+              min="0"
+              step="0.5"
+              placeholder="—"
+              [value]="draft().effortHours"
+              (input)="patch('effortHours', $any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="taskDetail">
+            Detail <span class="field__optional">(optional)</span>
+          </label>
+          <textarea
+            id="taskDetail"
+            class="field__input"
+            rows="2"
+            maxlength="2000"
+            placeholder="What it involves, or what it is waiting on"
+            [value]="draft().detail"
+            (input)="patch('detail', $any($event.target).value)"
+          ></textarea>
+        </div>
+
+        @if (draft().plannedStart && draft().plannedEnd && !canSave() && draft().title.trim()) {
+          <p class="field__note field__note--bad">The due date is before the start date.</p>
+        }
+
+        <div class="form__actions">
+          <button
+            type="button"
+            class="add-btn add-btn--inline"
+            (click)="save()"
+            [disabled]="!canSave() || busy()"
+          >
+            {{ busy() ? 'Saving…' : draft().id ? 'Save task' : '+ Add task' }}
+          </button>
+          <button type="button" class="link-btn" (click)="cancel()">Cancel</button>
+        </div>
+      </div>
+    }
+  }
+
+  @if (loading()) {
+    <p class="tasks__empty">Loading tasks…</p>
+  } @else {
+    <ul class="tasks__list">
+      @for (item of visible(); track item.id) {
+        <li class="task" [class.task--late]="item.isOverdue" [class.task--done]="item.status === 3">
+          <span
+            class="task__stripe"
+            [style.background]="item.statusColor"
+            aria-hidden="true"
+          ></span>
+
+          <span class="task__body">
+            <span class="task__title">{{ item.title }}</span>
+            <span class="task__meta">
+              @if (item.personId) {
+                <a [routerLink]="['/staff', item.personId]">{{ item.personName }}</a>
+              } @else {
+                <span class="task__unassigned">Unassigned</span>
+              }
+              · {{ item.statusLabel }}
+              @if (item.plannedEnd) {
+                · due {{ item.plannedEnd | date: 'd MMM' }}
+              }
+              @if (item.isOverdue) {
+                <span class="tag tag--bad">Overdue</span>
+              }
+              @if (item.completedOn) {
+                · completed {{ item.completedOn | date: 'd MMM' }}
+              }
+              @if (item.effortHours !== null) {
+                · {{ item.effortHours }}h
+              }
+            </span>
+            @if (item.detail) {
+              <span class="task__detail">{{ item.detail }}</span>
+            }
+          </span>
+
+          @if (canWrite()) {
+            <span class="task__controls">
+              <label class="visually-hidden" [attr.for]="'status-' + item.id">
+                Status for {{ item.title }}
+              </label>
+              <select
+                class="task__select"
+                [id]="'status-' + item.id"
+                [disabled]="busy()"
+                (change)="setStatus(item, $any($event.target).value)"
+              >
+                @for (status of statuses(); track status.value) {
+                  <option [value]="status.value" [selected]="item.status === status.value">
+                    {{ status.label }}
+                  </option>
+                }
+              </select>
+
+              <label class="visually-hidden" [attr.for]="'owner-' + item.id">
+                Assignee for {{ item.title }}
+              </label>
+              <select
+                class="task__select"
+                [id]="'owner-' + item.id"
+                [disabled]="busy()"
+                (change)="setAssignee(item, $any($event.target).value)"
+              >
+                <option value="" [selected]="!item.personId">Unassigned</option>
+                @for (member of members(); track member.id) {
+                  <option [value]="member.personId" [selected]="item.personId === member.personId">
+                    {{ member.fullName }}
+                  </option>
+                }
+              </select>
+
+              <button
+                type="button"
+                class="task__edit"
+                [attr.aria-label]="'Edit ' + item.title"
+                title="Edit"
+                (click)="edit(item)"
+              >
+                ✎
+              </button>
+              <button
+                type="button"
+                class="task__rm"
+                [attr.aria-label]="'Delete ' + item.title"
+                title="Delete"
+                [disabled]="busy()"
+                (click)="remove(item)"
+              >
+                ×
+              </button>
+            </span>
+          }
+        </li>
+      } @empty {
+        <li class="tasks__empty">
+          @if (doneCount() > 0) {
+            Nothing open. {{ doneCount() }} completed
+            {{ doneCount() === 1 ? 'task is' : 'tasks are' }} hidden.
+          } @else {
+            No tasks yet. Add the work this board is actually waiting on — sign-offs, UAT,
+            migrations — not only what is in Jira.
+          }
+        </li>
+      }
+    </ul>
+
+    @if (doneCount() > 0) {
+      <button type="button" class="link-btn" (click)="showDone.set(!showDone())">
+        {{ showDone() ? 'Hide' : 'Show' }} {{ doneCount() }} completed
+        {{ doneCount() === 1 ? 'task' : 'tasks' }}
+      </button>
+    }
+  }
+</div>

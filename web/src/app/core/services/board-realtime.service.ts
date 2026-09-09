@@ -5,6 +5,7 @@ import {
   HubConnectionState,
   LogLevel,
 } from '@microsoft/signalr';
+import { AuthService } from './auth.service';
 
 export type RealtimeStatus = 'disconnected' | 'connecting' | 'live';
 
@@ -17,6 +18,8 @@ export type RealtimeStatus = 'disconnected' | 'connecting' | 'live';
  */
 @Injectable({ providedIn: 'root' })
 export class BoardRealtimeService {
+  private readonly auth = inject(AuthService);
+
   private connection?: HubConnection;
   private joinedBoardId: string | null = null;
 
@@ -69,7 +72,10 @@ export class BoardRealtimeService {
 
     if (!this.connection) {
       this.connection = new HubConnectionBuilder()
-        .withUrl('/hubs/boards')
+        // The hub is [Authorize]d, so it needs the bearer too. The HTTP interceptor
+        // cannot help here — SignalR opens its own socket, and the server reads the
+        // token from the access_token query string for exactly this reason.
+        .withUrl('/hubs/boards', { accessTokenFactory: () => this.auth.accessToken ?? '' })
         .withAutomaticReconnect()
         .configureLogging(LogLevel.Warning)
         .build();
