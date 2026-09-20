@@ -54,6 +54,13 @@ export class UserGuidePage {
     { action: 'Add squad members and tasks', viewer: false, po: true, admin: true },
     { action: 'Pull a Jira or Smartsheet suggestion', viewer: false, po: true, admin: true },
     { action: 'Excel and JSON import', viewer: false, po: false, admin: true },
+    {
+      action: 'Edit your own profile — picture, skills, achievements',
+      viewer: true,
+      po: true,
+      admin: true,
+    },
+    { action: "Edit somebody else's profile", viewer: false, po: false, admin: true },
     { action: 'The roster, and recording time off', viewer: false, po: false, admin: true },
     { action: 'Categories, roles, users, integrations', viewer: false, po: false, admin: true },
   ];

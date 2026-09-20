@@ -129,7 +129,9 @@
                 <span class="table__ava" [style.background]="person.defaultRoleColor">
                   {{ person.initials }}
                 </span>
-                {{ person.fullName }}
+                <a class="table__name" [routerLink]="['/people', person.id]">
+                  {{ person.fullName }}
+                </a>
               </th>
               <td>
                 <span class="table__role" [style.color]="person.defaultRoleColor">

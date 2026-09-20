@@ -27,6 +27,7 @@ cards — ready to present or export.
 | **M12** | Staff scheduling: capacity, availability, work items, person profiles | ✅ Done |
 | **M13** | In-app user manual covering the whole product | ✅ Done |
 | **M14** | Telegram: boards updated by message, from linked accounts only | ✅ Done |
+| **M15** | Team directory: profile pictures, headlines, skills, achievements | ✅ Done |
 
 Every functional requirement in the spec is implemented and demoable end to end, plus a
 delivery dashboard, risk tracking, Excel round-tripping and user administration on top.
@@ -303,6 +304,51 @@ rather than presenting a partial history as complete.
 | View the schedule and profiles | Anyone signed in — knowing who has capacity is not privileged |
 | Add and edit work items | Whoever can edit that board |
 | Record availability | Admin, same gate as the roster |
+
+## The team directory
+
+**People** in the nav is the team as cards — a picture, a line about each person, the skills
+they list and what they have done. Open to everyone signed in, Viewers included. The
+**Roster** below it is the same people as administrative records; this is the part everybody
+else reads.
+
+Each person edits their own page: a picture (JPEG, PNG, WebP or GIF up to 2 MB), a headline,
+a couple of sentences, skills and achievements. Editing is inline — a profile only ever gets
+filled in because it was easy on the afternoon somebody thought of it.
+
+### Who may write
+
+**Your own profile, or anybody's if you are an admin.** Whose is whose comes from the link
+between an application account and a roster entry (`AppUser.PersonId`), set under
+Settings → Users. An account with no link sees the page without edit controls rather than
+being refused after the fact. A Viewer account is read-only everywhere else in the
+application — their own profile is the deliberate exception.
+
+### Two things worth knowing about the schema
+
+Photos live in **their own table**, one row per person. EF loads every scalar property of an
+entity it reads, so a photo column on `People` would drag image bytes into memory every time
+anybody listed the roster, rendered a slide or asked who is free this week. They are in the
+database rather than on disk because this deploys as one process against one SQL Server, and
+a file share would be another thing to configure, back up and keep in step — for forty
+pictures.
+
+Skills are **rows, not a comma-separated string**, because the question the directory exists
+to answer is "who here knows FHIR". `PersonSkills.Name` is indexed for exactly that search;
+you cannot usefully index the inside of a text field.
+
+### Applying it to an existing database
+
+The change is additive — two nullable columns on `People` and three new tables. Scripts are
+in [docs/sql](docs/sql):
+
+| File | When to use it |
+|---|---|
+| `2026-09-20-add-person-profiles.sql` | The database is already at `AddTelegramIntegration` |
+| `all-migrations-idempotent.sql` | Further behind than that, or you are not sure |
+
+Both are idempotent — every statement is guarded on `__EFMigrationsHistory`, so re-running
+one is harmless — and both run inside a single transaction. Take a backup first anyway.
 
 ## Updating boards from Telegram
 

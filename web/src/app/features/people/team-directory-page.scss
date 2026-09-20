@@ -1,0 +1,268 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.dir {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 26px 24px 70px;
+}
+
+.dir__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.dir__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+.dir__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 27px;
+  letter-spacing: -0.01em;
+}
+
+.dir__sub {
+  margin: 8px 0 0;
+  max-width: 66ch;
+  color: #5d6b7e;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dir__tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.search {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.search__input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink-tx);
+  font-size: 14px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  @include focus-ring(var(--accent-deep));
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #4e5b6e;
+  white-space: nowrap;
+}
+
+.dir__count {
+  font-size: 12.5px;
+  color: #8595a9;
+  font-variant-numeric: tabular-nums;
+}
+
+// ---------------------------------------------------------------------------
+// The cards
+// ---------------------------------------------------------------------------
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:hover {
+    border-color: var(--accent);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.07);
+  }
+
+  &--off {
+    opacity: 0.6;
+  }
+}
+
+.card__link {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 15px 16px;
+  text-decoration: none;
+  color: inherit;
+
+  @include focus-ring(var(--accent-deep));
+}
+
+// The photo and the initials avatar occupy exactly the same box, so a card does not
+// change shape the moment somebody uploads a picture.
+.card__photo,
+.card__avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.card__photo {
+  object-fit: cover;
+  background: #eef2f6;
+}
+
+.card__avatar {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: #0e1520;
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.card__name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.card__role {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #5d6b7e;
+  overflow-wrap: anywhere;
+}
+
+.card__meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: #8595a9;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: #eef2f6;
+  color: #4e5b6e;
+  font-size: 11px;
+  font-weight: 600;
+
+  &--more {
+    background: transparent;
+    color: #8595a9;
+  }
+}
+
+.tag {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+// ---------------------------------------------------------------------------
+// States
+// ---------------------------------------------------------------------------
+
+.empty {
+  padding: 30px;
+  border: 1px dashed var(--card-line);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: #5d6b7e;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.muted {
+  color: #8595a9;
+  font-size: 13px;
+}
+
+.banner {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: var(--card);
+  font-size: 13px;
+
+  &--error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line);
+  background: #fff;
+  color: var(--ink-tx);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--tx);
+  }
+
+  @include focus-ring(var(--accent-deep));
+}

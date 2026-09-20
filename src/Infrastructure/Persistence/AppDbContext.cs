@@ -26,6 +26,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<TelegramLink> TelegramLinks => Set<TelegramLink>();
     public DbSet<TelegramEnrolment> TelegramEnrolments => Set<TelegramEnrolment>();
     public DbSet<TelegramMessage> TelegramMessages => Set<TelegramMessage>();
+    public DbSet<PersonSkill> PersonSkills => Set<PersonSkill>();
+    public DbSet<PersonAchievement> PersonAchievements => Set<PersonAchievement>();
+    public DbSet<PersonPhoto> PersonPhotos => Set<PersonPhoto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

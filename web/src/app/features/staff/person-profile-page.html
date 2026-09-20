@@ -23,7 +23,13 @@
         </div>
       </div>
 
-      <a class="btn" routerLink="/staff">← Team schedule</a>
+      <div class="actions">
+        <!-- The two halves of a person: what they are committed to (here) and who they
+             are (the profile). Linked both ways rather than merged, because one is planning
+             and the other is a directory. -->
+        <a class="btn" [routerLink]="['/people', p.personId]">Profile</a>
+        <a class="btn" routerLink="/staff">← Team schedule</a>
+      </div>
     </header>
 
     @if (notice()) {

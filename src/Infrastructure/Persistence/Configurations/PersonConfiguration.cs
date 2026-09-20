@@ -17,6 +17,29 @@ public sealed class PersonConfiguration : IEntityTypeConfiguration<Person>
         builder.Property(p => p.AvatarColorOverride).HasMaxLength(9);
         builder.Property(p => p.DefaultRole).HasConversion<int>();
 
+        builder.Property(p => p.Headline).HasMaxLength(120);
+        builder.Property(p => p.About).HasMaxLength(2000);
+
+        builder.HasMany(p => p.Skills)
+            .WithOne(s => s.Person)
+            .HasForeignKey(s => s.PersonId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(p => p.Achievements)
+            .WithOne(a => a.Person)
+            .HasForeignKey(a => a.PersonId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // The backing fields are the source of truth; EF must not use the read-only
+        // properties — the same rule Board.Members follows.
+        builder.Metadata
+            .FindNavigation(nameof(Person.Skills))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Metadata
+            .FindNavigation(nameof(Person.Achievements))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
         builder.Ignore(p => p.Initials);
 
         builder.HasIndex(p => p.FullName);

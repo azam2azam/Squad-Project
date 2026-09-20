@@ -408,6 +408,38 @@ asked of `Board.CanBeEditedBy`, and every change is audited with `Source = "Tele
 `ChangedBy` stays the person's plain display name — the person profile matches activity on
 that name exactly, so decorating it would lose them their history.
 
+## Profiles and the team directory (M15)
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/profiles?q=&includeInactive=` | The directory. `q` matches names, headlines **and** skills |
+| `GET` | `/profiles/{personId}` | One profile, including `canEdit` for the caller |
+| `PUT` | `/profiles/{personId}` | Headline and about |
+| `POST` | `/profiles/{personId}/skills` | `{ names }` — commas and newlines are split |
+| `DELETE` | `/profiles/{personId}/skills/{skillId}` | Remove one |
+| `POST` | `/profiles/{personId}/achievements` | `{ title, detail?, achievedOn? }` |
+| `DELETE` | `/profiles/{personId}/achievements/{id}` | Remove one |
+| `GET` | `/profiles/{personId}/photo` | The image. **Anonymous** — see below |
+| `POST` | `/profiles/{personId}/photo` | multipart `file`; 2 MB, JPEG/PNG/WebP/GIF |
+| `DELETE` | `/profiles/{personId}/photo` | Clear it |
+
+Every write returns the **whole profile**, so a client never has to guess what the server
+made of an edit — the skills, the counts and the photo version come back in step.
+
+**Reading is open to anyone signed in.** Knowing who is on the team and what they work with
+is not privileged, and a directory half the company cannot open is not a directory.
+
+**Writing is the person's own, or an admin's**, decided by `AppUser.PersonId` — the link
+between an account and a roster entry. An account with no link can edit nothing, and
+`canEdit` on the read tells the UI that before it offers a button. A Viewer may still edit
+their own profile: they are read-only everywhere else, and this is the deliberate exception.
+
+The photo endpoint is `AllowAnonymous` on purpose: an `<img>` tag cannot send a bearer
+token. The URL carries `?v=` from the photo's own timestamp and the response is
+`max-age=31536000, immutable`, so the browser caches it hard and a new picture still appears
+at once under its new URL. The bytes live in `PersonPhotos`, one row per person, so listing
+the roster never loads them.
+
 ## Conventions
 
 - **Pagination** — list endpoints take `?page=` and `?pageSize=` (default 50, max 200)

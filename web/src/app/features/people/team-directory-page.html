@@ -1,0 +1,103 @@
+<div class="dir">
+  <header class="dir__head">
+    <div>
+      <p class="dir__eyebrow">Product Innovation &amp; Revamp Team</p>
+      <h1 class="dir__title">The team</h1>
+      <p class="dir__sub">
+        Who is here, what they work with, and what they have done. Search covers skills as
+        well as names — start with what you need rather than who you think does it.
+      </p>
+    </div>
+
+    @if (myPersonId(); as mine) {
+      <a class="btn btn--primary" [routerLink]="['/people', mine]">My profile</a>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="dir__tools">
+    <label class="search">
+      <span class="visually-hidden">Search the team</span>
+      <input
+        type="search"
+        class="search__input"
+        placeholder="Name, headline or skill — try &quot;Angular&quot;"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </label>
+
+    @if (isAdmin()) {
+      <label class="check">
+        <input type="checkbox" [checked]="includeInactive()" (change)="toggleInactive()" />
+        Show people who have left
+      </label>
+    }
+
+    <span class="dir__count">
+      {{ people().length }} {{ people().length === 1 ? 'person' : 'people' }}
+      @if (people().length > 0) {
+        · {{ withPhotos() }} with a photo · {{ withSkills() }} with skills
+      }
+    </span>
+  </div>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (people().length === 0) {
+    <p class="empty">
+      @if (search()) {
+        Nobody matches “{{ search() }}”. Skills only show up here once people add them to
+        their profile.
+      } @else {
+        Nobody on the roster yet.
+      }
+    </p>
+  } @else {
+    <ul class="grid">
+      @for (person of people(); track person.id) {
+        <li class="card" [class.card--off]="!person.isActive">
+          <a class="card__link" [routerLink]="['/people', person.id]">
+            @if (person.hasPhoto) {
+              <img class="card__photo" [src]="photoUrl(person)" [alt]="person.fullName" />
+            } @else {
+              <span class="card__avatar" [style.background]="person.roleColor">
+                {{ person.initials }}
+              </span>
+            }
+
+            <span class="card__body">
+              <span class="card__name">{{ person.fullName }}</span>
+              <span class="card__role">{{ person.headline || person.roleLabel }}</span>
+
+              @if (person.skills.length > 0) {
+                <span class="chips">
+                  @for (skill of person.skills.slice(0, 4); track skill) {
+                    <span class="chip">{{ skill }}</span>
+                  }
+                  @if (person.skills.length > 4) {
+                    <span class="chip chip--more">+{{ person.skills.length - 4 }}</span>
+                  }
+                </span>
+              }
+
+              <span class="card__meta">
+                {{ person.boardCount }} {{ person.boardCount === 1 ? 'board' : 'boards' }}
+                @if (person.achievementCount > 0) {
+                  · {{ person.achievementCount }}
+                  {{ person.achievementCount === 1 ? 'achievement' : 'achievements' }}
+                }
+                @if (!person.isActive) {
+                  <span class="tag">Left</span>
+                }
+              </span>
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { PeopleService, type PersonRequest } from '../../core/services/people.service';
 import { MetadataService } from '../../core/services/metadata.service';
 import type { Person, Role } from '../../core/models/board.models';
@@ -20,7 +21,7 @@ const emptyDraft = (): PersonRequest => ({
 @Component({
   selector: 'app-roster-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './roster-page.html',
   styleUrl: './roster-page.scss',
 })

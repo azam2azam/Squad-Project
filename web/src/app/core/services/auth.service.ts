@@ -12,6 +12,8 @@ export interface SignedInUser {
   displayName: string;
   role: number;
   roleName: UserRoleName;
+  /** The roster entry this account is linked to, when it is linked to one. */
+  personId: string | null;
 }
 
 export interface AuthResult {

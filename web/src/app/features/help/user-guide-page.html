@@ -33,6 +33,7 @@
     <a [routerLink]="[]" fragment="roles">Who can do what</a>
     <a [routerLink]="[]" fragment="boards">Boards</a>
     <a [routerLink]="[]" fragment="squad">Squad and roster</a>
+    <a [routerLink]="[]" fragment="profiles">Profiles</a>
     <a [routerLink]="[]" fragment="tasks">Tasks</a>
     <a [routerLink]="[]" fragment="schedule">Schedule and capacity</a>
     <a [routerLink]="[]" fragment="programmes">Programmes</a>
@@ -77,7 +78,17 @@
       </div>
       <div class="field">
         <dt>People</dt>
-        <dd>The roster — everyone who can be put on a squad. <span class="chip chip--admin">Admin</span></dd>
+        <dd>
+          The team directory: photos, headlines, skills and achievements. Everyone can open
+          it; you edit your own page.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Roster</dt>
+        <dd>
+          The same people as records — names, default roles, who is still here.
+          <span class="chip chip--admin">Admin</span>
+        </dd>
       </div>
       <div class="field">
         <dt>Schedule</dt>
@@ -253,6 +264,86 @@
         renamed and recoloured.
       </p>
     </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <section class="section" id="profiles">
+    <h2 class="section__title">Profiles</h2>
+    <p class="lede">
+      <b>People</b> in the nav is the team as cards: a photo, a line about each person, what
+      they work with, and what they have done. It is open to everyone signed in, including
+      Viewers.
+    </p>
+
+    <h3 class="section__sub">Your own page</h3>
+    <p>
+      Open <a routerLink="/people">People</a> and press <b>My profile</b>, or click your name
+      anywhere. Everything is edited in place:
+    </p>
+
+    <dl class="fields">
+      <div class="field">
+        <dt>Picture</dt>
+        <dd>
+          JPEG, PNG, WebP or GIF, up to 2 MB. Without one you get your initials on your role
+          colour, which is what the slides have always shown.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Headline</dt>
+        <dd>
+          One line under your name — "Tech Lead · Java full stack". Different from the
+          <b>Detail</b> an administrator sets on the roster, which is what prints on a slide.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>About</dt>
+        <dd>A couple of sentences. What you work on, and what you would like to do more of.</dd>
+      </div>
+      <div class="field">
+        <dt>Skills</dt>
+        <dd>
+          Type several at once — "Angular, FHIR R4, SQL Server" — commas are split for you.
+          The same skill in different capitals is not added twice.
+        </dd>
+      </div>
+      <div class="field">
+        <dt>Achievements</dt>
+        <dd>
+          A title, an optional detail and an optional date. Certifications, releases you led,
+          courses you finished.
+        </dd>
+      </div>
+    </dl>
+
+    <h3 class="section__sub">Who can change what</h3>
+    <p>
+      <b>You edit your own profile; an administrator can edit anyone's; nobody else can edit
+      anything.</b> Reading is open to everyone signed in. A Viewer account is read-only
+      everywhere else in the application — their own profile is the deliberate exception.
+    </p>
+
+    <div class="note">
+      <p class="note__label">If you cannot edit your own page</p>
+      <p>
+        Your account has to be linked to your roster entry for the application to know which
+        profile is yours. An administrator does that under
+        <a routerLink="/settings/users">Settings → Users</a>. Until then you will see the
+        page but no edit controls, and there will be no <b>My profile</b> button.
+      </p>
+    </div>
+
+    <h3 class="section__sub">Finding people</h3>
+    <p>
+      The search box covers <b>names, headlines and skills</b>, so "who here knows FHIR" is
+      one search rather than a question in a group chat. Skills only appear once people add
+      them, which is the honest reason to fill your own page in.
+    </p>
+    <p>
+      Each profile links to that person's <b>Schedule &amp; work</b> — their capacity, their
+      assignments and their tasks — and that page links back. Two pages on purpose: one is
+      who somebody is, the other is what they are committed to.
+    </p>
   </section>
 
   <!-- ================================================================= -->

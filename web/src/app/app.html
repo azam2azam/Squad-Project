@@ -22,10 +22,17 @@
           Portfolio
         </a>
 
+        <!-- The directory is everybody's; the roster underneath it is the admin's table
+             for maintaining the same people. -->
+        <a routerLink="/people" routerLinkActive="is-active" class="rail__link">
+          <span class="rail__icon" aria-hidden="true">☰</span>
+          People
+        </a>
+
         @if (isAdmin()) {
           <a routerLink="/roster" routerLinkActive="is-active" class="rail__link">
-            <span class="rail__icon" aria-hidden="true">☰</span>
-            People
+            <span class="rail__icon" aria-hidden="true">✎</span>
+            Roster
           </a>
         }
 

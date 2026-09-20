@@ -1,0 +1,279 @@
+@if (loading()) {
+  <p class="muted">Loading…</p>
+} @else if (!profile()) {
+  <p class="banner banner--error" role="alert">{{ error() ?? 'That profile was not found.' }}</p>
+} @else {
+  @let person = profile()!;
+
+  <div class="person">
+    <a class="back" routerLink="/people">← The team</a>
+
+    @if (error()) {
+      <p class="banner banner--error" role="alert">{{ error() }}</p>
+    }
+    @if (notice()) {
+      <p class="banner banner--ok" role="status">{{ notice() }}</p>
+    }
+
+    <!-- ================================================================ -->
+    <header class="hero">
+      <div class="hero__photo">
+        @if (photoUrl(); as url) {
+          <img class="hero__img" [src]="url" [alt]="person.fullName" />
+        } @else {
+          <span class="hero__avatar" [style.background]="person.roleColor">
+            {{ person.initials }}
+          </span>
+        }
+
+        @if (person.canEdit) {
+          <div class="hero__photo-actions">
+            <label class="link-btn">
+              {{ person.hasPhoto ? 'Change picture' : 'Add a picture' }}
+              <input
+                class="visually-hidden"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                [disabled]="busy()"
+                (change)="onPhotoPicked($event)"
+              />
+            </label>
+            @if (person.hasPhoto) {
+              <button type="button" class="link-btn link-btn--danger" [disabled]="busy()" (click)="removePhoto()">
+                Remove
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="hero__body">
+        <h1 class="hero__name">
+          {{ person.fullName }}
+          @if (!person.isActive) {
+            <span class="tag">Left the team</span>
+          }
+        </h1>
+
+        @if (editingAbout()) {
+          <label class="field">
+            <span class="field__label">Headline</span>
+            <input
+              class="field__input"
+              type="text"
+              maxlength="120"
+              placeholder="Tech Lead · Java full stack"
+              [value]="headlineDraft()"
+              (input)="headlineDraft.set($any($event.target).value)"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">
+              About <span class="field__hint">A couple of sentences is plenty.</span>
+            </span>
+            <textarea
+              class="field__input field__input--area"
+              rows="5"
+              maxlength="2000"
+              placeholder="What you work on, what you are good at, what you would like to do more of."
+              [value]="aboutDraft()"
+              (input)="aboutDraft.set($any($event.target).value)"
+            ></textarea>
+            <span class="field__count">{{ aboutDraft().length }} / 2000</span>
+          </label>
+
+          <div class="row">
+            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveAbout()">
+              {{ busy() ? 'Saving…' : 'Save' }}
+            </button>
+            <button type="button" class="link-btn" (click)="cancelEditing()">Cancel</button>
+          </div>
+        } @else {
+          <p class="hero__headline">{{ person.headline || person.roleLabel }}</p>
+
+          @if (person.email) {
+            <p class="hero__email"><a [href]="'mailto:' + person.email">{{ person.email }}</a></p>
+          }
+
+          @if (person.about) {
+            <p class="hero__about">{{ person.about }}</p>
+          } @else if (person.canEdit) {
+            <p class="hero__about hero__about--empty">
+              Nothing here yet. Add a line about what you work on — it is what makes the
+              directory worth opening.
+            </p>
+          }
+
+          <div class="row">
+            @if (person.canEdit) {
+              <button type="button" class="btn" (click)="startEditing()">Edit profile</button>
+            }
+            <a class="btn" [routerLink]="['/staff', person.id]">Schedule &amp; work</a>
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- ================================================================ -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Skills</h2>
+        <span class="panel__hint">What people search this directory for.</span>
+      </div>
+
+      @if (person.skills.length === 0 && !person.canEdit) {
+        <p class="muted">None listed.</p>
+      }
+
+      @if (person.skills.length > 0) {
+        <ul class="skills">
+          @for (skill of person.skills; track skill.id) {
+            <li class="skill">
+              {{ skill.name }}
+              @if (person.canEdit) {
+                <button
+                  type="button"
+                  class="skill__rm"
+                  [attr.aria-label]="'Remove ' + skill.name"
+                  [disabled]="busy()"
+                  (click)="removeSkill(skill.id)"
+                >
+                  ×
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (person.canEdit) {
+        <div class="add">
+          <label class="field field--inline">
+            <span class="visually-hidden">Add a skill</span>
+            <input
+              class="field__input"
+              type="text"
+              maxlength="300"
+              placeholder="Angular, FHIR R4, SQL Server — commas are fine"
+              [value]="skillDraft()"
+              (input)="skillDraft.set($any($event.target).value)"
+              (keydown.enter)="addSkills()"
+            />
+          </label>
+          <button type="button" class="btn" [disabled]="busy() || !skillDraft().trim()" (click)="addSkills()">
+            Add
+          </button>
+        </div>
+      }
+    </section>
+
+    <!-- ================================================================ -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Achievements</h2>
+        <span class="panel__hint">Certifications, releases you led, courses you finished.</span>
+      </div>
+
+      @if (person.achievements.length === 0) {
+        <p class="muted">
+          @if (person.canEdit) {
+            Nothing listed yet.
+          } @else {
+            None listed.
+          }
+        </p>
+      } @else {
+        <ul class="wins">
+          @for (win of person.achievements; track win.id) {
+            <li class="win">
+              <span class="win__body">
+                <span class="win__title">{{ win.title }}</span>
+                @if (win.detail) {
+                  <span class="win__detail">{{ win.detail }}</span>
+                }
+                @if (win.achievedOn) {
+                  <span class="win__date">{{ win.achievedOn }}</span>
+                }
+              </span>
+
+              @if (person.canEdit) {
+                <button
+                  type="button"
+                  class="link-btn link-btn--danger"
+                  [disabled]="busy()"
+                  (click)="removeAchievement(win.id)"
+                >
+                  Remove
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (person.canEdit) {
+        @if (!addingAchievement()) {
+          <button type="button" class="btn" (click)="addingAchievement.set(true)">
+            + Add an achievement
+          </button>
+        } @else {
+          <div class="editor">
+            <label class="field">
+              <span class="field__label">What was it?</span>
+              <input
+                class="field__input"
+                type="text"
+                maxlength="200"
+                placeholder="Led the MOH S3 discharge release"
+                [value]="achievementTitle()"
+                (input)="achievementTitle.set($any($event.target).value)"
+              />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Detail <span class="field__hint">(optional)</span></span>
+              <textarea
+                class="field__input field__input--area"
+                rows="2"
+                maxlength="1000"
+                [value]="achievementDetail()"
+                (input)="achievementDetail.set($any($event.target).value)"
+              ></textarea>
+            </label>
+
+            <label class="field field--date">
+              <span class="field__label">When <span class="field__hint">(optional)</span></span>
+              <input
+                class="field__input"
+                type="date"
+                [value]="achievementDate()"
+                (input)="achievementDate.set($any($event.target).value)"
+              />
+            </label>
+
+            <div class="row">
+              <button
+                type="button"
+                class="btn btn--primary"
+                [disabled]="busy() || !canSaveAchievement()"
+                (click)="addAchievement()"
+              >
+                {{ busy() ? 'Saving…' : 'Add' }}
+              </button>
+              <button type="button" class="link-btn" (click)="addingAchievement.set(false)">
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </section>
+
+    @if (person.canEdit) {
+      <p class="foot">
+        Only you and an administrator can change this page. Everyone signed in can read it.
+      </p>
+    }
+  </div>
+}

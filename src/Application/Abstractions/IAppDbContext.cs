@@ -24,6 +24,9 @@ public interface IAppDbContext
     DbSet<TelegramLink> TelegramLinks { get; }
     DbSet<TelegramEnrolment> TelegramEnrolments { get; }
     DbSet<TelegramMessage> TelegramMessages { get; }
+    DbSet<PersonSkill> PersonSkills { get; }
+    DbSet<PersonAchievement> PersonAchievements { get; }
+    DbSet<PersonPhoto> PersonPhotos { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

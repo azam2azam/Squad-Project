@@ -39,6 +39,22 @@ export const routes: Routes = [
       import('./features/boards/board-editor-page').then((m) => m.BoardEditorPage),
   },
   {
+    // The directory is for everybody, unlike the roster below: knowing who is on the team
+    // and what they work with is not privileged, and a directory half the company cannot
+    // open is not a directory.
+    path: 'people',
+    title: 'The team · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/people/team-directory-page').then((m) => m.TeamDirectoryPage),
+  },
+  {
+    path: 'people/:id',
+    title: 'Profile · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/people/person-page').then((m) => m.PersonPage),
+  },
+  {
     // Roster is org-wide, so only an Admin may open it — matching the API, which
     // refuses roster writes from anyone else.
     path: 'roster',

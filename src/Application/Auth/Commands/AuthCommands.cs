@@ -19,7 +19,13 @@ public sealed record SignedInUser(
     string Email,
     string DisplayName,
     UserRole Role,
-    string RoleName);
+    string RoleName,
+    /// <summary>
+    /// The roster entry this account belongs to, when it has been linked to one. Null is a
+    /// real state: an account can exist without anybody having pointed it at a person, and
+    /// the UI then has no "my profile" to offer rather than guessing at one.
+    /// </summary>
+    Guid? PersonId);
 
 // ---------------------------------------------------------------------------
 // Login
@@ -67,7 +73,7 @@ public sealed class LoginCommandHandler(
         return new AuthResult(
             access.Value, access.ExpiresAt,
             refresh.Value, refresh.ExpiresAt,
-            new SignedInUser(user.Id, user.Email, user.DisplayName, user.Role, user.Role.ToString()));
+            new SignedInUser(user.Id, user.Email, user.DisplayName, user.Role, user.Role.ToString(), user.PersonId));
     }
 }
 
@@ -110,7 +116,7 @@ public sealed class RefreshTokenCommandHandler(
         return new AuthResult(
             access.Value, access.ExpiresAt,
             refresh.Value, refresh.ExpiresAt,
-            new SignedInUser(user.Id, user.Email, user.DisplayName, user.Role, user.Role.ToString()));
+            new SignedInUser(user.Id, user.Email, user.DisplayName, user.Role, user.Role.ToString(), user.PersonId));
     }
 }
 
@@ -149,6 +155,6 @@ public sealed class GetCurrentUserQueryHandler(IAppDbContext db, ICurrentUserCon
 
         return user is null
             ? null
-            : new SignedInUser(user.Id, user.Email, user.DisplayName, user.Role, user.Role.ToString());
+            : new SignedInUser(user.Id, user.Email, user.DisplayName, user.Role, user.Role.ToString(), user.PersonId);
     }
 }
