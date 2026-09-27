@@ -1,9 +1,10 @@
-import { DOCUMENT, Component, computed, inject } from '@angular/core';
+import { DOCUMENT, Component, DestroyRef, computed, effect, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { MetadataService } from './core/services/metadata.service';
 import { AuthService } from './core/services/auth.service';
+import { MessagesService } from './core/services/messages.service';
 
 /**
  * Application shell: the persistent header and the routed outlet.
@@ -23,12 +24,23 @@ export class App {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+  private readonly messages = inject(MessagesService);
 
   protected readonly roleCount = this.metadata.roles;
   protected readonly user = this.auth.user;
   protected readonly isSignedIn = this.auth.isSignedIn;
   protected readonly isAdmin = this.auth.isAdmin;
   protected readonly canWrite = this.auth.canWrite;
+
+  /**
+   * The unread badge.
+   *
+   * Polled rather than pushed: the socket only carries threads you have open, so a
+   * message arriving in a channel you are not looking at would never reach the badge.
+   * Sixty seconds is slow enough to be invisible in the network tab and fast enough that
+   * the number is not embarrassingly stale when somebody glances at it.
+   */
+  protected readonly unread = this.messages.unread;
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -44,6 +56,21 @@ export class App {
     const url = this.url();
     return url.startsWith('/slide') || url.startsWith('/present') || url.startsWith('/login');
   });
+
+  constructor() {
+    // Refresh the badge on sign-in and on every navigation: moving between screens is
+    // exactly when somebody looks at it, and it costs one small request.
+    effect(() => {
+      this.url();
+      if (this.isSignedIn()) void this.messages.refreshUnread();
+    });
+
+    const timer = setInterval(() => {
+      if (this.isSignedIn()) void this.messages.refreshUnread();
+    }, 60_000);
+
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
 
   protected signOut(): void {
     void this.auth.logout();

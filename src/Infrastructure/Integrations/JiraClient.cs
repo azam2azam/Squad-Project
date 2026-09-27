@@ -36,20 +36,36 @@ public sealed class JiraClient(
 
         try
         {
-            using var request = BuildSearchRequest(credentials, projectKey);
-            using var response = await http.SendAsync(request, cancellationToken);
+            var tally = new Tally();
+            string? pageToken = null;
 
-            if (!response.IsSuccessStatusCode)
+            // The replacement endpoint pages with a token and does not report a total, so
+            // the issues have to be walked. Capped rather than unbounded: a project with
+            // more than a thousand issues does not produce a more useful percentage, and an
+            // integration that can loop forever on somebody else's data eventually will.
+            for (var page = 0; page < 10; page++)
             {
-                logger.LogWarning("Jira search for {ProjectKey} returned {Status}",
-                    projectKey, (int)response.StatusCode);
-                return null;
+                using var request = BuildSearchRequest(credentials, projectKey, pageToken);
+                using var response = await http.SendAsync(request, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogWarning("Jira search for {ProjectKey} returned {Status}",
+                        projectKey, (int)response.StatusCode);
+                    return null;
+                }
+
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var document = await JsonDocument.ParseAsync(stream,
+                    cancellationToken: cancellationToken);
+
+                Accumulate(document.RootElement, tally);
+
+                pageToken = NextPageToken(document.RootElement);
+                if (pageToken is null) break;
             }
 
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-            return Summarise(document.RootElement);
+            return Summarise(tally);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
@@ -59,11 +75,28 @@ public sealed class JiraClient(
         }
     }
 
-    private static HttpRequestMessage BuildSearchRequest(JiraCredentials credentials, string projectKey)
+    /// <summary>
+    /// Builds one page of the search.
+    ///
+    /// The endpoint is <c>/rest/api/3/search/jql</c>, not <c>/rest/api/3/search</c>:
+    /// Atlassian removed the latter from Jira Cloud, and it now answers <b>410 Gone</b> to
+    /// every request — which looks exactly like "the project returned nothing" from the
+    /// outside, whatever key you type.
+    ///
+    /// The difference that matters when reading this: the new endpoint returns no total and
+    /// pages with an opaque token rather than a start index.
+    /// </summary>
+    private static HttpRequestMessage BuildSearchRequest(JiraCredentials credentials,
+        string projectKey, string? pageToken)
     {
         var jql = Uri.EscapeDataString($"project = \"{projectKey}\" ORDER BY updated DESC");
-        var url = $"{credentials.BaseUrl}/rest/api/3/search?jql={jql}&maxResults=200" +
+        var url = $"{credentials.BaseUrl}/rest/api/3/search/jql?jql={jql}&maxResults=100" +
                   "&fields=status,statuscategorychangedate,sprint,customfield_10020";
+
+        if (pageToken is not null)
+        {
+            url += $"&nextPageToken={Uri.EscapeDataString(pageToken)}";
+        }
 
         var request = new HttpRequestMessage(HttpMethod.Get, url);
 
@@ -78,15 +111,38 @@ public sealed class JiraClient(
     }
 
     /// <summary>
-    /// Turns raw issues into a progress and status suggestion. Kept deliberately simple
-    /// and explainable — the rationale is shown to the PO so they can judge it.
+    /// Running counts across pages. Held as numbers rather than a list of issues because a
+    /// <see cref="JsonElement"/> does not outlive the document it came from, and the
+    /// document is disposed at the end of each page.
     /// </summary>
-    private static JiraSnapshot Summarise(JsonElement root)
+    private sealed class Tally
     {
-        var total = 0;
-        var done = 0;
-        var blocked = 0;
-        string? sprintName = null;
+        public int Total;
+        public int Done;
+        public int Blocked;
+        public string? SprintName;
+    }
+
+    /// <summary>The token for the next page, or null when this was the last one.</summary>
+    private static string? NextPageToken(JsonElement root)
+    {
+        if (root.TryGetProperty("isLast", out var isLast) && isLast.ValueKind == JsonValueKind.True)
+        {
+            return null;
+        }
+
+        return root.TryGetProperty("nextPageToken", out var token)
+               && token.ValueKind == JsonValueKind.String
+            ? token.GetString()
+            : null;
+    }
+
+    private static void Accumulate(JsonElement root, Tally tally)
+    {
+        var total = tally.Total;
+        var done = tally.Done;
+        var blocked = tally.Blocked;
+        var sprintName = tally.SprintName;
 
         if (root.TryGetProperty("issues", out var issues) && issues.ValueKind == JsonValueKind.Array)
         {
@@ -122,6 +178,23 @@ public sealed class JiraClient(
                 sprintName ??= ReadSprintName(fields);
             }
         }
+
+        tally.Total = total;
+        tally.Done = done;
+        tally.Blocked = blocked;
+        tally.SprintName = sprintName;
+    }
+
+    /// <summary>
+    /// Turns the counts into a progress and status suggestion. Kept deliberately simple
+    /// and explainable — the rationale is shown to the PO so they can judge it.
+    /// </summary>
+    private static JiraSnapshot Summarise(Tally tally)
+    {
+        var total = tally.Total;
+        var done = tally.Done;
+        var blocked = tally.Blocked;
+        var sprintName = tally.SprintName;
 
         var progress = total == 0 ? 0 : (int)Math.Round(done * 100d / total);
 

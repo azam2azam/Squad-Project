@@ -22,6 +22,24 @@
           Portfolio
         </a>
 
+        <a routerLink="/messages" routerLinkActive="is-active" class="rail__link">
+          <span class="rail__icon" aria-hidden="true">✉</span>
+          Messages
+          @if (unread().mentions > 0) {
+            <span
+              class="rail__badge rail__badge--mention"
+              [attr.aria-label]="unread().mentions + ' mentions'"
+              >{{ unread().mentions }}</span
+            >
+          } @else if (unread().conversations > 0) {
+            <span
+              class="rail__badge"
+              [attr.aria-label]="unread().conversations + ' conversations with unread messages'"
+              >{{ unread().conversations }}</span
+            >
+          }
+        </a>
+
         <!-- The directory is everybody's; the roster underneath it is the admin's table
              for maintaining the same people. -->
         <a routerLink="/people" routerLinkActive="is-active" class="rail__link">

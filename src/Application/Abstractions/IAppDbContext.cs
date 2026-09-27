@@ -28,5 +28,10 @@ public interface IAppDbContext
     DbSet<PersonAchievement> PersonAchievements { get; }
     DbSet<PersonPhoto> PersonPhotos { get; }
 
+    DbSet<Conversation> Conversations { get; }
+    DbSet<ConversationMember> ConversationMembers { get; }
+    DbSet<Message> Messages { get; }
+    DbSet<MessageMention> MessageMentions { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

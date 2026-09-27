@@ -30,6 +30,7 @@ builder.Services.AddSignalR();
 // Replaces the no-op notifier registered by Infrastructure: handlers publish through
 // IBoardNotifier and this is the only place that knows the transport is SignalR.
 builder.Services.AddSingleton<IBoardNotifier, SignalRBoardNotifier>();
+builder.Services.AddSingleton<IMessageNotifier, SignalRMessageNotifier>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -96,6 +97,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapHub<BoardsHub>("/hubs/boards");
+app.MapHub<MessagesHub>("/hubs/messages");
 
 await MigrateAndSeedAsync(app);
 

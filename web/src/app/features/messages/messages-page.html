@@ -1,0 +1,366 @@
+<div class="msg">
+  <!-- ── inbox ─────────────────────────────────────────────────────────── -->
+  <aside class="msg__list" aria-label="Conversations">
+    <header class="msg__listhead">
+      <div>
+        <h1 class="msg__title">Messages</h1>
+        <p class="msg__sub">
+          @if (unread().mentions > 0) {
+            <strong>{{ unread().mentions }} mention{{ unread().mentions === 1 ? '' : 's' }}</strong>
+            @if (unread().messages > 0) { · }
+          }
+          @if (unread().messages > 0) {
+            {{ unread().messages }} unread
+          } @else if (unread().mentions === 0) {
+            Nothing unread
+          }
+        </p>
+      </div>
+
+      <button type="button" class="btn btn--primary btn--sm" (click)="openPicker()">
+        New
+      </button>
+    </header>
+
+    <label class="search">
+      <span class="visually-hidden">Search conversations</span>
+      <input
+        type="search"
+        placeholder="Search conversations"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </label>
+
+    @if (loadingInbox()) {
+      <p class="msg__empty">Loading…</p>
+    } @else if (inbox().length === 0) {
+      <div class="msg__empty">
+        <p><strong>No conversations yet.</strong></p>
+        <p>
+          Open a board or squad channel, or message someone directly — channels appear here
+          once you join them.
+        </p>
+        <button type="button" class="btn btn--primary btn--sm" (click)="openPicker()">
+          Start a conversation
+        </button>
+      </div>
+    } @else {
+      <ul class="convs">
+        @for (c of inbox(); track c.id) {
+          <li>
+            <button
+              type="button"
+              class="conv"
+              [class.is-active]="thread()?.id === c.id"
+              [class.is-unread]="c.unreadCount > 0 && !c.isMuted"
+              (click)="select(c)"
+            >
+              <span
+                class="conv__avatar"
+                [style.background]="c.counterpartColor ?? 'transparent'"
+                [class.conv__avatar--channel]="c.kind !== DIRECT"
+              >
+                @if (c.kind === DIRECT) {
+                  {{ c.counterpartInitials }}
+                } @else if (c.kind === BOARD) {
+                  <svg viewBox="0 0 16 16" aria-hidden="true" width="14" height="14">
+                    <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none"
+                      stroke="currentColor" stroke-width="1.3" />
+                    <path d="M1.5 6h13" stroke="currentColor" stroke-width="1.3" />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 16 16" aria-hidden="true" width="14" height="14">
+                    <circle cx="5.5" cy="6" r="2.2" fill="none" stroke="currentColor" stroke-width="1.3" />
+                    <circle cx="11" cy="6.5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.3" />
+                    <path d="M1.8 13c.4-2.2 1.9-3.3 3.7-3.3S8.8 10.8 9.2 13" fill="none"
+                      stroke="currentColor" stroke-width="1.3" />
+                    <path d="M10.4 9.9c1.6-.2 3 .8 3.4 3.1" fill="none" stroke="currentColor"
+                      stroke-width="1.3" />
+                  </svg>
+                }
+              </span>
+
+              <span class="conv__body">
+                <span class="conv__top">
+                  <span class="conv__name">{{ c.title }}</span>
+                  <span class="conv__time">{{ timeLabel(c.lastActivityAt) }}</span>
+                </span>
+
+                <span class="conv__meta">
+                  <span class="tag tag--{{ c.kindLabel | lowercase }}">{{ c.kindLabel }}</span>
+                  @if (c.subtitle) { <span class="conv__sub">{{ c.subtitle }}</span> }
+                  @if (c.isMuted) { <span class="conv__muted">Muted</span> }
+                </span>
+
+                <span class="conv__preview">
+                  @if (c.lastMessagePreview) {
+                    <span class="conv__author">{{ c.lastMessageAuthor }}:</span>
+                    {{ c.lastMessagePreview }}
+                  } @else {
+                    <span class="conv__author">No messages yet</span>
+                  }
+                </span>
+              </span>
+
+              @if (c.unreadMentionCount > 0) {
+                <span class="badge badge--mention" [attr.aria-label]="c.unreadMentionCount + ' mentions'">&#64;</span>
+              } @else if (c.unreadCount > 0 && !c.isMuted) {
+                <span class="badge" [attr.aria-label]="c.unreadCount + ' unread'">{{ c.unreadCount }}</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+
+  <!-- ── thread ────────────────────────────────────────────────────────── -->
+  <section class="msg__thread" aria-label="Conversation">
+    @if (error()) {
+      <p class="banner banner--error" role="alert">{{ error() }}</p>
+    }
+
+    @if (!thread()) {
+      <div class="msg__blank">
+        <h2>Pick a conversation</h2>
+        <p>
+          Board channels are about one initiative. Squad channels follow the people across
+          every board they run. Direct messages stay between two of you.
+        </p>
+      </div>
+    } @else {
+      @let t = thread()!;
+
+      <header class="thread__head">
+        <div class="thread__id">
+          <h2 class="thread__title">{{ t.title }}</h2>
+          <p class="thread__meta">
+            <span class="tag tag--{{ t.kindLabel | lowercase }}">{{ t.kindLabel }}</span>
+            @if (t.subtitle) { <span>{{ t.subtitle }}</span> }
+            <span
+              class="live live--{{ status() }}"
+              [title]="status() === 'live' ? 'Live updates are on' : 'Not receiving live updates'"
+            >
+              {{ status() === 'live' ? 'Live' : status() === 'connecting' ? 'Connecting' : 'Offline' }}
+            </span>
+          </p>
+        </div>
+
+        <div class="thread__actions">
+          @if (t.kind === BOARD && t.boardId) {
+            <a class="btn btn--ghost btn--sm" [routerLink]="['/boards', t.boardId]">Open board</a>
+          }
+          <button type="button" class="btn btn--ghost btn--sm" (click)="toggleMute()">
+            {{ t.isMuted ? 'Unmute' : 'Mute' }}
+          </button>
+          @if (t.kind !== DIRECT) {
+            <button type="button" class="btn btn--ghost btn--sm" (click)="leave()">Leave</button>
+          }
+        </div>
+      </header>
+
+      @if (t.relatedBoards.length > 0) {
+        <div class="thread__boards">
+          <span class="thread__boardslabel">Boards this squad runs</span>
+          @for (b of t.relatedBoards; track b.id) {
+            <a class="boardchip" [routerLink]="['/boards', b.id]">
+              {{ b.title }}
+              <span class="boardchip__status">{{ b.statusLabel }}</span>
+            </a>
+          }
+        </div>
+      }
+
+      @if (t.participants.length > 0) {
+        <div class="thread__people">
+          @for (p of t.participants; track p.personId ?? p.userId) {
+            <button
+              type="button"
+              class="who"
+              [class.who--noaccount]="!p.hasAccount"
+              [style.--who-color]="p.color"
+              [title]="p.hasAccount ? 'Mention ' + p.displayName : p.displayName + ' has no account — a mention will not reach them'"
+              [disabled]="!p.hasAccount"
+              (click)="mention(p.displayName)"
+            >
+              <span class="who__avatar">{{ p.initials }}</span>
+              <span class="who__name">{{ p.displayName }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (unreachable().length > 0) {
+        <p class="thread__note">
+          {{ unreachable().length }} of this squad
+          {{ unreachable().length === 1 ? 'has' : 'have' }} no sign-in account yet, so a
+          mention will not reach {{ unreachable().length === 1 ? 'them' : 'them' }}.
+          An administrator can create accounts under Settings → Users.
+        </p>
+      }
+
+      <div class="thread__scroll">
+        @if (loadingThread()) {
+          <p class="msg__empty">Loading…</p>
+        } @else if (t.messages.length === 0) {
+          <p class="msg__empty">
+            Nothing here yet. Say what changed, what is blocked, or what you need.
+          </p>
+        } @else {
+          @for (m of t.messages; track m.id; let i = $index) {
+            @if (startsNewDay(t.messages, i)) {
+              <p class="daymark"><span>{{ dayLabel(m.sentAt) }}</span></p>
+            }
+
+            <article
+              class="bubble"
+              [class.bubble--mine]="m.isMine"
+              [class.bubble--mention]="m.mentionsMe"
+              [class.bubble--gone]="m.isDeleted"
+            >
+              <span class="bubble__avatar" [style.background]="m.authorColor">
+                {{ m.authorInitials }}
+              </span>
+
+              <div class="bubble__body">
+                <p class="bubble__head">
+                  @if (m.authorPersonId) {
+                    <a class="bubble__author" [routerLink]="['/people', m.authorPersonId]">
+                      {{ m.authorName }}
+                    </a>
+                  } @else {
+                    <span class="bubble__author">{{ m.authorName }}</span>
+                  }
+                  <span class="bubble__time">{{ timeLabel(m.sentAt) }}</span>
+                  @if (m.editedAt && !m.isDeleted) { <span class="bubble__edited">edited</span> }
+                </p>
+
+                @if (m.replyToMessageId) {
+                  <p class="quote">
+                    <span class="quote__author">{{ m.replyToAuthorName }}</span>
+                    {{ m.replyToExcerpt }}
+                  </p>
+                }
+
+                @if (m.isDeleted) {
+                  <p class="bubble__text bubble__text--gone">Message withdrawn</p>
+                } @else {
+                  <p class="bubble__text">{{ m.body }}</p>
+
+                  <span class="bubble__tools">
+                    <button type="button" (click)="startReply(m)">Reply</button>
+                    @if (m.isMine) {
+                      <button type="button" (click)="startEdit(m)">Edit</button>
+                    }
+                    <button type="button" (click)="remove(m)">Delete</button>
+                  </span>
+                }
+              </div>
+            </article>
+          }
+        }
+      </div>
+
+      <!-- ── composer ─────────────────────────────────────────────────── -->
+      <form class="composer" (submit)="$event.preventDefault(); send()">
+        @if (replyTo(); as r) {
+          <p class="composer__ctx">
+            Replying to <strong>{{ r.authorName }}</strong>
+            <button type="button" class="composer__cancel" (click)="cancelComposerContext()">
+              Cancel
+            </button>
+          </p>
+        } @else if (editing()) {
+          <p class="composer__ctx">
+            Editing your message
+            <button type="button" class="composer__cancel" (click)="cancelComposerContext()">
+              Cancel
+            </button>
+          </p>
+        }
+
+        <div class="composer__row">
+          <textarea
+            rows="2"
+            class="composer__input"
+            [placeholder]="'Message ' + t.title + ' — @ to mention, Enter to send'"
+            [value]="draft()"
+            (input)="draft.set($any($event.target).value)"
+            (keydown)="onKeydown($event)"
+            aria-label="Write a message"
+          ></textarea>
+
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="sending() || draft().trim().length === 0"
+          >
+            {{ sending() ? 'Sending…' : editing() ? 'Save' : 'Send' }}
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+</div>
+
+<!-- ── new conversation picker ──────────────────────────────────────────── -->
+@if (pickerOpen()) {
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Start a conversation">
+    <div class="sheet__panel">
+      <header class="sheet__head">
+        <h2>Start a conversation</h2>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="closePicker()">Close</button>
+      </header>
+
+      <label class="search">
+        <span class="visually-hidden">Search boards, squads and people</span>
+        <input
+          type="search"
+          placeholder="Search boards, squads and people"
+          [value]="pickerSearch()"
+          (input)="onPickerSearch($any($event.target).value)"
+        />
+      </label>
+
+      <div class="sheet__scroll">
+        @if (squadTargets().length > 0) {
+          <h3 class="sheet__group">Squads</h3>
+          @for (t of squadTargets(); track t.label) {
+            <button type="button" class="target" (click)="start(t)">
+              <span class="target__label">{{ t.label }}</span>
+              <span class="target__sub">{{ t.sublabel }}</span>
+            </button>
+          }
+        }
+
+        @if (boardTargets().length > 0) {
+          <h3 class="sheet__group">Boards</h3>
+          @for (t of boardTargets(); track t.boardId) {
+            <button type="button" class="target" (click)="start(t)">
+              <span class="target__label">{{ t.label }}</span>
+              <span class="target__sub">{{ t.sublabel }}</span>
+            </button>
+          }
+        }
+
+        <h3 class="sheet__group">People</h3>
+        @if (peopleTargets().length === 0) {
+          <p class="sheet__note">
+            Nobody else has a sign-in account yet, so there is no one to message directly.
+            An administrator can create accounts under Settings → Users and link each one
+            to its roster entry.
+          </p>
+        } @else {
+          @for (t of peopleTargets(); track t.userId) {
+            <button type="button" class="target" (click)="start(t)">
+              <span class="target__avatar" [style.background]="t.color">{{ t.initials }}</span>
+              <span class="target__label">{{ t.label }}</span>
+              <span class="target__sub">{{ t.sublabel }}</span>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}

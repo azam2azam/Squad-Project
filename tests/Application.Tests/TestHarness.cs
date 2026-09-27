@@ -102,6 +102,27 @@ public sealed class RecordingBoardNotifier : IBoardNotifier
     }
 }
 
+/// <summary>Captures message broadcasts, so handlers can assert the fan-out happened.</summary>
+public sealed class RecordingMessageNotifier : IMessageNotifier
+{
+    public List<(Guid ConversationId, object Payload)> Posted { get; } = [];
+    public List<(Guid ConversationId, object Payload)> Changed { get; } = [];
+
+    public Task MessagePostedAsync(Guid conversationId, object payload,
+        CancellationToken cancellationToken = default)
+    {
+        Posted.Add((conversationId, payload));
+        return Task.CompletedTask;
+    }
+
+    public Task MessageChangedAsync(Guid conversationId, object payload,
+        CancellationToken cancellationToken = default)
+    {
+        Changed.Add((conversationId, payload));
+        return Task.CompletedTask;
+    }
+}
+
 /// <summary>Mutable ambient identity so a single test can switch roles mid-flight.</summary>
 public sealed class FakeUserContext(Guid userId, UserRole role) : ICurrentUserContext
 {

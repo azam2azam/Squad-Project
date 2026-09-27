@@ -29,6 +29,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<PersonSkill> PersonSkills => Set<PersonSkill>();
     public DbSet<PersonAchievement> PersonAchievements => Set<PersonAchievement>();
     public DbSet<PersonPhoto> PersonPhotos => Set<PersonPhoto>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ConversationMember> ConversationMembers => Set<ConversationMember>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<MessageMention> MessageMentions => Set<MessageMention>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -250,3 +250,23 @@
   grid-column: 1 / -1;
   background: transparent;
 }
+
+/* Unread badge on the Messages rail link. A mention is somebody asking you
+   specifically, so it is a different colour rather than a bigger number. */
+.rail__badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.rail__badge--mention {
+  background: #e11d48;
+}

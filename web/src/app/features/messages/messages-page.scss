@@ -1,0 +1,746 @@
+:host {
+  display: block;
+}
+
+/* Two panes side by side on a desk, stacked on a phone. The thread owns the height so
+   the composer stays pinned and only the messages scroll. */
+.msg {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 18px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 22px 24px 28px;
+  height: calc(100vh - 64px);
+  min-height: 520px;
+}
+
+@media (max-width: 900px) {
+  .msg {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    padding: 18px 16px 40px;
+  }
+}
+
+/* ── inbox ─────────────────────────────────────────────────────────────── */
+
+.msg__list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.msg__listhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.msg__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-tx);
+}
+
+.msg__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #6b7688;
+}
+
+.msg__empty {
+  margin: 18px 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7688;
+
+  p {
+    margin: 0 0 8px;
+  }
+}
+
+.convs {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.conv {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: #f3f6fa;
+  }
+
+  &.is-active {
+    background: #e8f0fb;
+  }
+}
+
+.conv__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Channels get an outline glyph rather than a colour fill: a board is not a person,
+   and giving it an avatar makes the list read as forty colleagues. */
+.conv__avatar--channel {
+  background: #eef2f7 !important;
+  color: #5b6a80;
+  border: 1px solid var(--card-line);
+}
+
+.conv__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.conv__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.conv__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-tx);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv__time {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: #93a0b2;
+}
+
+.conv__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.conv__sub,
+.conv__muted {
+  font-size: 10.5px;
+  color: #8894a6;
+}
+
+.conv__preview {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #74808f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv__author {
+  font-weight: 600;
+  color: #5d6b7e;
+}
+
+.is-unread {
+  .conv__name,
+  .conv__preview {
+    color: var(--ink-tx);
+    font-weight: 600;
+  }
+}
+
+.badge {
+  flex: 0 0 auto;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 19px;
+  text-align: center;
+}
+
+/* A mention is not just "more unread" — it is somebody asking you specifically, so it
+   is a different colour rather than a bigger number. */
+.badge--mention {
+  background: #e11d48;
+}
+
+.tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--card-line);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7688;
+}
+
+.tag--board {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tag--squad {
+  border-color: #c7f0e9;
+  background: #ecfdf8;
+  color: #0d9488;
+}
+
+.tag--direct {
+  border-color: #e9d5ff;
+  background: #faf5ff;
+  color: #7c3aed;
+}
+
+/* ── thread ────────────────────────────────────────────────────────────── */
+
+.msg__thread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.msg__blank {
+  margin: auto;
+  max-width: 420px;
+  text-align: center;
+  color: #6b7688;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    color: var(--ink-tx);
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+}
+
+.thread__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-line);
+}
+
+.thread__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-tx);
+}
+
+.thread__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: #77839a;
+}
+
+.thread__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+
+.live--live {
+  color: #0d9488;
+}
+
+.live--connecting {
+  color: #d97706;
+}
+
+.live--disconnected {
+  color: #9aa5b5;
+}
+
+.thread__boards {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 0 0;
+}
+
+.thread__boardslabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #93a0b2;
+}
+
+.boardchip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
+  background: #f7f9fc;
+  font-size: 11.5px;
+  color: var(--ink-tx);
+  text-decoration: none;
+
+  &:hover {
+    border-color: #b9c6d8;
+  }
+}
+
+.boardchip__status {
+  font-size: 9.5px;
+  color: #8894a6;
+}
+
+.thread__people {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 10px 0 0;
+}
+
+.who {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 2px;
+  border: 1px solid var(--card-line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 11.5px;
+  color: var(--ink-tx);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--who-color, #b9c6d8);
+  }
+}
+
+/* Someone with no account cannot be reached by a mention. Shown, because knowing the
+   squad is bigger than the set of people who will see this matters more than a tidy row. */
+.who--noaccount {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.who__avatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--who-color, #94a3b8);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.thread__note {
+  margin: 10px 0 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #854d0e;
+}
+
+.thread__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 2px 6px;
+}
+
+.daymark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9aa5b5;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--card-line);
+  }
+}
+
+.bubble {
+  display: flex;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 10px;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &:hover .bubble__tools {
+    opacity: 1;
+  }
+}
+
+/* A message naming you gets a rail rather than a fill: it must be findable when you
+   scroll back through two hundred messages, without shouting over everything else. */
+.bubble--mention {
+  background: #fff7ed;
+  box-shadow: inset 3px 0 0 #fb923c;
+}
+
+.bubble--gone {
+  opacity: 0.6;
+}
+
+.bubble__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.bubble__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.bubble__head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0 0 2px;
+}
+
+.bubble__author {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-tx);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.bubble__time,
+.bubble__edited {
+  font-size: 10.5px;
+  color: #93a0b2;
+}
+
+.bubble__edited {
+  font-style: italic;
+}
+
+.bubble__text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #2b3542;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble__text--gone {
+  font-style: italic;
+  color: #97a3b4;
+}
+
+.quote {
+  margin: 0 0 4px;
+  padding: 4px 9px;
+  border-left: 2px solid #c7d2e0;
+  background: #f4f7fb;
+  border-radius: 0 6px 6px 0;
+  font-size: 11.5px;
+  color: #6b7688;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote__author {
+  font-weight: 700;
+  margin-right: 5px;
+  color: #5d6b7e;
+}
+
+.bubble__tools {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 3px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+
+  button {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #7a8698;
+    cursor: pointer;
+
+    &:hover {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Keep the actions reachable without a mouse hover. */
+.bubble__tools:focus-within {
+  opacity: 1;
+}
+
+/* ── composer ──────────────────────────────────────────────────────────── */
+
+.composer {
+  border-top: 1px solid var(--card-line);
+  padding-top: 11px;
+}
+
+.composer__ctx {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 7px;
+  font-size: 11.5px;
+  color: #6b7688;
+}
+
+.composer__cancel {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.composer__row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-end;
+}
+
+.composer__input {
+  flex: 1;
+  resize: vertical;
+  min-height: 44px;
+  max-height: 180px;
+  padding: 9px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: #93b4f0;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+  }
+}
+
+/* ── picker ────────────────────────────────────────────────────────────── */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(14, 21, 32, 0.45);
+}
+
+.sheet__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  max-height: min(640px, 88vh);
+  padding: 16px 18px 18px;
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(14, 21, 32, 0.3);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink-tx);
+  }
+}
+
+.sheet__scroll {
+  margin-top: 10px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sheet__group {
+  margin: 12px 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #93a0b2;
+}
+
+.sheet__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6b7688;
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: #f3f6fa;
+  }
+}
+
+.target__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.target__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-tx);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.target__sub {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: #8894a6;
+}
+
+.search input {
+  width: 100%;
+  padding: 7px 11px;
+  border: 1px solid var(--card-line);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink-tx);
+
+  &:focus {
+    outline: none;
+    border-color: #93b4f0;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+  }
+}

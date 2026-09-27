@@ -40,6 +40,9 @@
       <div class="builder__header">
         <h1 class="builder__title">Build the slide</h1>
         <a class="builder__back" routerLink="/portfolio">All boards</a>
+        <!-- Straight into this board's channel. The conversation about a board belongs
+             next to the board, not in a separate app somebody has to remember. -->
+        <button type="button" class="builder__back" (click)="discuss()">Discuss</button>
       </div>
 
       @if (readOnlyReason(); as reason) {

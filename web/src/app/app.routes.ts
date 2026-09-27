@@ -39,6 +39,24 @@ export const routes: Routes = [
       import('./features/boards/board-editor-page').then((m) => m.BoardEditorPage),
   },
   {
+    // Messaging is for everyone signed in. A communication tool half the team cannot
+    // open is one they route around, back to WhatsApp.
+    path: 'messages',
+    title: 'Messages · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/messages/messages-page').then((m) => m.MessagesPage),
+  },
+  {
+    // A thread is a route rather than local state, so a conversation can be linked to
+    // from a board, from a notification, or pasted to a colleague.
+    path: 'messages/:id',
+    title: 'Messages · Squad Status Board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/messages/messages-page').then((m) => m.MessagesPage),
+  },
+  {
     // The directory is for everybody, unlike the roster below: knowing who is on the team
     // and what they work with is not privileged, and a directory half the company cannot
     // open is not a directory.

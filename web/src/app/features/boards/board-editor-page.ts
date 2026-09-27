@@ -20,6 +20,7 @@ import type {
   SmartsheetSuggestion,
 } from '../../core/services/boards.service';
 import { AuthService } from '../../core/services/auth.service';
+import { MessagesService } from '../../core/services/messages.service';
 import {
   CategoriesService,
   type BoardCategory,
@@ -55,6 +56,7 @@ export class BoardEditorPage {
   private readonly exporter = inject(SlideExportService);
   private readonly auth = inject(AuthService);
   private readonly categoriesService = inject(CategoriesService);
+  private readonly messages = inject(MessagesService);
 
   /** Active programmes only: a retired one should not be offered as a new home. */
   protected readonly categories = signal<BoardCategory[]>([]);
@@ -480,6 +482,24 @@ export class BoardEditorPage {
       next: (copy) => void this.router.navigate(['/boards', copy.id]),
       error: () => this.error.set('Could not duplicate the board.'),
     });
+  }
+
+  /**
+   * Opens this board's channel, creating it if nobody has wanted to talk about the board
+   * before. The conversation belongs beside the work rather than in a separate app
+   * somebody has to remember to go and look at.
+   */
+  protected async discuss(): Promise<void> {
+    const id = this.boardId();
+    if (!id) return;
+
+    try {
+      const ref = await this.messages.openBoard(id);
+      await this.router.navigate(['/messages', ref.conversationId]);
+    } catch {
+      // Non-fatal: the messages screen opens the same channel from its own picker.
+      await this.router.navigate(['/messages']);
+    }
   }
 }
 
