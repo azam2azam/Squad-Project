@@ -6,6 +6,17 @@
     a nav that promises screens the app does not have is worse than a short nav.
   -->
   <aside class="rail">
+    <button
+      type="button"
+      class="rail__collapse"
+      (click)="toggleRail()"
+      [attr.aria-expanded]="!railCollapsed()"
+      [attr.aria-label]="railCollapsed() ? 'Expand the navigation' : 'Collapse the navigation'"
+      [title]="railCollapsed() ? 'Expand' : 'Collapse'"
+    >
+      {{ railCollapsed() ? '»' : '«' }}
+    </button>
+
     <div class="rail__brand">
       <p class="rail__eyebrow">Enterprise Delivery</p>
       <p class="rail__title">Squad Command</p>

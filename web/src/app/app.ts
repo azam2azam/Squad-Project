@@ -1,4 +1,12 @@
-import { DOCUMENT, Component, DestroyRef, computed, effect, inject } from '@angular/core';
+import {
+  DOCUMENT,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -19,6 +27,7 @@ import { MessagesService } from './core/services/messages.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   styleUrl: './app.scss',
   templateUrl: './app.html',
+  host: { '[class.rail-collapsed]': 'railCollapsed()' },
 })
 export class App {
   private readonly metadata = inject(MetadataService);
@@ -76,6 +85,20 @@ export class App {
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
   }
 
+  /** Icons-only rail. Remembered, because it is a working preference, not a mode. */
+  protected readonly railCollapsed = signal(readCollapsed());
+
+  protected toggleRail(): void {
+    const next = !this.railCollapsed();
+    this.railCollapsed.set(next);
+
+    try {
+      localStorage.setItem(RAIL_KEY, next ? '1' : '0');
+    } catch {
+      // A private window refusing storage costs the preference, not the layout.
+    }
+  }
+
   protected signOut(): void {
     void this.auth.logout();
   }
@@ -91,5 +114,15 @@ export class App {
     const main = this.document.getElementById('main');
     main?.focus();
     main?.scrollIntoView();
+  }
+}
+
+const RAIL_KEY = 'ssb.rail.collapsed';
+
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) === '1';
+  } catch {
+    return false;
   }
 }

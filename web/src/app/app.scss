@@ -91,6 +91,24 @@
   gap: 2px;
   min-width: 0;
 
+  // The nav is the only part that scrolls: the brand stays at the top and the user
+  // block at the bottom, which is what makes a long list usable on a short screen.
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+
   @media (max-width: 900px) {
     flex-direction: row;
     flex-wrap: wrap;
@@ -287,4 +305,95 @@
 
 .rail__badge--mention {
   background: #e11d48;
+}
+
+// ---------------------------------------------------------------------------
+// Collapsed rail — icons only
+// ---------------------------------------------------------------------------
+
+.rail__collapse {
+  align-self: flex-end;
+  margin: -6px -2px 6px 0;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--tx-mut);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tx);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  @include focus-ring(var(--accent));
+
+  // The rail is a horizontal strip on narrow screens; there is nothing to collapse.
+  @media (max-width: 900px) {
+    display: none;
+  }
+}
+
+// Only above the breakpoint: below it the rail is already a strip.
+@media (min-width: 901px) {
+  :host(.rail-collapsed) {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  :host(.rail-collapsed) .rail {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  // Labels are bare text nodes beside each icon, so they are collapsed by type size
+  // rather than display: none. The words stay in the accessibility tree, which is why
+  // the links keep their names with no title attribute bolted on.
+  :host(.rail-collapsed) .rail__link,
+  :host(.rail-collapsed) .rail__skin,
+  :host(.rail-collapsed) .rail__signout,
+  :host(.rail-collapsed) .rail__user {
+    font-size: 0;
+    justify-content: center;
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  :host(.rail-collapsed) .rail__icon {
+    font-size: 13px;
+    width: auto;
+  }
+
+  :host(.rail-collapsed) .rail__skin::after {
+    content: '◐';
+    font-size: 13px;
+  }
+
+  :host(.rail-collapsed) .rail__signout::after {
+    content: '⎋';
+    font-size: 14px;
+  }
+
+  // The user block collapses to the role dot: a name is unreadable at this width.
+  :host(.rail-collapsed) .rail__user::after {
+    content: '●';
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  // These carry their own type size, so a zeroed parent does not reach them.
+  :host(.rail-collapsed) .rail__user-name,
+  :host(.rail-collapsed) .rail__user-role,
+  :host(.rail-collapsed) .rail__brand,
+  :host(.rail-collapsed) .rail__group,
+  :host(.rail-collapsed) .rail__chip {
+    display: none;
+  }
+
+  :host(.rail-collapsed) .rail__collapse {
+    align-self: center;
+    margin-right: 0;
+  }
 }
