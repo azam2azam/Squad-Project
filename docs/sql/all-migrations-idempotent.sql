@@ -1,6 +1,6 @@
 ﻿-- ===========================================================================
 --  Squad Status Board — every migration to date, idempotent
---  Generated: 2026-09-27  (through 20260921092458_AddTeamMessaging)
+--  Generated: 2026-10-27  (through 20261027144255_AddBoardPresentationFlag)
 -- ===========================================================================
 --  Use this when a database is more than one migration behind, or when you are
 --  not sure what it has. Each statement is guarded on __EFMigrationsHistory, so
@@ -8,9 +8,6 @@
 --
 --  On an empty database it builds the whole schema from nothing.
 --  Take a backup first.
---
---  The last migration in here (team messaging) comes from work still
---  uncommitted in the repository working tree — regenerate if it changes.
 -- ===========================================================================
 
 IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
@@ -1147,6 +1144,31 @@ IF NOT EXISTS (
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
     VALUES (N'20260921092458_AddTeamMessaging', N'8.0.11');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261027144255_AddBoardPresentationFlag'
+)
+BEGIN
+    ALTER TABLE [Boards] ADD [IncludeInPresentation] bit NOT NULL DEFAULT CAST(1 AS bit);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261027144255_AddBoardPresentationFlag'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261027144255_AddBoardPresentationFlag', N'8.0.11');
 END;
 GO
 
