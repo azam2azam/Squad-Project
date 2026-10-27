@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { MetadataService } from './core/services/metadata.service';
 import { AuthService } from './core/services/auth.service';
+import { SkinService } from './core/services/skin.service';
 import { MessagesService } from './core/services/messages.service';
 
 /**
@@ -24,6 +25,9 @@ export class App {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+
+  /** Public: the rail calls toggle() and reads skin() directly. */
+  protected readonly skin = inject(SkinService);
   private readonly messages = inject(MessagesService);
 
   protected readonly roleCount = this.metadata.roles;

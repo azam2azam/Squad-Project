@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { MetadataService } from '../../core/services/metadata.service';
+import { SkinService } from '../../core/services/skin.service';
 
 /**
  * Local sign-in.
@@ -21,6 +22,9 @@ export class LoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly metadata = inject(MetadataService);
+
+  /** Public: the template calls toggle() and reads skin() directly. */
+  protected readonly skin = inject(SkinService);
 
   protected readonly email = signal('');
   protected readonly password = signal('');

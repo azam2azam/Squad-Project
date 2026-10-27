@@ -182,3 +182,99 @@
   font-size: 11px;
   color: var(--tx-dim);
 }
+
+// ---------------------------------------------------------------------------
+// Glass skin — the sign-in page is where the theme is set, so it carries the
+// full treatment: the soft blue-to-mint ground, a frosted card and a teal
+// action. Classic above is untouched; this only applies under the attribute.
+// ---------------------------------------------------------------------------
+
+:host-context([data-skin='glass']) {
+  background: linear-gradient(135deg, #d7e6f6 0%, #e6f0f8 40%, #e4f3ed 74%, #dcefe7 100%);
+
+  .login::before {
+    background:
+      radial-gradient(44% 40% at 14% 16%, rgba(126, 186, 226, 0.45), transparent 70%),
+      radial-gradient(48% 42% at 86% 80%, rgba(118, 209, 183, 0.42), transparent 72%);
+  }
+
+  .login__card {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    // 18px sits at the top of the 10–20px the style calls for; the card is large
+    // enough to carry it without the edge looking soft.
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 20px 48px rgba(23, 51, 77, 0.14);
+    // Dark ink on pale glass: the contrast floor the skin is not allowed to break.
+    color: #17222f;
+  }
+
+  .login__title {
+    color: #15314c;
+  }
+
+  .login__sub,
+  .field__label {
+    color: #4a6076;
+  }
+
+  .field__input {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(255, 255, 255, 0.95);
+    color: #17222f;
+
+    &::placeholder {
+      color: #7d93a8;
+    }
+  }
+
+  .login__submit {
+    // Darker than the reference mockup on purpose: white on its pale teal measured
+    // 2.86:1, under the 4.5:1 the style requires. Both stops clear it at this depth.
+    background: linear-gradient(135deg, #12857a, #0c6f67);
+    border: none;
+    color: #ffffff;
+  }
+
+  .login__demo {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .login__demo-title,
+  .login__demo-role,
+  .login__demo-email,
+  .login__demo-can {
+    color: #42596e;
+  }
+
+  .login__demo-btn {
+    background: rgba(255, 255, 255, 0.66);
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+// The skin switch, bottom of the card. Present in both skins so the choice is
+// reversible from the one page you can always reach.
+.login__skin {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.login__skin-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--tx-mut);
+  font-size: 11.5px;
+  font-weight: 600;
+  @include focus-ring(var(--accent));
+}
+
+:host-context([data-skin='glass']) .login__skin-btn {
+  border-color: rgba(23, 34, 47, 0.14);
+  color: #4a6076;
+}

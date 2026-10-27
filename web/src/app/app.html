@@ -119,6 +119,9 @@
             {{ user()!.roleName === 'ProductOwner' ? 'Product Owner' : user()!.roleName }}
           </span>
         </a>
+        <button type="button" class="rail__skin" (click)="skin.toggle()">
+          {{ skin.skin() === 'glass' ? 'Classic look' : 'Glass look' }}
+        </button>
         <button type="button" class="rail__signout" (click)="signOut()">Sign out</button>
       } @else if (roleCount().length > 0) {
         <span class="rail__chip rail__chip--ok" title="Reference data loaded from the API">

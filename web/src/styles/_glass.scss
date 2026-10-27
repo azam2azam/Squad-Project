@@ -1,0 +1,95 @@
+// Glass skin — opt-in, applied by data-skin="glass" on <html>.
+//
+// The whole skin is token overrides plus one blur rule. Nothing per-page: twenty files
+// already paint their surfaces with var(--card) on var(--bg), so moving those two tokens
+// moves the whole application, and the pages that hardcode white are caught by the
+// surface list at the bottom.
+//
+// Specification followed (glassmorphism, ui-ux-pro-max styles.csv):
+//   backdrop blur 10–20px · translucent white 0.1–0.3 · 1px light border
+//   required: text contrast 4.5:1, visible focus, reduced-motion
+//
+// The opacity sits at the top of that range (0.58, not 0.15) deliberately. This is a
+// dense working application read for hours, not a marketing page: at 0.15 the text on a
+// card sits over whatever happens to be behind it and the contrast is whatever the
+// gradient allows. At 0.58 over a pale gradient the ink stays above 4.5:1 everywhere,
+// and the frosting still reads.
+
+[data-skin='glass'] {
+  // Soft blue to mint, the attached theme's ground.
+  --bg: linear-gradient(135deg, #dce9f7 0%, #e8f1f8 38%, #e6f4ee 72%, #dff0e8 100%);
+
+  --card: rgba(255, 255, 255, 0.58);
+  --card-line: rgba(255, 255, 255, 0.75);
+
+  // Ink stays the classic near-black: the contrast floor is not negotiable for a skin.
+  --ink-tx: #17222f;
+
+  --shadow-card: 0 1px 2px rgba(23, 34, 47, 0.04), 0 8px 24px rgba(23, 34, 47, 0.07);
+
+  --glass-blur: 14px;
+
+  body {
+    background: var(--bg);
+    background-attachment: fixed;
+  }
+
+  // Two soft lights behind everything, so the blur has something to pick up. Fixed and
+  // non-interactive: this is wallpaper, not a layer anything can hit.
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 38% at 12% 18%, rgba(141, 196, 230, 0.4), transparent 70%),
+      radial-gradient(46% 40% at 88% 78%, rgba(133, 214, 191, 0.36), transparent 72%);
+  }
+
+  // The frosted surfaces. One rule, listing the container classes the app actually uses —
+  // including the ones that hardcode white, which this overrides on specificity.
+  .card,
+  .panel,
+  .editor,
+  .stat,
+  .table-wrap,
+  .kpi,
+  .deck,
+  .hero,
+  .form,
+  .banner,
+  .chooser__card,
+  .login__card {
+    background: var(--card);
+    border-color: var(--card-line);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  // The rail is the one dark surface; frosting it keeps the depth without losing the
+  // contrast its white text depends on.
+  .rail {
+    background: rgba(14, 21, 32, 0.82);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  // Inputs sit on the glass rather than cutting a white hole in it.
+  .field__input,
+  .search__input {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+// Blur is the expensive part of this skin and the part that can smear on a slow GPU.
+// Reduced motion is the closest standard signal for "give me less of that".
+@media (prefers-reduced-motion: reduce) {
+  [data-skin='glass'] {
+    --glass-blur: 0px;
+
+    --card: rgba(255, 255, 255, 0.9);
+  }
+}

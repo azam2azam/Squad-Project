@@ -57,5 +57,11 @@
         }
       </ul>
     </div>
+
+    <div class="login__skin">
+      <button type="button" class="login__skin-btn" (click)="skin.toggle()">
+        {{ skin.skin() === 'glass' ? 'Switch to classic' : 'Switch to glass' }}
+      </button>
+    </div>
   </form>
 </div>
