@@ -254,6 +254,44 @@
       background: #16202d;
     }
   }
+
+  // Quiet until hovered: deleting a board is rare, and a red button sitting beside Save
+  // all day invites the wrong click.
+  &--danger {
+    margin-left: auto;
+    border-color: #fca5a5;
+    color: #b91c1c;
+
+    &:hover:not(:disabled) {
+      background: #fef2f2;
+      border-color: #b91c1c;
+    }
+  }
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--ink-tx);
+
+  input {
+    margin-top: 2px;
+    flex: none;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.check__hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #64748b;
 }
 
 .builder__saved {

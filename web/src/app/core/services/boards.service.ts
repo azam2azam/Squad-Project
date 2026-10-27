@@ -30,6 +30,8 @@ export interface UpdateBoardRequest extends CreateBoardRequest {
   smartsheetSheetId?: string | null;
   /** The short handle people type in a Telegram update. Null removes it. */
   code?: string | null;
+  /** False keeps the board out of Present mode without deleting it. */
+  includeInPresentation?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -57,6 +59,11 @@ export class BoardsService {
 
   update(id: string, request: UpdateBoardRequest): Observable<BoardDetail> {
     return this.http.put<BoardDetail>(`${this.baseUrl}/boards/${id}`, { ...request, id });
+  }
+
+  /** Soft delete on the server: the board leaves every list, its history survives. */
+  remove(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/boards/${id}`);
   }
 
   duplicate(id: string, newTitle?: string): Observable<BoardDetail> {

@@ -12,9 +12,107 @@
 }
 
 .present__stage {
-  // Matches the prototype's min(1024px, 96vw).
-  width: min(1024px, 96vw);
-  max-height: 92vh;
+  // The prototype capped at 1024px, which wastes most of a meeting-room screen. The
+  // slide is 16:9, so height is what actually limits it: take the width that fills the
+  // viewport, bounded by what 94vh of height allows at that ratio.
+  width: min(96vw, calc(94vh * 16 / 9));
+  max-height: 94vh;
+
+  // The dark slide is the deliverable; this is the same slide for a bright room. Only
+  // the surface tokens move — role and status colours are the semantic palette and stay
+  // put, so a status reads the same in either theme.
+  &--light {
+    --ink: #ffffff;
+    --panel: #f4f7fa;
+    --panel-2: #eef2f7;
+    --line: rgba(14, 21, 32, 0.12);
+    --tx: #0e1520;
+    --tx-mut: #51607a;
+    --tx-dim: #7d8ba1;
+    --shadow-slide: 0 24px 60px rgba(8, 14, 22, 0.18);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Programme chooser
+// ---------------------------------------------------------------------------
+
+.chooser {
+  width: min(620px, 92vw);
+  color: var(--tx);
+  font-family: var(--font-ui);
+}
+
+.chooser__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.chooser__title {
+  margin: 0 0 22px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.chooser__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+}
+
+.deck {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--tx);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+
+  &:hover {
+    border-color: var(--accent);
+    background: var(--panel-2);
+  }
+
+  @include focus-ring;
+}
+
+.deck__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.deck__name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.deck__count {
+  font-size: 12.5px;
+  color: var(--tx-mut);
+  font-variant-numeric: tabular-nums;
+}
+
+.chooser__foot {
+  display: flex;
+  gap: 10px;
 }
 
 .present__state {
@@ -102,4 +200,19 @@
   @media (max-width: 720px) {
     display: none;
   }
+}
+
+.present__btn--wide {
+  min-width: 0;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+// A hairline between stepping and the theme switch, so they do not read as one group.
+.present__sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: var(--line);
 }

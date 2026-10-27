@@ -122,6 +122,8 @@ export interface BoardSummary {
   categoryId: string | null;
   categoryName: string | null;
   categoryColor: string | null;
+  /** Whether Present mode walks through this board. */
+  includeInPresentation: boolean;
 }
 
 /** One avatar on a portfolio card. */
@@ -143,6 +145,8 @@ export interface BoardDetail extends Omit<BoardSummary, 'memberCount' | 'composi
   smartsheetSheetId: string | null;
   /** Short handle people type in a Telegram update. Null until one is assigned. */
   code: string | null;
+  /** Whether Present mode walks through this board. */
+  includeInPresentation: boolean;
   createdBy: string;
   createdAt: string;
   members: SquadMember[];

@@ -5,13 +5,40 @@
     <p>{{ error() }}</p>
     <button type="button" class="present__btn" (click)="exit()">Back</button>
   </div>
+} @else if (choices(); as programmes) {
+  <!-- A review meeting walks one programme, so the deck is chosen before it starts. -->
+  <div class="chooser">
+    <p class="chooser__eyebrow">Present</p>
+    <h1 class="chooser__title">Which programme?</h1>
+
+    <ul class="chooser__list">
+      @for (programme of programmes; track programme.id) {
+        <li>
+          <button type="button" class="deck" (click)="open(programme.id)">
+            <span class="deck__dot" [style.background]="programme.color ?? '#5d6b7e'"></span>
+            <span class="deck__name">{{ programme.name }}</span>
+            <span class="deck__count">
+              {{ programme.count }} {{ programme.count === 1 ? 'board' : 'boards' }}
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    <div class="chooser__foot">
+      <button type="button" class="present__btn present__btn--wide" (click)="presentEverything()">
+        Present everything
+      </button>
+      <button type="button" class="present__btn present__btn--wide" (click)="exit()">Back</button>
+    </div>
+  </div>
 } @else if (current(); as board) {
   <!-- Announces slide changes to screen readers without stealing focus. -->
   <p class="visually-hidden" role="status" aria-live="polite">
     Slide {{ index() + 1 }} of {{ boards().length }}: {{ board.title }}
   </p>
 
-  <div class="present__stage">
+  <div class="present__stage" [class.present__stage--light]="theme() === 'light'">
     <app-slide-canvas [board]="board" />
   </div>
 
@@ -36,6 +63,18 @@
       aria-label="Next slide"
     >
       ›
+    </button>
+
+    <span class="present__sep" aria-hidden="true"></span>
+
+    <button
+      type="button"
+      class="present__btn"
+      (click)="toggleTheme()"
+      [attr.aria-label]="theme() === 'dark' ? 'Switch to the light slide' : 'Switch to the dark slide'"
+      [title]="theme() === 'dark' ? 'Light slide' : 'Dark slide'"
+    >
+      {{ theme() === 'dark' ? '☀' : '☾' }}
     </button>
   </div>
 

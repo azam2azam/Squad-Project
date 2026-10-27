@@ -259,6 +259,28 @@
       @if (canWrite()) {
         <div class="card">
           <div class="card__head">
+            <h2 class="card__title">Presentation</h2>
+          </div>
+
+          <label class="check">
+            <input
+              type="checkbox"
+              [checked]="d.includeInPresentation"
+              (change)="update('includeInPresentation', $any($event.target).checked)"
+            />
+            <span>
+              <b>Include this board in Present mode</b>
+              <span class="check__hint">
+                Off keeps the board live and maintained, but out of the review deck.
+              </span>
+            </span>
+          </label>
+        </div>
+      }
+
+      @if (canWrite()) {
+        <div class="card">
+          <div class="card__head">
             <h2 class="card__title">Board code</h2>
             @if (!telegramEnabled()) {
               <span class="card__hint">Telegram is off for this deployment</span>
@@ -529,6 +551,16 @@
           </button>
           <button type="button" class="btn" (click)="duplicate()" [disabled]="saving()">
             Duplicate
+          </button>
+
+          <!-- Soft delete: the board leaves every screen, its history stays. -->
+          <button
+            type="button"
+            class="btn btn--danger"
+            (click)="remove()"
+            [disabled]="saving()"
+          >
+            {{ confirmingDelete() ? 'Click again to confirm' : 'Delete board' }}
           </button>
 
           @if (savedAt() && !isDirty()) {

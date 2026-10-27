@@ -30,7 +30,8 @@ public sealed record BoardSummaryDto(
     IReadOnlyList<BoardFaceDto> Faces,
     Guid? CategoryId,
     string? CategoryName,
-    string? CategoryColor)
+    string? CategoryColor,
+    bool IncludeInPresentation)
 {
     /// <summary>How many avatars a card shows before collapsing the rest into "+n".</summary>
     private const int FacesShown = 5;
@@ -66,7 +67,8 @@ public sealed record BoardSummaryDto(
             .ToList(),
         board.CategoryId,
         board.Category?.Name,
-        board.Category?.Color);
+        board.Category?.Color,
+        board.IncludeInPresentation);
 }
 
 /// <summary>One avatar on a portfolio card.</summary>
@@ -105,7 +107,8 @@ public sealed record BoardDetailDto(
     string? CategoryColor,
     string? SmartsheetSheetId,
     // The short handle people type in a Telegram update. Null until one is assigned.
-    string? Code)
+    string? Code,
+    bool IncludeInPresentation)
 {
     public static BoardDetailDto From(Board board) => new(
         board.Id,
@@ -137,7 +140,8 @@ public sealed record BoardDetailDto(
         board.Category?.Name,
         board.Category?.Color,
         board.SmartsheetSheetId,
-        board.Code);
+        board.Code,
+        board.IncludeInPresentation);
 }
 
 /// <summary>One avatar card on the slide.</summary>

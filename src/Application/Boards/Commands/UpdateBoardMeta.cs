@@ -26,7 +26,8 @@ public sealed record UpdateBoardMetaCommand(
     string? JiraBoardId = null,
     Guid? CategoryId = null,
     string? SmartsheetSheetId = null,
-    string? Code = null) : IRequest<BoardDetailDto>;
+    string? Code = null,
+    bool IncludeInPresentation = true) : IRequest<BoardDetailDto>;
 
 public sealed class UpdateBoardMetaCommandValidator : AbstractValidator<UpdateBoardMetaCommand>
 {
@@ -74,6 +75,7 @@ public sealed class UpdateBoardMetaCommandHandler(
         // Category is set alongside the rest so one save moves a board between programmes.
         board.AssignCategory(request.CategoryId);
         board.LinkSmartsheet(request.SmartsheetSheetId);
+        board.SetPresentationVisibility(request.IncludeInPresentation);
 
         // Uniqueness is checked here rather than left to the database, so a clash comes
         // back as "DIS is already taken" instead of a constraint violation.

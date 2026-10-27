@@ -272,6 +272,14 @@ public class Board : Entity
     /// <summary>Moves the board to a programme, or out of one when given null.</summary>
     public void AssignCategory(Guid? categoryId) => CategoryId = categoryId;
 
+    /// <summary>
+    /// Whether this board appears in Present mode. Separate from deletion: a board can be
+    /// live and maintained but not something the review meeting walks through.
+    /// </summary>
+    public bool IncludeInPresentation { get; private set; } = true;
+
+    public void SetPresentationVisibility(bool include) => IncludeInPresentation = include;
+
     public void SetOrder(int orderIndex)
     {
         OrderIndex = orderIndex;

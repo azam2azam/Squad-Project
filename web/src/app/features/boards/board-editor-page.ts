@@ -168,7 +168,8 @@ export class BoardEditorPage {
       // change silently discarded.
       draft.categoryId !== (board.categoryId ?? '') ||
       draft.smartsheetSheetId !== (board.smartsheetSheetId ?? '') ||
-      draft.code !== (board.code ?? '')
+      draft.code !== (board.code ?? '') ||
+      draft.includeInPresentation !== board.includeInPresentation
     );
   });
 
@@ -294,6 +295,7 @@ export class BoardEditorPage {
         categoryId: draft.categoryId || null,
         smartsheetSheetId: draft.smartsheetSheetId.trim() || null,
         code: draft.code.trim() || null,
+        includeInPresentation: draft.includeInPresentation,
       })
       .subscribe({
         next: (saved) => {
@@ -474,6 +476,29 @@ export class BoardEditorPage {
     }
   }
 
+  /** Two clicks rather than a dialog — the second click within the same visit confirms. */
+  protected readonly confirmingDelete = signal(false);
+
+  protected remove(): void {
+    const board = this.serverBoard();
+    if (!board) return;
+
+    if (!this.confirmingDelete()) {
+      this.confirmingDelete.set(true);
+      return;
+    }
+
+    this.saving.set(true);
+    this.boards.remove(board.id).subscribe({
+      next: () => void this.router.navigate(['/portfolio']),
+      error: (err) => {
+        this.saving.set(false);
+        this.confirmingDelete.set(false);
+        this.error.set(readProblemDetail(err) ?? 'Could not delete the board.');
+      },
+    });
+  }
+
   protected duplicate(): void {
     const board = this.serverBoard();
     if (!board) return;
@@ -521,6 +546,7 @@ interface DraftState {
   code: string;
   /** Empty string means uncategorised, which is a real state. */
   categoryId: string;
+  includeInPresentation: boolean;
 }
 
 function toDraft(board: BoardDetail): DraftState {
@@ -539,6 +565,7 @@ function toDraft(board: BoardDetail): DraftState {
     smartsheetSheetId: board.smartsheetSheetId ?? '',
     code: board.code ?? '',
     categoryId: board.categoryId ?? '',
+    includeInPresentation: board.includeInPresentation,
   };
 }
 

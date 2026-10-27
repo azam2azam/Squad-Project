@@ -54,6 +54,9 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
 
+        // Existing boards predate the flag and must keep appearing in Present mode.
+        builder.Property(b => b.IncludeInPresentation).HasDefaultValue(true);
+
         builder.HasIndex(b => b.OrderIndex);
         builder.HasIndex(b => b.IsDeleted);
         // The dashboard risk register filters on this.
